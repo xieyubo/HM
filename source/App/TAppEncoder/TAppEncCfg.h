@@ -496,6 +496,13 @@ protected:
   UInt      m_fgcSEIBlendingModeID;
   UInt      m_fgcSEILog2ScaleFactor;
   Bool      m_fgcSEICompModelPresent[MAX_NUM_COMPONENT];
+#if FGS_RDD5_ENABLE
+  UInt      m_fgcSEINumIntensityIntervalMinus1[MAX_NUM_COMPONENT];
+  UInt      m_fgcSEINumModelValuesMinus1[MAX_NUM_COMPONENT];
+  UInt      m_fgcSEIIntensityIntervalLowerBound[MAX_NUM_COMPONENT][MAX_NUM_INTENSITIES];
+  UInt      m_fgcSEIIntensityIntervalUpperBound[MAX_NUM_COMPONENT][MAX_NUM_INTENSITIES];
+  UInt      m_fgcSEICompModelValue[MAX_NUM_COMPONENT][MAX_NUM_INTENSITIES][MAX_NUM_MODEL_VALUES];
+#endif
   // content light level SEI
   Bool      m_cllSEIEnabled;
   UInt      m_cllSEIMaxContentLevel;

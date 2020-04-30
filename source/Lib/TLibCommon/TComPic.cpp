@@ -60,6 +60,10 @@ TComPic::TComPic()
   {
     m_apcPicYuv[i]      = NULL;
   }
+#if FGS_RDD5_ENABLE
+  m_grainCharacteristic = NULL;
+  m_grainBuf = NULL;
+#endif
 }
 
 TComPic::~TComPic()
@@ -201,6 +205,9 @@ Void TComPic::destroy()
   }
 
   deleteSEIs(m_SEIs);
+#if FGS_RDD5_ENABLE
+  m_grainBuf = NULL;
+#endif
 }
 
 Void TComPic::compressMotion()
@@ -256,6 +263,65 @@ UInt TComPic::getSubstreamForCtuAddr(const UInt ctuAddr, const Bool bAddressInRa
   }
   return subStrm;
 }
+
+#if FGS_RDD5_ENABLE
+// initialization of RDD5 based film grain syntheis buffers and parameters
+void TComPic::createGrainSynthesizer(Bool bFirstPictureInSequence, SEIFilmGrainSynthesizer* pGrainCharacteristics, TComPicYuv* pGrainBuf, const TComSPS* sps)
+{
+    m_grainCharacteristic = pGrainCharacteristics;
+    m_grainBuf = pGrainBuf;
+
+    if (bFirstPictureInSequence)
+    {
+      // Create and initialize the Film Grain Synthesizer
+      m_grainCharacteristic->create(sps->getPicWidthInLumaSamples(), sps->getPicHeightInLumaSamples(),
+            sps->getChromaFormatIdc(), sps->getBitDepth(CHANNEL_TYPE_LUMA), 0, 1);
+      
+      //Frame level TComPicYuv buffer created to blend Film Grain Noise into it
+      m_grainBuf->createWithoutCUInfo(sps->getPicWidthInLumaSamples(), sps->getPicHeightInLumaSamples(),
+        sps->getChromaFormatIdc(), false, 0, 0);
+
+      m_grainCharacteristic->fgsInit();
+    }
+}
+
+TComPicYuv* TComPic::getPicYuvDisp()
+{
+    int payloadType = 0;
+    std::list<SEI*>::iterator message;
+
+    m_grainCharacteristic->m_errorCode = -1;
+    for (message = m_SEIs.begin(); message != m_SEIs.end(); ++message)
+    {
+        payloadType = (*message)->payloadType();
+        if (payloadType == SEI::FILM_GRAIN_CHARACTERISTICS)
+        {
+            m_grainCharacteristic->m_pFgcParameters = static_cast<SEIFilmGrainCharacteristics*>(*message);
+            /* Validation of Film grain characteristic parameters for the constrains of SMPTE-RDD5*/
+            m_grainCharacteristic->m_errorCode = m_grainCharacteristic->grainValidateParams();
+            break;
+        }
+    }
+
+    if (FGS_SUCCESS == m_grainCharacteristic->m_errorCode)
+    {
+      m_apcPicYuv[PIC_YUV_REC]->copyToPic(m_grainBuf);
+      m_grainCharacteristic->m_poc = getPOC();
+      m_grainCharacteristic->grainSynthesizeAndBlend(m_grainBuf, getSlice(0)->getIdrPicFlag());
+      return m_grainBuf;
+    }
+    else
+    {
+      if (payloadType == SEI::FILM_GRAIN_CHARACTERISTICS)
+      {
+        fprintf(stdout, "Film Grain synthesis is not performed. Error code: 0x%x \n", m_grainCharacteristic->m_errorCode);
+      }
+      return  m_apcPicYuv[PIC_YUV_REC];
+    }
+
+}
+
+#endif
 
 
 //! \}

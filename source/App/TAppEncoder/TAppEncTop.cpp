@@ -433,6 +433,19 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setFilmGrainCharactersticsSEILog2ScaleFactor         ((UChar)m_fgcSEILog2ScaleFactor);
   for (Int i = 0; i < MAX_NUM_COMPONENT; i++) {
     m_cTEncTop.setFGCSEICompModelPresent                          (m_fgcSEICompModelPresent[i], i);
+#if FGS_RDD5_ENABLE	
+    if (m_fgcSEICompModelPresent[i]) {
+      m_cTEncTop.setFGCSEINumIntensityIntervalMinus1((UChar)m_fgcSEINumIntensityIntervalMinus1[i], i);
+      m_cTEncTop.setFGCSEINumModelValuesMinus1((UChar)m_fgcSEINumModelValuesMinus1[i], i);
+      for (int j = 0; j <= m_fgcSEINumIntensityIntervalMinus1[i]; j++) {
+        m_cTEncTop.setFGCSEIIntensityIntervalLowerBound((UChar)m_fgcSEIIntensityIntervalLowerBound[i][j], i, j);
+        m_cTEncTop.setFGCSEIIntensityIntervalUpperBound((UChar)m_fgcSEIIntensityIntervalUpperBound[i][j], i, j);
+        for (int k = 0; k <= m_fgcSEINumModelValuesMinus1[i]; k++) {
+          m_cTEncTop.setFGCSEICompModelValue(m_fgcSEICompModelValue[i][j][k], i, j, k);
+        }
+      }
+    }
+#endif
   }
 // content light level
   m_cTEncTop.setCLLSEIEnabled                                     (m_cllSEIEnabled);

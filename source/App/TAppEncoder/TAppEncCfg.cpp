@@ -727,6 +727,18 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   SMultiValueInput<Bool> cfg_timeCodeSeiHoursFlag            (0,  1, 0, MAX_TIMECODE_SEI_SETS);
   SMultiValueInput<Int>  cfg_timeCodeSeiTimeOffsetLength     (0, 31, 0, MAX_TIMECODE_SEI_SETS);
   SMultiValueInput<Int>  cfg_timeCodeSeiTimeOffsetValue      (std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max(), 0, MAX_TIMECODE_SEI_SETS);
+#if FGS_RDD5_ENABLE
+  // default values used for FGC SEI parameter parsing
+  SMultiValueInput<UInt>  cfg_FgcSEIIntensityIntervalLowerBoundComp0(0, 255, 0, 256);
+  SMultiValueInput<UInt>  cfg_FgcSEIIntensityIntervalLowerBoundComp1(0, 255, 0, 256);
+  SMultiValueInput<UInt>  cfg_FgcSEIIntensityIntervalLowerBoundComp2(0, 255, 0, 256);
+  SMultiValueInput<UInt>  cfg_FgcSEIIntensityIntervalUpperBoundComp0(0, 255, 0, 256);
+  SMultiValueInput<UInt>  cfg_FgcSEIIntensityIntervalUpperBoundComp1(0, 255, 0, 256);
+  SMultiValueInput<UInt>  cfg_FgcSEIIntensityIntervalUpperBoundComp2(0, 255, 0, 256);
+  SMultiValueInput<UInt>  cfg_FgcSEICompModelValueComp0(0, 65535, 0, 256 * 6);
+  SMultiValueInput<UInt>  cfg_FgcSEICompModelValueComp1(0, 65535, 0, 256 * 6);
+  SMultiValueInput<UInt>  cfg_FgcSEICompModelValueComp2(0, 65535, 0, 256 * 6);
+#endif
   SMultiValueInput<Int>  cfg_omniViewportSEIAzimuthCentre    (-11796480, 11796479, 0, 15);
   SMultiValueInput<Int>  cfg_omniViewportSEIElevationCentre  ( -5898240,  5898240, 0, 15);
   SMultiValueInput<Int>  cfg_omniViewportSEITiltCentre       (-11796480, 11796479, 0, 15);
@@ -1215,6 +1227,23 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("SEIFGCCompModelPresentComp0",                     m_fgcSEICompModelPresent[0],                       false, "Specifies the presense of film grain modelling on colour component 0.")
   ("SEIFGCCompModelPresentComp1",                     m_fgcSEICompModelPresent[1],                       false, "Specifies the presense of film grain modelling on colour component 1.")
   ("SEIFGCCompModelPresentComp2",                     m_fgcSEICompModelPresent[2],                       false, "Specifies the presense of film grain modelling on colour component 2.")
+#if FGS_RDD5_ENABLE
+  ("SEIFGCNumIntensityIntervalMinus1Comp0", m_fgcSEINumIntensityIntervalMinus1[0], 0u, "Specifies the number of intensity intervals minus1 on colour component 0.")
+  ("SEIFGCNumIntensityIntervalMinus1Comp1", m_fgcSEINumIntensityIntervalMinus1[1], 0u, "Specifies the number of intensity intervals minus1 on colour component 1.")
+  ("SEIFGCNumIntensityIntervalMinus1Comp2", m_fgcSEINumIntensityIntervalMinus1[2], 0u, "Specifies the number of intensity intervals minus1 on colour component 2.")
+  ("SEIFGCNumModelValuesMinus1Comp0", m_fgcSEINumModelValuesMinus1[0], 0u, "Specifies the number of component model values minus1 on colour component 0.")
+  ("SEIFGCNumModelValuesMinus1Comp1", m_fgcSEINumModelValuesMinus1[1], 0u, "Specifies the number of component model values minus1 on colour component 1.")
+  ("SEIFGCNumModelValuesMinus1Comp2", m_fgcSEINumModelValuesMinus1[2], 0u, "Specifies the number of component model values minus1 on colour component 2.")
+  ("SEIFGCIntensityIntervalLowerBoundComp0", cfg_FgcSEIIntensityIntervalLowerBoundComp0, cfg_FgcSEIIntensityIntervalLowerBoundComp0, "Specifies the lower bound for the intensity intervals on colour component 0.")
+  ("SEIFGCIntensityIntervalLowerBoundComp1", cfg_FgcSEIIntensityIntervalLowerBoundComp1, cfg_FgcSEIIntensityIntervalLowerBoundComp1, "Specifies the lower bound for the intensity intervals on colour component 1.")
+  ("SEIFGCIntensityIntervalLowerBoundComp2", cfg_FgcSEIIntensityIntervalLowerBoundComp2, cfg_FgcSEIIntensityIntervalLowerBoundComp2, "Specifies the lower bound for the intensity intervals on colour component 2.")
+  ("SEIFGCIntensityIntervalUpperBoundComp0", cfg_FgcSEIIntensityIntervalUpperBoundComp0, cfg_FgcSEIIntensityIntervalUpperBoundComp0, "Specifies the upper bound for the intensity intervals on colour component 0.")
+  ("SEIFGCIntensityIntervalUpperBoundComp1", cfg_FgcSEIIntensityIntervalUpperBoundComp1, cfg_FgcSEIIntensityIntervalUpperBoundComp1, "Specifies the upper bound for the intensity intervals on colour component 1.")
+  ("SEIFGCIntensityIntervalUpperBoundComp2", cfg_FgcSEIIntensityIntervalUpperBoundComp2, cfg_FgcSEIIntensityIntervalUpperBoundComp2, "Specifies the upper bound for the intensity intervals on colour component 2.")
+  ("SEIFGCCompModelValuesComp0", cfg_FgcSEICompModelValueComp0, cfg_FgcSEICompModelValueComp0, "Specifies the component model values on colour component 0.")
+  ("SEIFGCCompModelValuesComp1", cfg_FgcSEICompModelValueComp1, cfg_FgcSEICompModelValueComp1, "Specifies the component model values on colour component 1.")
+  ("SEIFGCCompModelValuesComp2", cfg_FgcSEICompModelValueComp2, cfg_FgcSEICompModelValueComp2, "Specifies the component model values on colour component 2.")
+#endif
 // content light level SEI
   ("SEICLLEnabled",                                   m_cllSEIEnabled,                                   false, "Control generation of the content light level SEI message")
   ("SEICLLMaxContentLightLevel",                      m_cllSEIMaxContentLevel,                              0u, "When not equal to 0, specifies an upper bound on the maximum light level among all individual samples in a 4:4:4 representation "
@@ -2045,7 +2074,55 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
       m_timeSetArray[i].timeOffsetValue       = cfg_timeCodeSeiTimeOffsetValue      .values.size()>i ? cfg_timeCodeSeiTimeOffsetValue      .values [i] : 0;
     }
   }
-
+#if FGS_RDD5_ENABLE
+  // Assigning the FGC SEI params from App to Lib
+  if (m_fgcSEIEnabled)
+  {
+    UInt numModelCtr;
+    if (m_fgcSEICompModelPresent[0])
+    {
+      numModelCtr = 0;
+      for (UChar i = 0; i <= m_fgcSEINumIntensityIntervalMinus1[0]; i++)
+      {
+        m_fgcSEIIntensityIntervalLowerBound[0][i] = UChar((cfg_FgcSEIIntensityIntervalLowerBoundComp0.values.size() > i) ? cfg_FgcSEIIntensityIntervalLowerBoundComp0.values[i] : 0);
+        m_fgcSEIIntensityIntervalUpperBound[0][i] = UChar((cfg_FgcSEIIntensityIntervalUpperBoundComp0.values.size() > i) ? cfg_FgcSEIIntensityIntervalUpperBoundComp0.values[i] : 0);
+        for (UChar j = 0; j <= m_fgcSEINumModelValuesMinus1[0]; j++)
+        {
+          m_fgcSEICompModelValue[0][i][j] = UInt((cfg_FgcSEICompModelValueComp0.values.size() > numModelCtr) ? cfg_FgcSEICompModelValueComp0.values[numModelCtr] : 0);
+          numModelCtr++;
+        }
+      }
+    }
+    if (m_fgcSEICompModelPresent[1])
+    {
+      numModelCtr = 0;
+      for (UChar i = 0; i <= m_fgcSEINumIntensityIntervalMinus1[1]; i++)
+      {
+        m_fgcSEIIntensityIntervalLowerBound[1][i] = UChar((cfg_FgcSEIIntensityIntervalLowerBoundComp1.values.size() > i) ? cfg_FgcSEIIntensityIntervalLowerBoundComp1.values[i] : 0);
+        m_fgcSEIIntensityIntervalUpperBound[1][i] = UChar((cfg_FgcSEIIntensityIntervalUpperBoundComp1.values.size() > i) ? cfg_FgcSEIIntensityIntervalUpperBoundComp1.values[i] : 0);
+        for (UChar j = 0; j <= m_fgcSEINumModelValuesMinus1[1]; j++)
+        {
+          m_fgcSEICompModelValue[1][i][j] = UInt((cfg_FgcSEICompModelValueComp1.values.size() > numModelCtr) ? cfg_FgcSEICompModelValueComp1.values[numModelCtr] : 0);
+          numModelCtr++;
+        }
+      }
+    }
+    if (m_fgcSEICompModelPresent[2])
+    {
+      numModelCtr = 0;
+      for (UChar i = 0; i <= m_fgcSEINumIntensityIntervalMinus1[2]; i++)
+      {
+        m_fgcSEIIntensityIntervalLowerBound[2][i] = UChar((cfg_FgcSEIIntensityIntervalLowerBoundComp2.values.size() > i) ? cfg_FgcSEIIntensityIntervalLowerBoundComp2.values[i] : 0);
+        m_fgcSEIIntensityIntervalUpperBound[2][i] = UChar((cfg_FgcSEIIntensityIntervalUpperBoundComp2.values.size() > i) ? cfg_FgcSEIIntensityIntervalUpperBoundComp2.values[i] : 0);
+        for (UChar j = 0; j <= m_fgcSEINumModelValuesMinus1[2]; j++)
+        {
+          m_fgcSEICompModelValue[2][i][j] = UInt((cfg_FgcSEICompModelValueComp2.values.size() > numModelCtr) ? cfg_FgcSEICompModelValueComp2.values[numModelCtr] : 0);
+          numModelCtr++;
+        }
+      }
+    }
+  }
+#endif
   // check validity of input parameters
   xCheckParameter();
 

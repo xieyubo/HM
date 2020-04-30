@@ -246,6 +246,10 @@ static const Int MAX_ENCODER_DEBLOCKING_QUALITY_LAYERS =           8 ;
 
 static const UInt LUMA_LEVEL_TO_DQP_LUT_MAXSIZE =                1024; ///< max LUT size for QP offset based on luma
 
+#if FGS_RDD5_ENABLE
+static const Int MAX_NUM_INTENSITIES =                            256; // Maximum nuber of intensity intervals supported in FGC SEI
+static const Int MAX_NUM_MODEL_VALUES =                             6; // Maximum nuber of model values supported in FGC SEI 
+#endif
 // ====================================================================================================================
 // Macro functions
 // ====================================================================================================================

@@ -447,6 +447,13 @@ protected:
   UChar     m_fgcSEIBlendingModeID;
   UChar     m_fgcSEILog2ScaleFactor;
   Bool      m_fgcSEICompModelPresent[MAX_NUM_COMPONENT];
+#if FGS_RDD5_ENABLE
+  UChar     m_fgcSEINumIntensityIntervalMinus1[MAX_NUM_COMPONENT];
+  UChar     m_fgcSEINumModelValuesMinus1[MAX_NUM_COMPONENT];
+  UChar     m_fgcSEIIntensityIntervalLowerBound[MAX_NUM_COMPONENT][MAX_NUM_INTENSITIES];
+  UChar     m_fgcSEIIntensityIntervalUpperBound[MAX_NUM_COMPONENT][MAX_NUM_INTENSITIES];
+  UInt      m_fgcSEICompModelValue[MAX_NUM_COMPONENT][MAX_NUM_INTENSITIES][MAX_NUM_MODEL_VALUES];
+#endif
   // content light level SEI
   Bool      m_cllSEIEnabled;
   UShort    m_cllSEIMaxContentLevel;
@@ -1017,6 +1024,18 @@ public:
   UChar getFilmGrainCharactersticsSEILog2ScaleFactor()               { return m_fgcSEILog2ScaleFactor; }
   Void  setFGCSEICompModelPresent(Bool b, Int index)                 { m_fgcSEICompModelPresent[index] = b; }
   Bool  getFGCSEICompModelPresent(Int index)                         { return m_fgcSEICompModelPresent[index]; }
+#if FGS_RDD5_ENABLE
+  void    setFGCSEINumIntensityIntervalMinus1(UChar v, Int index) { m_fgcSEINumIntensityIntervalMinus1[index] = v; }
+  UChar   getFGCSEINumIntensityIntervalMinus1(Int index) { return m_fgcSEINumIntensityIntervalMinus1[index]; }
+  void    setFGCSEINumModelValuesMinus1(UChar v, Int index) { m_fgcSEINumModelValuesMinus1[index] = v; }
+  UChar   getFGCSEINumModelValuesMinus1(Int index) { return m_fgcSEINumModelValuesMinus1[index]; }
+  void    setFGCSEIIntensityIntervalLowerBound(UChar v, Int index, Int ctr) { m_fgcSEIIntensityIntervalLowerBound[index][ctr] = v; }
+  UChar   getFGCSEIIntensityIntervalLowerBound(Int index, Int ctr) { return m_fgcSEIIntensityIntervalLowerBound[index][ctr]; }
+  void    setFGCSEIIntensityIntervalUpperBound(UChar v, Int index, Int ctr) { m_fgcSEIIntensityIntervalUpperBound[index][ctr] = v; }
+  UChar   getFGCSEIIntensityIntervalUpperBound(Int index, Int ctr) { return m_fgcSEIIntensityIntervalUpperBound[index][ctr]; }
+  void    setFGCSEICompModelValue(UInt v, Int index, Int ctr, Int modelCtr) { m_fgcSEICompModelValue[index][ctr][modelCtr] = v; }
+  UInt    getFGCSEICompModelValue(Int index, Int ctr, Int modelCtr) { return m_fgcSEICompModelValue[index][ctr][modelCtr]; }
+#endif
   // cll SEI
   Void  setCLLSEIEnabled(Bool b)                                     { m_cllSEIEnabled = b; }
   Bool  getCLLSEIEnabled()                                           { return m_cllSEIEnabled; }
