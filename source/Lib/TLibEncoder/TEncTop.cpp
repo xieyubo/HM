@@ -342,6 +342,14 @@ Void TEncTop::encode( Bool flush, TComPicYuv* pcPicYuvOrg, TComPicYuv* pcPicYuvT
     pcPicYuvOrg->copyToPic( pcPicCurr->getPicYuvOrg() );
     pcPicYuvTrueOrg->copyToPic( pcPicCurr->getPicYuvTrueOrg() );
 
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+    if ( getShutterFilterFlag() )
+    {
+      pcPicCurr->xOutputPreFilteredPic(pcPicCurr, &m_cListPic);
+      pcPicCurr->getPicYuvOrg()->copyToPic(pcPicYuvOrg);
+    }
+#endif
+
     // compute image characteristics
     if ( getUseAdaptiveQP() )
     {

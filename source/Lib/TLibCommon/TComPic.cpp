@@ -98,6 +98,9 @@ Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirt
   {
 #endif
     m_apcPicYuv[PIC_YUV_REC]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_REC]->create( iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true );
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+    m_apcPicYuv[PIC_YUV_POST_REC]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_POST_REC]->create( iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true );
+#endif
 #if REDUCED_ENCODER_MEMORY
   }
 #endif
@@ -150,6 +153,24 @@ Void TComPic::prepareForReconstruction()
   // mark it should be extended
   m_apcPicYuv[PIC_YUV_REC]->setBorderExtension(false);
 
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  if (m_apcPicYuv[PIC_YUV_POST_REC] == NULL)
+  {
+    const TComSPS &sps = m_picSym.getSPS();
+    const ChromaFormat chromaFormatIDC = sps.getChromaFormatIdc();
+    const Int          iWidth = sps.getPicWidthInLumaSamples();
+    const Int          iHeight = sps.getPicHeightInLumaSamples();
+    const UInt         uiMaxCuWidth = sps.getMaxCUWidth();
+    const UInt         uiMaxCuHeight = sps.getMaxCUHeight();
+    const UInt         uiMaxDepth = sps.getMaxTotalCUDepth();
+
+    m_apcPicYuv[PIC_YUV_POST_REC] = new TComPicYuv;  m_apcPicYuv[PIC_YUV_POST_REC]->create(iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true);
+  }
+
+  // mark it should be extended
+  m_apcPicYuv[PIC_YUV_POST_REC]->setBorderExtension(false);
+#endif
+
   m_picSym.prepareForReconstruction();
 }
 
@@ -176,6 +197,14 @@ Void TComPic::releaseEncoderSourceImageData()
 
 Void TComPic::releaseAllReconstructionData()
 {
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  if (m_apcPicYuv[PIC_YUV_POST_REC])
+  {
+    m_apcPicYuv[PIC_YUV_POST_REC]->destroy();
+    delete m_apcPicYuv[PIC_YUV_POST_REC];
+    m_apcPicYuv[PIC_YUV_POST_REC] = NULL;
+  }
+#endif
   if (m_apcPicYuv[PIC_YUV_REC    ])
   {
     m_apcPicYuv[PIC_YUV_REC]->destroy();
@@ -257,5 +286,103 @@ UInt TComPic::getSubstreamForCtuAddr(const UInt ctuAddr, const Bool bAddressInRa
   return subStrm;
 }
 
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+TComPic*  TComPic::findPrevPicPOC(TComPic* pcPic, TComList<TComPic*>* pcListPic)
+{
+  TComPic*  prevPic = NULL;
+  TComPic*  listPic = NULL;
+  TComList<TComPic*>::iterator  iterListPic = pcListPic->begin();
+  for (Int i = 0; i < (Int)(pcListPic->size()); i++)
+  {
+    listPic = *(iterListPic);
+    listPic->setCurrSliceIdx(0);
+    if (listPic->getPOC() == pcPic->getPOC() - 1)
+    {
+      prevPic = *(iterListPic);
+      prevPic->setCurrSliceIdx(0);
+    }
+    iterListPic++;
+  }
+  return prevPic;
+}
+Void TComPic::xOutputPostFilteredPic(TComPic* pcPic, TComList<TComPic*>* pcListPic)
+{
+  if (pcPic->getPOC() % 2 == 0)
+  {
+    TComPic* prevPic = findPrevPicPOC(pcPic, pcListPic);
+    if (prevPic)
+    {
+      TComPicYuv* currYuv = pcPic->getPicYuvRec();
+      TComPicYuv* prevYuv = prevPic->getPicYuvRec();
+      TComPicYuv* postYuv = pcPic->getPicYuvPostRec();
+      for (Int chan = 0; chan < currYuv->getNumberValidComponents(); chan++)
+      {
+        const ComponentID ch = ComponentID(chan);
+        const ChannelType cType = (ch == COMPONENT_Y) ? CHANNEL_TYPE_LUMA : CHANNEL_TYPE_CHROMA;
+        const Int bitDepth = pcPic->getSlice(0)->getSPS()->getBitDepth(cType);
+        const Int maxOutputValue = (1 << bitDepth) - 1;
 
+        Pel*  currPxl = currYuv->getAddr(ch);
+        Pel*  prevPxl = prevYuv->getAddr(ch);
+        Pel*  postPxl = postYuv->getAddr(ch);
+        Int iStride = currYuv->getStride(ch);
+        Int iHeight = currYuv->getHeight(ch);
+        Int iWidth = currYuv->getWidth(ch);
+        for (Int y = 0; y < iHeight; y++)
+        {
+          for (Int x = 0; x < iWidth; x++)
+          {
+            postPxl[x] = std::min(maxOutputValue, std::max(0, (currPxl[x] << 1) - prevPxl[x]));
+          }
+          currPxl += iStride;
+          prevPxl += iStride;
+          postPxl += iStride;
+        }
+      }
+    }
+    else
+    {
+      pcPic->getPicYuvRec()->copyToPic(pcPic->getPicYuvPostRec());
+    }
+  }
+  else
+  {
+    pcPic->getPicYuvRec()->copyToPic(pcPic->getPicYuvPostRec());
+  }
+}
+Void TComPic::xOutputPreFilteredPic(TComPic* pcPic, TComList<TComPic*>* pcListPic)
+{
+  if (pcPic->getPOC() % 2 == 0)
+  {
+    TComPic* prevPic = findPrevPicPOC(pcPic, pcListPic);
+    if (prevPic)
+    {
+      TComPicYuv* currYuv = pcPic->getPicYuvOrg();
+      TComPicYuv* prevYuv = prevPic->getPicYuvOrg();
+      for (Int chan = 0; chan < currYuv->getNumberValidComponents(); chan++)
+      {
+        const ComponentID ch = ComponentID(chan);
+        const ChannelType cType = (ch == COMPONENT_Y) ? CHANNEL_TYPE_LUMA : CHANNEL_TYPE_CHROMA;
+        const Int bitDepth = pcPic->getSlice(0)->getSPS()->getBitDepth(cType);
+        const Int maxOutputValue = (1 << bitDepth) - 1;
+
+        Pel*  currPxl = currYuv->getAddr(ch);
+        Pel*  prevPxl = prevYuv->getAddr(ch);
+        Int iStride = currYuv->getStride(ch);
+        Int iHeight = currYuv->getHeight(ch);
+        Int iWidth = currYuv->getWidth(ch);
+        for (Int y = 0; y < iHeight; y++)
+        {
+          for (Int x = 0; x < iWidth; x++)
+          {
+            currPxl[x] = std::min( maxOutputValue, std::max( 0, (currPxl[x] + prevPxl[x]) >> 1) );
+          }
+          currPxl += iStride;
+          prevPxl += iStride;
+        }
+      }
+    }
+  }
+}
+#endif
 //! \}

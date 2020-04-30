@@ -112,6 +112,10 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setXPSNRWeight                                     ( m_dXPSNRWeight[id], ComponentID(id));
   }
 
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  m_cTEncTop.setShutterFilterFlag                                 ( m_ShutterFilterEnable );
+#endif
+
   m_cTEncTop.setCabacZeroWordPaddingEnabled                       ( m_cabacZeroWordPaddingEnabled );
 
   m_cTEncTop.setFrameRate                                         ( m_iFrameRate );
@@ -545,6 +549,12 @@ Void TAppEncTop::xCreateLib()
   {
     m_cTVideoIOYuvReconFile.open(m_reconFileName, true, m_outputBitDepth, m_outputBitDepth, m_internalBitDepth);  // write mode
   }
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  if (m_ShutterFilterEnable && !m_preFilterVideoFileName.empty())
+  {
+    m_cTVideoIOYuvPreFile.open(m_preFilterVideoFileName, true, m_outputBitDepth, m_outputBitDepth, m_internalBitDepth);  // write mode
+  }
+#endif
 
   // Neo Decoder
   m_cTEncTop.create();
@@ -555,6 +565,12 @@ Void TAppEncTop::xDestroyLib()
   // Video I/O
   m_cTVideoIOYuvInputFile.close();
   m_cTVideoIOYuvReconFile.close();
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  if (m_ShutterFilterEnable && !m_preFilterVideoFileName.empty())
+  {
+    m_cTVideoIOYuvPreFile.close();
+  }
+#endif
 
   // Neo Decoder
   m_cTEncTop.destroy();
@@ -678,6 +694,14 @@ Void TAppEncTop::encode()
     {
       m_cTEncTop.encode( bEos, flush ? 0 : pcPicYuvOrg, flush ? 0 : &cPicYuvTrueOrg, ipCSC, snrCSC, m_cListPicYuvRec, outputAccessUnits, iNumEncoded );
     }
+
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+    if (m_ShutterFilterEnable && !m_preFilterVideoFileName.empty())
+    {
+      m_cTVideoIOYuvPreFile.write(pcPicYuvOrg, ipCSC, m_confWinLeft, m_confWinRight, m_confWinTop, m_confWinBottom,
+        NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range);
+    }
+#endif
 
     // write bistream to file if necessary
     if ( iNumEncoded > 0 )

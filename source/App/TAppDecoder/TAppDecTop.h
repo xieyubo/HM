@@ -62,6 +62,10 @@ private:
   // class interface
   TDecTop                         m_cTDecTop;                     ///< decoder class
   TVideoIOYuv                     m_cTVideoIOYuvReconFile;        ///< reconstruction YUV class
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  bool                            m_ShutterFilterEnable;          ///< enable Post-processing with Shutter Interval SEI
+  TVideoIOYuv                     m_cTVideoIOYuvPostFile;         ///< post-filtered YUV class
+#endif
 
   // for output control
   Int                             m_iPOCLastDisplay;              ///< last POC in display order
@@ -81,6 +85,11 @@ public:
   Void  destroy           (); ///< destroy internal members
   Void  decode            (); ///< main decoding function
   UInt  getNumberOfChecksumErrorsDetected() const { return m_cTDecTop.getNumberOfChecksumErrorsDetected(); }
+
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  Bool  getShutterFilterFlag()        const { return m_ShutterFilterEnable; }
+  Void  setShutterFilterFlag(Bool value)    { m_ShutterFilterEnable = value; }
+#endif
 
 protected:
   Void  xCreateDecLib     (); ///< create internal classes

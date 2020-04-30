@@ -61,6 +61,9 @@ private:
   TEncTop                    m_cTEncTop;                    ///< encoder class
   TVideoIOYuv                m_cTVideoIOYuvInputFile;       ///< input YUV file
   TVideoIOYuv                m_cTVideoIOYuvReconFile;       ///< output reconstruction file
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  TVideoIOYuv                m_cTVideoIOYuvPreFile;         ///< output pre-filtered file
+#endif
 
   TComList<TComPicYuv*>      m_cListPicYuvRec;              ///< list of reconstruction YUV files
 
