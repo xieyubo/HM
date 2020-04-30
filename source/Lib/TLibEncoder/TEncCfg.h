@@ -147,6 +147,9 @@ protected:
   Bool      m_bXPSNREnableFlag;
   Double    m_dXPSNRWeight[MAX_NUM_COMPONENT];
   Bool      m_cabacZeroWordPaddingEnabled;
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  bool      m_ShutterFilterEnable;                          ///< enable Pre-Filtering with Shutter Interval SEI
+#endif
 
   /* profile & level */
   Profile::Name m_profile;
@@ -576,6 +579,11 @@ public:
 
   Bool      getCabacZeroWordPaddingEnabled()           const { return m_cabacZeroWordPaddingEnabled;  }
   Void      setCabacZeroWordPaddingEnabled(Bool value)       { m_cabacZeroWordPaddingEnabled = value; }
+
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  Bool      getShutterFilterFlag()              const { return m_ShutterFilterEnable; }
+  Void      setShutterFilterFlag(Bool value)    { m_ShutterFilterEnable = value; }
+#endif
 
   //====== Coding Structure ========
   Void      setIntraPeriod                  ( Int   i )      { m_uiIntraPeriod = (UInt)i; }

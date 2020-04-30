@@ -781,6 +781,9 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("InputPathPrefix,-ipp",                            inputPathPrefix,                             string(""), "pathname to prepend to input filename")
   ("BitstreamFile,b",                                 m_bitstreamFileName,                         string(""), "Bitstream output file name")
   ("ReconFile,o",                                     m_reconFileName,                             string(""), "Reconstructed YUV output file name")
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  ("SEIPreFilteringFilename,-sii",                    m_preFilterVideoFileName,                    string(""), "File name of Pre-Filtering video. If empty, not output video\n")
+#endif
   ("SourceWidth,-wdt",                                m_iSourceWidth,                                       0, "Source picture width")
   ("SourceHeight,-hgt",                               m_iSourceHeight,                                      0, "Source picture height")
   ("InputBitDepth",                                   m_inputBitDepth[CHANNEL_TYPE_LUMA],                   8, "Bit-depth of input file")
@@ -2002,6 +2005,9 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
       }
     }
   }
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  m_ShutterFilterEnable = false;
+#endif
 #if SHUTTER_INTERVAL_SEI_MESSAGE
   if (m_siiSEIEnabled)
   {
@@ -2022,6 +2028,18 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
       m_siiSEINumUnitsInShutterInterval = cfg_siiSEIInputNumUnitsInSI.values[0];
       assert(m_siiSEINumUnitsInShutterInterval >= 0 && m_siiSEINumUnitsInShutterInterval <= MAX_UINT);
     }
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+    if (arraySize > 1 && m_siiSEISubLayerNumUnitsInSI[0] == 2 * m_siiSEISubLayerNumUnitsInSI[arraySize - 1])
+    {
+      m_ShutterFilterEnable = true;
+      const double shutterAngle = 360.0;
+      double fpsHFR = (double)m_iFrameRate, fpsLFR = (double)m_iFrameRate / 2.0;
+      UInt numUnitsHFR = (UInt)(((double)m_siiSEITimeScale / fpsHFR) * (shutterAngle / 360.0));
+      UInt numUnitsLFR = (UInt)(((double)m_siiSEITimeScale / fpsLFR) * (shutterAngle / 360.0));
+      for (Int i = 0; i < arraySize - 1; i++) m_siiSEISubLayerNumUnitsInSI[i] = numUnitsLFR;
+      m_siiSEISubLayerNumUnitsInSI[arraySize - 1] = numUnitsHFR;
+    }
+#endif
   }
 #endif
   if(m_timeCodeSEIEnabled)
@@ -3084,6 +3102,12 @@ Void TAppEncCfg::xPrintParameter()
   printf("Input          File                    : %s\n", m_inputFileName.c_str()          );
   printf("Bitstream      File                    : %s\n", m_bitstreamFileName.c_str()      );
   printf("Reconstruction File                    : %s\n", m_reconFileName.c_str()          );
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  if (m_ShutterFilterEnable && !m_preFilterVideoFileName.empty())
+  {
+    printf("Pre-Filtering File                     : %s\n", m_preFilterVideoFileName.c_str());
+  }
+#endif
   printf("Real     Format                        : %dx%d %gHz\n", m_iSourceWidth - m_confWinLeft - m_confWinRight, m_iSourceHeight - m_confWinTop - m_confWinBottom, (Double)m_iFrameRate/m_temporalSubsampleRatio );
   printf("Internal Format                        : %dx%d %gHz\n", m_iSourceWidth, m_iSourceHeight, (Double)m_iFrameRate/m_temporalSubsampleRatio );
   printf("Sequence PSNR output                   : %s\n", (m_printMSEBasedSequencePSNR ? "Linear average, MSE-based" : "Linear average only") );
