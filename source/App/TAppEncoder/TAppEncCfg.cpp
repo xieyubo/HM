@@ -729,15 +729,6 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   SMultiValueInput<Int>  cfg_timeCodeSeiTimeOffsetValue      (std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max(), 0, MAX_TIMECODE_SEI_SETS);
 #if FGS_RDD5_ENABLE
   // default values used for FGC SEI parameter parsing
-  //SMultiValueInput<UInt>  cfg_FgcSEIIntensityIntervalLowerBoundComp0(0, 255, 0, 256);
-  //SMultiValueInput<UInt>  cfg_FgcSEIIntensityIntervalLowerBoundComp1(0, 255, 0, 256);
-  //SMultiValueInput<UInt>  cfg_FgcSEIIntensityIntervalLowerBoundComp2(0, 255, 0, 256);
-  //SMultiValueInput<UInt>  cfg_FgcSEIIntensityIntervalUpperBoundComp0(0, 255, 0, 256);
-  //SMultiValueInput<UInt>  cfg_FgcSEIIntensityIntervalUpperBoundComp1(0, 255, 0, 256);
-  //SMultiValueInput<UInt>  cfg_FgcSEIIntensityIntervalUpperBoundComp2(0, 255, 0, 256);
-  //SMultiValueInput<UInt>  cfg_FgcSEICompModelValueComp0(0, 65535, 0, 256 * 6);
-  //SMultiValueInput<UInt>  cfg_FgcSEICompModelValueComp1(0, 65535, 0, 256 * 6);
-  //SMultiValueInput<UInt>  cfg_FgcSEICompModelValueComp2(0, 65535, 0, 256 * 6);
   SMultiValueInput<UInt>  cfg_FgcSEIIntensityIntervalLowerBoundComp[3]={SMultiValueInput<UInt> (0, 255, 0, 256), SMultiValueInput<UInt> (0, 255, 0, 256), SMultiValueInput<UInt> (0, 255, 0, 256)};
   SMultiValueInput<UInt>  cfg_FgcSEIIntensityIntervalUpperBoundComp[3]={SMultiValueInput<UInt> (0, 255, 0, 256), SMultiValueInput<UInt> (0, 255, 0, 256), SMultiValueInput<UInt> (0, 255, 0, 256)};
   SMultiValueInput<UInt>  cfg_FgcSEICompModelValueComp[3]={SMultiValueInput<UInt> (0, 65535, 0, 256 * 6), SMultiValueInput<UInt> (0, 65535, 0, 256 * 6), SMultiValueInput<UInt> (0, 65535, 0, 256 * 6)};
