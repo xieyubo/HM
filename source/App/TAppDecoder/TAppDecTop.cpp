@@ -70,7 +70,7 @@ Void TAppDecTop::destroy()
   m_bitstreamFileName.clear();
   m_reconFileName.clear();
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-  m_postFilterVideoFileName.clear();
+  m_shutterIntervalPostFileName.clear();
 #endif
 }
 
@@ -252,7 +252,7 @@ Void TAppDecTop::decode()
           setShutterFilterFlag(numUnitsLFR == 2 * numUnitsHFR);
         }
       }
-      if ((!m_postFilterVideoFileName.empty()) && (!openedPostFile) && getShutterFilterFlag())
+      if ((!m_shutterIntervalPostFileName.empty()) && (!openedPostFile) && getShutterFilterFlag())
       {
         const BitDepths &bitDepths = pcListPic->front()->getPicSym()->getSPS().getBitDepths(); // use bit depths of first reconstructed picture.
         for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
@@ -263,14 +263,14 @@ Void TAppDecTop::decode()
           }
         }
 
-        std::ofstream ofile(m_postFilterVideoFileName.c_str());
+        std::ofstream ofile(m_shutterIntervalPostFileName.c_str());
         if (!ofile.good() || !ofile.is_open())
         {
-          fprintf(stderr, "\nUnable to open file '%s' for writing shutter-interval-SEI video\n", m_postFilterVideoFileName.c_str());
+          fprintf(stderr, "\nUnable to open file '%s' for writing shutter-interval-SEI video\n", m_shutterIntervalPostFileName.c_str());
           exit(EXIT_FAILURE);
         }
 
-        m_cTVideoIOYuvPostFile.open(m_postFilterVideoFileName, true, m_outputBitDepth, m_outputBitDepth, bitDepths.recon); // write mode
+        m_cTVideoIOYuvSIIPostFile.open(m_shutterIntervalPostFileName, true, m_outputBitDepth, m_outputBitDepth, bitDepths.recon); // write mode
         openedPostFile = true;
       }
 #endif
@@ -331,9 +331,9 @@ Void TAppDecTop::xDestroyDecLib()
     m_cTVideoIOYuvReconFile.close();
   }
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-  if (!m_postFilterVideoFileName.empty() && getShutterFilterFlag())
+  if (!m_shutterIntervalPostFileName.empty() && getShutterFilterFlag())
   {
-    m_cTVideoIOYuvPostFile.close();
+    m_cTVideoIOYuvSIIPostFile.close();
   }
 #endif
 
@@ -538,14 +538,14 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
         }
 
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-        if (!m_postFilterVideoFileName.empty() && getShutterFilterFlag())
+        if (!m_shutterIntervalPostFileName.empty() && getShutterFilterFlag())
         {
           pcPic->xOutputPostFilteredPic(pcPic, pcListPic);
 
           const Window &conf = pcPic->getConformanceWindow();
           const Window  defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
 
-          m_cTVideoIOYuvPostFile.write( pcPic->getPicYuvPostRec(),
+          m_cTVideoIOYuvSIIPostFile.write( pcPic->getPicYuvPostRec(),
                                         m_outputColourSpaceConvert,
                                         conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
                                         conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
@@ -674,14 +674,14 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
         }
 
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-        if (!m_postFilterVideoFileName.empty() && getShutterFilterFlag())
+        if (!m_shutterIntervalPostFileName.empty() && getShutterFilterFlag())
         {
           pcPic->xOutputPostFilteredPic(pcPic, pcListPic);
 
           const Window &conf = pcPic->getConformanceWindow();
           const Window  defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
 
-          m_cTVideoIOYuvPostFile.write( pcPic->getPicYuvPostRec(),
+          m_cTVideoIOYuvSIIPostFile.write( pcPic->getPicYuvPostRec(),
                                         m_outputColourSpaceConvert,
                                         conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
                                         conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),

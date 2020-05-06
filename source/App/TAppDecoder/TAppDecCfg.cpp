@@ -87,7 +87,7 @@ Bool TAppDecCfg::parseCfg( Int argc, TChar* argv[] )
   ("RespectDefDispWindow,w",    m_respectDefDispWindow,                0,          "Only output content inside the default display window\n")
   ("SEIColourRemappingInfoFilename",  m_colourRemapSEIFileName,        string(""), "Colour Remapping YUV output file name. If empty, no remapping is applied (ignore SEI message)\n")
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-  ("SEIPostFilteringFilename,-sii",   m_postFilterVideoFileName,        string(""), "Post Filtering with Shutter Interval SEI. If empty, no filtering is applied (ignore SEI message)\n")
+  ("SEIShutterIntervalPostFilename,-sii", m_shutterIntervalPostFileName,  string(""), "Post Filtering with Shutter Interval SEI. If empty, no filtering is applied (ignore SEI message)\n")
 #endif
   ("SEIAnnotatedRegionsInfoFilename",  m_annotatedRegionsSEIFileName,   string(""), "Annotated regions output file name. If empty, no object information will be saved (ignore SEI message)\n")
 #if O0043_BEST_EFFORT_DECODING
