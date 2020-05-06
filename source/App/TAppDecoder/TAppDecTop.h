@@ -63,8 +63,8 @@ private:
   TDecTop                         m_cTDecTop;                     ///< decoder class
   TVideoIOYuv                     m_cTVideoIOYuvReconFile;        ///< reconstruction YUV class
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-  bool                            m_ShutterFilterEnable;          ///< enable Post-processing with Shutter Interval SEI
-  TVideoIOYuv                     m_cTVideoIOYuvPostFile;         ///< post-filtered YUV class
+  Bool                            m_ShutterFilterEnable;          ///< enable Post-processing with Shutter Interval SEI
+  TVideoIOYuv                     m_cTVideoIOYuvSIIPostFile;      ///< post-filtered YUV class
 #endif
 
   // for output control

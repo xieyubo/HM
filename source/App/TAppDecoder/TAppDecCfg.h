@@ -67,7 +67,7 @@ protected:
   Bool          m_decodedNoDisplaySEIEnabled;         ///< Enable(true)/disable(false) writing only pictures that get displayed based on the no display SEI message
   std::string   m_colourRemapSEIFileName;             ///< output Colour Remapping file name
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-  std::string   m_postFilterVideoFileName;            ///< output Post Filtering file name
+  std::string   m_shutterIntervalPostFileName;        ///< output Post Filtering file name
 #endif
   std::string   m_annotatedRegionsSEIFileName;        ///< annotated regions file name
   std::vector<Int> m_targetDecLayerIdSet;             ///< set of LayerIds to be included in the sub-bitstream extraction process.
@@ -93,7 +93,7 @@ public:
   , m_decodedNoDisplaySEIEnabled(false)
   , m_colourRemapSEIFileName()
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-  , m_postFilterVideoFileName()
+  , m_shutterIntervalPostFileName()
 #endif
   , m_annotatedRegionsSEIFileName()
   , m_targetDecLayerIdSet()

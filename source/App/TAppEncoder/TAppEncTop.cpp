@@ -550,9 +550,9 @@ Void TAppEncTop::xCreateLib()
     m_cTVideoIOYuvReconFile.open(m_reconFileName, true, m_outputBitDepth, m_outputBitDepth, m_internalBitDepth);  // write mode
   }
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-  if (m_ShutterFilterEnable && !m_preFilterVideoFileName.empty())
+  if (m_ShutterFilterEnable && !m_shutterIntervalPreFileName.empty())
   {
-    m_cTVideoIOYuvPreFile.open(m_preFilterVideoFileName, true, m_outputBitDepth, m_outputBitDepth, m_internalBitDepth);  // write mode
+    m_cTVideoIOYuvSIIPreFile.open(m_shutterIntervalPreFileName, true, m_outputBitDepth, m_outputBitDepth, m_internalBitDepth);  // write mode
   }
 #endif
 
@@ -566,9 +566,9 @@ Void TAppEncTop::xDestroyLib()
   m_cTVideoIOYuvInputFile.close();
   m_cTVideoIOYuvReconFile.close();
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-  if (m_ShutterFilterEnable && !m_preFilterVideoFileName.empty())
+  if (m_ShutterFilterEnable && !m_shutterIntervalPreFileName.empty())
   {
-    m_cTVideoIOYuvPreFile.close();
+    m_cTVideoIOYuvSIIPreFile.close();
   }
 #endif
 
@@ -696,9 +696,9 @@ Void TAppEncTop::encode()
     }
 
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-    if (m_ShutterFilterEnable && !m_preFilterVideoFileName.empty())
+    if (m_ShutterFilterEnable && !m_shutterIntervalPreFileName.empty())
     {
-      m_cTVideoIOYuvPreFile.write(pcPicYuvOrg, ipCSC, m_confWinLeft, m_confWinRight, m_confWinTop, m_confWinBottom,
+      m_cTVideoIOYuvSIIPreFile.write(pcPicYuvOrg, ipCSC, m_confWinLeft, m_confWinRight, m_confWinTop, m_confWinBottom,
         NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range);
     }
 #endif
