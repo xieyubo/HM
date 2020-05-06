@@ -2073,16 +2073,16 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   if (m_fgcSEIEnabled)
   {
     UInt numModelCtr;
-    for (int c = 0; c <= 2; c++ )
+    for (UInt c = 0; c <= 2; c++ )
     {
       if (m_fgcSEICompModelPresent[c])
       {
         numModelCtr = 0;
-        for (int i = 0; i <= m_fgcSEINumIntensityIntervalMinus1[c]; i++)
+        for (UInt i = 0; i <= m_fgcSEINumIntensityIntervalMinus1[c]; i++)
         {
           m_fgcSEIIntensityIntervalLowerBound[c][i] = UChar((cfg_FgcSEIIntensityIntervalLowerBoundComp[c].values.size() > i) ? cfg_FgcSEIIntensityIntervalLowerBoundComp[c].values[i] : 0);
           m_fgcSEIIntensityIntervalUpperBound[c][i] = UChar((cfg_FgcSEIIntensityIntervalUpperBoundComp[c].values.size() > i) ? cfg_FgcSEIIntensityIntervalUpperBoundComp[c].values[i] : 0);
-          for (int j = 0; j <= m_fgcSEINumModelValuesMinus1[c]; j++)
+          for (UInt j = 0; j <= m_fgcSEINumModelValuesMinus1[c]; j++)
           {
             m_fgcSEICompModelValue[c][i][j] = UInt((cfg_FgcSEICompModelValueComp[c].values.size() > numModelCtr) ? cfg_FgcSEICompModelValueComp[c].values[numModelCtr] : 0);
             numModelCtr++;

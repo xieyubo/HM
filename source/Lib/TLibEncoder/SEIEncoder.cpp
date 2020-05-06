@@ -595,12 +595,12 @@ Void SEIEncoder::initSEIFilmGrainCharacteristics(SEIFilmGrainCharacteristics *se
     {
       seiFilmGrain->m_compModel[i].numModelValues = 1 + m_pcCfg->getFGCSEINumModelValuesMinus1(i);
       seiFilmGrain->m_compModel[i].intensityValues.resize(1 + m_pcCfg->getFGCSEINumIntensityIntervalMinus1(i));
-      for (int j = 0; j <= m_pcCfg->getFGCSEINumIntensityIntervalMinus1(i); j++)
+      for (UInt j = 0; j <= m_pcCfg->getFGCSEINumIntensityIntervalMinus1(i); j++)
       {
         seiFilmGrain->m_compModel[i].intensityValues[j].intensityIntervalLowerBound = m_pcCfg->getFGCSEIIntensityIntervalLowerBound(i, j);
         seiFilmGrain->m_compModel[i].intensityValues[j].intensityIntervalUpperBound = m_pcCfg->getFGCSEIIntensityIntervalUpperBound(i, j);
         seiFilmGrain->m_compModel[i].intensityValues[j].compModelValue.resize(seiFilmGrain->m_compModel[i].numModelValues);
-        for (int k = 0; k < seiFilmGrain->m_compModel[i].numModelValues; k++)
+        for (UInt k = 0; k < seiFilmGrain->m_compModel[i].numModelValues; k++)
         {
           seiFilmGrain->m_compModel[i].intensityValues[j].compModelValue[k] = m_pcCfg->getFGCSEICompModelValue(i, j, k);
         }

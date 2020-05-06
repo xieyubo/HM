@@ -287,7 +287,7 @@ void TComPic::createGrainSynthesizer(Bool bFirstPictureInSequence, SEIFilmGrainS
 
 TComPicYuv* TComPic::getPicYuvDisp()
 {
-    int payloadType = 0;
+    Int payloadType = 0;
     std::list<SEI*>::iterator message;
 
     m_grainCharacteristic->m_errorCode = -1;

@@ -123,7 +123,7 @@ public:
   TComPicYuv*   getPicYuvRec()        { return  m_apcPicYuv[PIC_YUV_REC]; }
 
 #if FGS_RDD5_ENABLE
-  void createGrainSynthesizer(bool bFirstPictureInSequence, SEIFilmGrainSynthesizer* pGrainCharacteristics, TComPicYuv* pGrainBuf, const TComSPS* sps);
+  Void createGrainSynthesizer(Bool bFirstPictureInSequence, SEIFilmGrainSynthesizer* pGrainCharacteristics, TComPicYuv* pGrainBuf, const TComSPS* sps);
   SEIFilmGrainSynthesizer *m_grainCharacteristic;
   TComPicYuv              *m_grainBuf;
   TComPicYuv*        getPicYuvDisp();

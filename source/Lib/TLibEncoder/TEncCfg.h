@@ -1025,15 +1025,15 @@ public:
   Void  setFGCSEICompModelPresent(Bool b, Int index)                 { m_fgcSEICompModelPresent[index] = b; }
   Bool  getFGCSEICompModelPresent(Int index)                         { return m_fgcSEICompModelPresent[index]; }
 #if FGS_RDD5_ENABLE
-  void    setFGCSEINumIntensityIntervalMinus1(UChar v, Int index) { m_fgcSEINumIntensityIntervalMinus1[index] = v; }
+  Void    setFGCSEINumIntensityIntervalMinus1(UChar v, Int index) { m_fgcSEINumIntensityIntervalMinus1[index] = v; }
   UChar   getFGCSEINumIntensityIntervalMinus1(Int index) { return m_fgcSEINumIntensityIntervalMinus1[index]; }
-  void    setFGCSEINumModelValuesMinus1(UChar v, Int index) { m_fgcSEINumModelValuesMinus1[index] = v; }
+  Void    setFGCSEINumModelValuesMinus1(UChar v, Int index) { m_fgcSEINumModelValuesMinus1[index] = v; }
   UChar   getFGCSEINumModelValuesMinus1(Int index) { return m_fgcSEINumModelValuesMinus1[index]; }
-  void    setFGCSEIIntensityIntervalLowerBound(UChar v, Int index, Int ctr) { m_fgcSEIIntensityIntervalLowerBound[index][ctr] = v; }
+  Void    setFGCSEIIntensityIntervalLowerBound(UChar v, Int index, Int ctr) { m_fgcSEIIntensityIntervalLowerBound[index][ctr] = v; }
   UChar   getFGCSEIIntensityIntervalLowerBound(Int index, Int ctr) { return m_fgcSEIIntensityIntervalLowerBound[index][ctr]; }
-  void    setFGCSEIIntensityIntervalUpperBound(UChar v, Int index, Int ctr) { m_fgcSEIIntensityIntervalUpperBound[index][ctr] = v; }
+  Void    setFGCSEIIntensityIntervalUpperBound(UChar v, Int index, Int ctr) { m_fgcSEIIntensityIntervalUpperBound[index][ctr] = v; }
   UChar   getFGCSEIIntensityIntervalUpperBound(Int index, Int ctr) { return m_fgcSEIIntensityIntervalUpperBound[index][ctr]; }
-  void    setFGCSEICompModelValue(UInt v, Int index, Int ctr, Int modelCtr) { m_fgcSEICompModelValue[index][ctr][modelCtr] = v; }
+  Void    setFGCSEICompModelValue(UInt v, Int index, Int ctr, Int modelCtr) { m_fgcSEICompModelValue[index][ctr][modelCtr] = v; }
   UInt    getFGCSEICompModelValue(Int index, Int ctr, Int modelCtr) { return m_fgcSEICompModelValue[index][ctr][modelCtr]; }
 #endif
   // cll SEI
