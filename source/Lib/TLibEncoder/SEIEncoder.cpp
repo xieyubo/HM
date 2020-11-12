@@ -1377,6 +1377,31 @@ Void SEIEncoder::readAnnotatedRegionSEI(std::istream &fic, SEIAnnotatedRegions *
               readTokenValueAndValidate<UInt>(ar.objectConfidence, failed, fic, "SEIArObjDetConf[c]", UInt(0), UInt(1<<seiAnnoRegion->m_hdr.m_objectConfidenceLength)-1);
             }
           }
+#if JVET_T0050_ANNOTATED_REGIONS_SEI
+          //Compare with existing attributes to decide whether it's a static object
+          //First check whether it's an existing object (or) new object
+          auto destIt = m_pcCfg->m_arObjects.find(it->first);
+          //New object
+          if (destIt == m_pcCfg->m_arObjects.end())
+          {
+            //New object arrived, needs to be appended to the map of tracked objects
+            m_pcCfg->m_arObjects[it->first] = ar;
+          }
+          //Existing object
+          else
+          {
+            // Size remains the same
+            if(m_pcCfg->m_arObjects[it->first].boundingBoxWidth == ar.boundingBoxWidth &&
+              m_pcCfg->m_arObjects[it->first].boundingBoxHeight == ar.boundingBoxHeight)
+              {
+                if(m_pcCfg->m_arObjects[it->first].boundingBoxTop == ar.boundingBoxTop &&
+                  m_pcCfg->m_arObjects[it->first].boundingBoxLeft == ar.boundingBoxLeft)
+                  {
+                    ar.boundingBoxValid = 0;
+                  }
+              }
+          }
+#endif
         }
       }
     }
