@@ -233,6 +233,7 @@ Void TEncCu::compressCtu( TComDataCU* pCtu )
   // initialize CU data
   m_ppcBestCU[0]->initCtu( pCtu->getPic(), pCtu->getCtuRsAddr() );
   m_ppcTempCU[0]->initCtu( pCtu->getPic(), pCtu->getCtuRsAddr() );
+  m_bEncodeDQP         = false;
 
   // analysis of CU
   DEBUG_STRING_NEW(sDebug)
