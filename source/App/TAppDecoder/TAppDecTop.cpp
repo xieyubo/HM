@@ -250,11 +250,18 @@ Void TAppDecTop::decode()
           UInt numUnitsLFR = seiShutterIntervalInfo->m_siiSubLayerNumUnitsInSI[0];
           UInt numUnitsHFR = seiShutterIntervalInfo->m_siiSubLayerNumUnitsInSI[arraySize - 1];
           setShutterFilterFlag(numUnitsLFR == 2 * numUnitsHFR);
+		  
+          const TComSPS* activeSPS = &(pcListPic->front()->getPicSym()->getSPS());
+          if (numUnitsLFR == 2 * numUnitsHFR && activeSPS->getMaxTLayers() == 1 && activeSPS->getMaxDecPicBuffering(0) == 1)
+          {
+            fprintf(stderr, "Warning: Shutter Interval SEI message processing is disabled for single TempLayer and single frame in DPB\n");
+            setShutterFilterFlag(false);
+          }
         }
       }
       if ((!m_shutterIntervalPostFileName.empty()) && (!openedPostFile) && getShutterFilterFlag())
       {
-        const BitDepths &bitDepths = pcListPic->front()->getPicSym()->getSPS().getBitDepths(); // use bit depths of first reconstructed picture.
+        const BitDepths &bitDepths = pcListPic->front()->getPicSym()->getSPS().getBitDepths();
         for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
         {
           if (m_outputBitDepth[channelType] == 0)

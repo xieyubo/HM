@@ -148,7 +148,7 @@ protected:
   Double    m_dXPSNRWeight[MAX_NUM_COMPONENT];
   Bool      m_cabacZeroWordPaddingEnabled;
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-  bool      m_ShutterFilterEnable;                          ///< enable Pre-Filtering with Shutter Interval SEI
+  Bool      m_ShutterFilterEnable;                          ///< enable Pre-Filtering with Shutter Interval SEI
 #endif
 
   /* profile & level */

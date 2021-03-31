@@ -2032,12 +2032,16 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
     if (arraySize > 1 && m_siiSEISubLayerNumUnitsInSI[0] == 2 * m_siiSEISubLayerNumUnitsInSI[arraySize - 1])
     {
       m_ShutterFilterEnable = true;
-      const double shutterAngle = 360.0;
-      double fpsHFR = (double)m_iFrameRate, fpsLFR = (double)m_iFrameRate / 2.0;
-      UInt numUnitsHFR = (UInt)(((double)m_siiSEITimeScale / fpsHFR) * (shutterAngle / 360.0));
-      UInt numUnitsLFR = (UInt)(((double)m_siiSEITimeScale / fpsLFR) * (shutterAngle / 360.0));
+      const Double shutterAngle = 360.0;
+      Double fpsHFR = (Double)m_iFrameRate, fpsLFR = (Double)m_iFrameRate / 2.0;
+      UInt numUnitsHFR = (UInt)(((Double)m_siiSEITimeScale / fpsHFR) * (shutterAngle / 360.0));
+      UInt numUnitsLFR = (UInt)(((Double)m_siiSEITimeScale / fpsLFR) * (shutterAngle / 360.0));
       for (Int i = 0; i < arraySize - 1; i++) m_siiSEISubLayerNumUnitsInSI[i] = numUnitsLFR;
       m_siiSEISubLayerNumUnitsInSI[arraySize - 1] = numUnitsHFR;
+    }
+    else
+    {
+      printf("Warning: Input number of units in Sii SEI should be greater than 1 and number of LFR units should be 2 times of number of HFR units\n");
     }
 #endif
   }
@@ -2944,6 +2948,14 @@ Void TAppEncCfg::xCheckParameter()
     printf("Warning: SEITMCTSExtractionInfo is enabled. Enabling segmentation with one slice per tile.");
     m_sliceMode = FIXED_NUMBER_OF_TILES;
     m_sliceArgument = 1;
+  }
+#endif
+
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  if (m_siiSEIEnabled && m_ShutterFilterEnable && m_maxTempLayer == 1 && m_maxDecPicBuffering[0] == 1)
+  {
+    printf("Warning: Shutter Interval SEI message processing is disabled for single TempLayer and single frame in DPB\n");
+    m_ShutterFilterEnable = false;
   }
 #endif
 
