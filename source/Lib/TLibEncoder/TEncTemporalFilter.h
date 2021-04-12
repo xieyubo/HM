@@ -50,7 +50,12 @@ struct MotionVector
 {
   Int x, y;
   Int error;
+#if JVET_V0056
+  Int noise;
+  MotionVector() : x(0), y(0), error(INT_LEAST32_MAX), noise(0) {}
+#else
   MotionVector() : x(0), y(0), error(INT_LEAST32_MAX) {}
+#endif
   void set(Int nx, Int ny, Int ne) { x = nx; y = ny; error = ne; }
 };
 
@@ -129,7 +134,11 @@ private:
   static const Int s_motionVectorFactor;
   static const Int s_padding;
   static const Int s_interpolationFilter[16][8];
+#if JVET_V0056
+  static const Double s_refStrengths[3][4];
+#else
   static const Double s_refStrengths[3][2];
+#endif
 
   // Private member variables
   Int m_FrameSkip;
@@ -156,7 +165,11 @@ private:
       const Array2D<MotionVector> *previous=0, const Int factor = 1, const Bool doubleRes = false) const;
   Void motionEstimation(Array2D<MotionVector> &mvs, const TComPicYuv &orgPic, const TComPicYuv &buffer, const TComPicYuv &origSubsampled2, const TComPicYuv &origSubsampled4) const;
 
+#if JVET_V0056
+  Void bilateralFilter(const TComPicYuv &orgPic, std::deque<TemporalFilterSourcePicInfo> &srcFrameInfo, TComPicYuv &newOrgPic, Double overallStrength) const;
+#else
   Void bilateralFilter(const TComPicYuv &orgPic, const std::deque<TemporalFilterSourcePicInfo> &srcFrameInfo, TComPicYuv &newOrgPic, Double overallStrength) const;
+#endif
   Void applyMotion(const Array2D<MotionVector> &mvs, const TComPicYuv &input, TComPicYuv &output) const;
 }; // END CLASS DEFINITION TEncTemporalFilter
 

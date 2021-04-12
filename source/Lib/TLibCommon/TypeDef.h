@@ -46,6 +46,8 @@
 #include <utility>
 #include <iostream>
 
+#define JVET_V0056 1
+
 //! \ingroup TLibCommon
 //! \{
 
