@@ -590,6 +590,23 @@ Void SEIEncoder::initSEIFilmGrainCharacteristics(SEIFilmGrainCharacteristics *se
   for (int i = 0; i < MAX_NUM_COMPONENT; i++)
   {
     seiFilmGrain->m_compModel[i].bPresentFlag = m_pcCfg->getFGCSEICompModelPresent(i);
+#if FGS_RDD5_ENABLE
+    if (seiFilmGrain->m_compModel[i].bPresentFlag)
+    {
+      seiFilmGrain->m_compModel[i].numModelValues = 1 + m_pcCfg->getFGCSEINumModelValuesMinus1(i);
+      seiFilmGrain->m_compModel[i].intensityValues.resize(1 + m_pcCfg->getFGCSEINumIntensityIntervalMinus1(i));
+      for (UInt j = 0; j <= m_pcCfg->getFGCSEINumIntensityIntervalMinus1(i); j++)
+      {
+        seiFilmGrain->m_compModel[i].intensityValues[j].intensityIntervalLowerBound = m_pcCfg->getFGCSEIIntensityIntervalLowerBound(i, j);
+        seiFilmGrain->m_compModel[i].intensityValues[j].intensityIntervalUpperBound = m_pcCfg->getFGCSEIIntensityIntervalUpperBound(i, j);
+        seiFilmGrain->m_compModel[i].intensityValues[j].compModelValue.resize(seiFilmGrain->m_compModel[i].numModelValues);
+        for (UInt k = 0; k < seiFilmGrain->m_compModel[i].numModelValues; k++)
+        {
+          seiFilmGrain->m_compModel[i].intensityValues[j].compModelValue[k] = m_pcCfg->getFGCSEICompModelValue(i, j, k);
+        }
+      }
+    }
+#endif
   }
 }
 

@@ -91,6 +91,7 @@
 #define SHUTTER_INTERVAL_SEI_MESSAGE                      1  ///< support for shutter interval SEI message 
 #define SEI_ENCODER_CONTROL                               1  ///< add encoder control for the following SEI: film grain characteristics, content light level, ambient viewing environment
 #define DPB_ENCODER_USAGE_CHECK                           1 ///< Adds DPB encoder usage check.
+#define FGS_RDD5_ENABLE                                   1 // SMPTE RDD5 based film grain synthesis enabled
 
 // ====================================================================================================================
 // Tool Switches

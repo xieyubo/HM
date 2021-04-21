@@ -43,6 +43,9 @@
 #include "TComPicSym.h"
 #include "TComPicYuv.h"
 #include "TComBitStream.h"
+#if FGS_RDD5_ENABLE
+#include "SEIFilmGrainSynthesizer.h"
+#endif
 
 //! \ingroup TLibCommon
 //! \{
@@ -118,6 +121,13 @@ public:
 
   TComPicYuv*   getPicYuvOrg()        { return  m_apcPicYuv[PIC_YUV_ORG]; }
   TComPicYuv*   getPicYuvRec()        { return  m_apcPicYuv[PIC_YUV_REC]; }
+
+#if FGS_RDD5_ENABLE
+  Void createGrainSynthesizer(Bool bFirstPictureInSequence, SEIFilmGrainSynthesizer* pGrainCharacteristics, TComPicYuv* pGrainBuf, const TComSPS* sps);
+  SEIFilmGrainSynthesizer *m_grainCharacteristic;
+  TComPicYuv              *m_grainBuf;
+  TComPicYuv*        getPicYuvDisp();
+#endif
 
   TComPicYuv*   getPicYuvPred()       { return  m_pcPicYuvPred; }
   TComPicYuv*   getPicYuvResi()       { return  m_pcPicYuvResi; }

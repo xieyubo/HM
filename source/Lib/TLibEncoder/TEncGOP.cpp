@@ -499,13 +499,15 @@ Void TEncGOP::xCreateIRAPLeadingSEIMessages (SEIMessages& seiMessages, const TCo
 #endif
 
 #if SEI_ENCODER_CONTROL
-// film grain
+#if !FGS_RDD5_ENABLE
+  // film grain
   if (m_pcCfg->getFilmGrainCharactersticsSEIEnabled())
   {
     SEIFilmGrainCharacteristics *seiFGC = new SEIFilmGrainCharacteristics;
     m_seiEncoder.initSEIFilmGrainCharacteristics(seiFGC);
     seiMessages.push_back(seiFGC);
   }
+#endif
 // content light level
   if (m_pcCfg->getCLLSEIEnabled())
   {
@@ -682,6 +684,15 @@ Void TEncGOP::xCreatePerPictureSEIMessages (Int picInGOP, SEIMessages& seiMessag
       delete seiRegionalNesting;
     }
   }
+#if FGS_RDD5_ENABLE
+  // Film Grain Characteristics SEI insertion at at frame level
+  if (m_pcCfg->getFilmGrainCharactersticsSEIEnabled())
+  {
+    SEIFilmGrainCharacteristics *fgcSEI = new SEIFilmGrainCharacteristics;
+    m_seiEncoder.initSEIFilmGrainCharacteristics(fgcSEI);
+    seiMessages.push_back(fgcSEI);
+  }
+#endif
 }
 
 Void TEncGOP::xCreateScalableNestingSEI (SEIMessages& seiMessages, SEIMessages& nestedSeiMessages)

@@ -66,6 +66,9 @@ protected:
   Int           m_decodedPictureHashSEIEnabled;       ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
   Bool          m_decodedNoDisplaySEIEnabled;         ///< Enable(true)/disable(false) writing only pictures that get displayed based on the no display SEI message
   std::string   m_colourRemapSEIFileName;             ///< output Colour Remapping file name
+#if FGS_RDD5_ENABLE
+  std::string   m_SEIFGSFileName;                     ///< output reconstruction file name
+#endif
   std::string   m_annotatedRegionsSEIFileName;        ///< annotated regions file name
   std::vector<Int> m_targetDecLayerIdSet;             ///< set of LayerIds to be included in the sub-bitstream extraction process.
   Int           m_respectDefDispWindow;               ///< Only output content inside the default display window
@@ -89,6 +92,9 @@ public:
   , m_decodedPictureHashSEIEnabled(0)
   , m_decodedNoDisplaySEIEnabled(false)
   , m_colourRemapSEIFileName()
+#if FGS_RDD5_ENABLE
+  , m_SEIFGSFileName()
+#endif
   , m_annotatedRegionsSEIFileName()
   , m_targetDecLayerIdSet()
   , m_respectDefDispWindow(0)

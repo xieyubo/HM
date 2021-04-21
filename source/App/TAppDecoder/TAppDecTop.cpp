@@ -69,6 +69,9 @@ Void TAppDecTop::destroy()
 {
   m_bitstreamFileName.clear();
   m_reconFileName.clear();
+#if FGS_RDD5_ENABLE
+  m_SEIFGSFileName.clear();
+#endif
 }
 
 // ====================================================================================================================
@@ -136,6 +139,9 @@ Void TAppDecTop::decode()
 
   // main decoder loop
   Bool openedReconFile = false; // reconstruction file not yet opened. (must be performed after SPS is seen)
+#if FGS_RDD5_ENABLE
+  Bool openedSEIFGSFile = false; // reconstruction file (with FGS) not yet opened. (must be performed after SPS is seen)
+#endif
   Bool loopFiltered = false;
 
   while (!!bitstreamFile)
@@ -230,6 +236,23 @@ Void TAppDecTop::decode()
         m_cTVideoIOYuvReconFile.open( m_reconFileName, true, m_outputBitDepth, m_outputBitDepth, bitDepths.recon ); // write mode
         openedReconFile = true;
       }
+#if FGS_RDD5_ENABLE
+      // Initialize file handle to write output with film grain
+      if ((!m_SEIFGSFileName.empty()) && (!openedSEIFGSFile))
+      {
+        const BitDepths &bitDepths = pcListPic->front()->getPicSym()->getSPS().getBitDepths(); // use bit depths of first reconstructed picture.
+        for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
+        {
+          if (m_outputBitDepth[channelType] == 0)
+          {
+            m_outputBitDepth[channelType] = bitDepths.recon[channelType];
+          }
+        }
+
+        m_cTVideoIOYuvSEIFGSFile.open(m_SEIFGSFileName, true, m_outputBitDepth, m_outputBitDepth, bitDepths.recon); // write mode
+        openedSEIFGSFile = true;
+      }
+#endif
       // write reconstruction to file
       if( bNewPicture )
       {
@@ -286,6 +309,12 @@ Void TAppDecTop::xDestroyDecLib()
   {
     m_cTVideoIOYuvReconFile.close();
   }
+#if FGS_RDD5_ENABLE
+  if (!m_SEIFGSFileName.empty())
+  {
+    m_cTVideoIOYuvSEIFGSFile.close();
+  }
+#endif
 
   // destroy decoder class
   m_cTDecTop.destroy();
@@ -477,6 +506,21 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
                                          NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range  );
         }
 
+#if FGS_RDD5_ENABLE
+        // Perform FGS on decoded frame and write to output FGS file
+        if (!m_SEIFGSFileName.empty())
+        {
+          const Window &conf = pcPic->getConformanceWindow();
+          const Window  defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
+          m_cTVideoIOYuvSEIFGSFile.write(pcPic->getPicYuvDisp(),
+                                          m_outputColourSpaceConvert,
+                                          conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
+                                          conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
+                                          conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+                                          conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset(),
+                                          NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range);
+        }
+#endif
         if (!m_annotatedRegionsSEIFileName.empty())
         {
           xOutputAnnotatedRegions(pcPic);
@@ -605,7 +649,22 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
                                          NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range );
         }
 
-        if (!m_colourRemapSEIFileName.empty())
+#if FGS_RDD5_ENABLE
+        // Perform FGS on decoded frame and write to output FGS file
+        if (!m_SEIFGSFileName.empty())
+        {
+          const Window &conf = pcPic->getConformanceWindow();
+          const Window  defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
+          m_cTVideoIOYuvSEIFGSFile.write(pcPic->getPicYuvDisp(),
+                                          m_outputColourSpaceConvert,
+                                          conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
+                                          conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
+                                          conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+                                          conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset(),
+                                          NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range);
+        }
+#endif
+       if (!m_colourRemapSEIFileName.empty())
         {
           xOutputColourRemapPic(pcPic);
         }

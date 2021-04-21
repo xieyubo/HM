@@ -62,7 +62,9 @@ private:
   // class interface
   TDecTop                         m_cTDecTop;                     ///< decoder class
   TVideoIOYuv                     m_cTVideoIOYuvReconFile;        ///< reconstruction YUV class
-
+#if FGS_RDD5_ENABLE
+  TVideoIOYuv                     m_cTVideoIOYuvSEIFGSFile;       ///< reconstruction YUV class
+#endif
   // for output control
   Int                             m_iPOCLastDisplay;              ///< last POC in display order
   std::ofstream                   m_seiMessageFileStream;         ///< Used for outputing SEI messages.

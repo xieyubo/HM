@@ -100,6 +100,11 @@ private:
   Int                     m_prevPOC;
   Int                     m_prevTid0POC;
   Bool                    m_bFirstSliceInPicture;
+#if FGS_RDD5_ENABLE
+  Bool                    m_bFirstPictureInSequence;
+  SEIFilmGrainSynthesizer m_grainCharacteristic;
+  TComPicYuv              m_grainBuf;
+#endif
   Bool                    m_bFirstSliceInSequence;
   Bool                    m_prevSliceSkipped;
   Int                     m_skippedPOC;
