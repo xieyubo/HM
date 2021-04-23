@@ -68,9 +68,17 @@ TComPic::~TComPic()
 }
 
 #if REDUCED_ENCODER_MEMORY
-Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bCreateEncoderSourcePicYuv, const Bool bCreateForImmediateReconstruction )
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bCreateEncoderSourcePicYuv, const Bool bCreateForImmediateReconstruction, const Bool bCreateForProcessedReconstruction )
 #else
-Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual)
+Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bCreateEncoderSourcePicYuv, const Bool bCreateForImmediateReconstruction )
+#endif
+#else
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual, const Bool bCreateForProcessedReconstruction )
+#else
+Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual )
+#endif
 #endif
 {
   destroy();
@@ -99,7 +107,10 @@ Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirt
 #endif
     m_apcPicYuv[PIC_YUV_REC]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_REC]->create( iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true );
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-    m_apcPicYuv[PIC_YUV_POST_REC]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_POST_REC]->create( iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true );
+    if (bCreateForProcessedReconstruction)
+    {
+      m_apcPicYuv[PIC_YUV_POST_REC] = new TComPicYuv;  m_apcPicYuv[PIC_YUV_POST_REC]->create(iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true);
+    }
 #endif
 #if REDUCED_ENCODER_MEMORY
   }
@@ -135,7 +146,11 @@ Void TComPic::prepareForEncoderSourcePicYuv()
   }
 }
 
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+Void TComPic::prepareForReconstruction( const Bool bCreateForProcessedReconstruction )
+#else
 Void TComPic::prepareForReconstruction()
+#endif
 {
   if (m_apcPicYuv[PIC_YUV_REC] == NULL)
   {
@@ -154,7 +169,7 @@ Void TComPic::prepareForReconstruction()
   m_apcPicYuv[PIC_YUV_REC]->setBorderExtension(false);
 
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-  if (m_apcPicYuv[PIC_YUV_POST_REC] == NULL)
+  if (m_apcPicYuv[PIC_YUV_POST_REC] == NULL && bCreateForProcessedReconstruction)
   {
     const TComSPS &sps = m_picSym.getSPS();
     const ChromaFormat chromaFormatIDC = sps.getChromaFormatIdc();
@@ -168,7 +183,10 @@ Void TComPic::prepareForReconstruction()
   }
 
   // mark it should be extended
-  m_apcPicYuv[PIC_YUV_POST_REC]->setBorderExtension(false);
+  if (bCreateForProcessedReconstruction)
+  {
+    m_apcPicYuv[PIC_YUV_POST_REC]->setBorderExtension(false);
+  }
 #endif
 
   m_picSym.prepareForReconstruction();

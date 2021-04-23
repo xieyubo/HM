@@ -95,14 +95,26 @@ public:
   virtual ~TComPic();
 
 #if REDUCED_ENCODER_MEMORY
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  Void          create( const TComSPS &sps, const TComPPS &pps, const Bool bCreateEncoderSourcePicYuv, const Bool bCreateForImmediateReconstruction, const Bool bCreateForProcessedReconstruction );
+#else
   Void          create( const TComSPS &sps, const TComPPS &pps, const Bool bCreateEncoderSourcePicYuv, const Bool bCreateForImmediateReconstruction );
+#endif
   Void          prepareForEncoderSourcePicYuv();
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  Void          prepareForReconstruction( const Bool bCreateForProcessedReconstruction );
+#else
   Void          prepareForReconstruction();
+#endif
   Void          releaseReconstructionIntermediateData();
   Void          releaseAllReconstructionData();
   Void          releaseEncoderSourceImageData();
 #else
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  Void          create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual /*= false*/, const Bool bCreateForProcessedReconstruction );
+#else
   Void          create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual /*= false*/ );
+#endif
 #endif
 
   virtual Void  destroy();
