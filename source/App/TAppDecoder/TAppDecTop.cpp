@@ -142,7 +142,8 @@ Void TAppDecTop::decode()
   Bool loopFiltered = false;
 #if SHUTTER_INTERVAL_SEI_PROCESSING
   Bool openedPostFile = false;
-  setShutterFilterFlag(false);
+  setShutterFilterFlag(!m_shutterIntervalPostFileName.empty());   // not apply shutter interval SEI processing if filename is not specified.
+  m_cTDecTop.setShutterFilterFlag(getShutterFilterFlag());
 #endif
 
   while (!!bitstreamFile)
@@ -241,24 +242,38 @@ Void TAppDecTop::decode()
       TComList<TComPic*>::iterator iterPic = pcListPic->begin();
       TComPic* pcPic = *(iterPic);
       SEIMessages shutterIntervalInfo = getSeisByType(pcPic->getSEIs(), SEI::SHUTTER_INTERVAL_INFO);
-      if (shutterIntervalInfo.size() > 0)
+      if (!m_shutterIntervalPostFileName.empty())
       {
-        SEIShutterIntervalInfo *seiShutterIntervalInfo = (SEIShutterIntervalInfo*) *(shutterIntervalInfo.begin());
-        if (!seiShutterIntervalInfo->m_siiFixedSIwithinCLVS)
+        if (shutterIntervalInfo.size() > 0)
         {
-          UInt arraySize = seiShutterIntervalInfo->m_siiMaxSubLayersMinus1 + 1;
-          UInt numUnitsLFR = seiShutterIntervalInfo->m_siiSubLayerNumUnitsInSI[0];
-          UInt numUnitsHFR = seiShutterIntervalInfo->m_siiSubLayerNumUnitsInSI[arraySize - 1];
-          setShutterFilterFlag(numUnitsLFR == 2 * numUnitsHFR);
-		  
-          const TComSPS* activeSPS = &(pcListPic->front()->getPicSym()->getSPS());
-          if (numUnitsLFR == 2 * numUnitsHFR && activeSPS->getMaxTLayers() == 1 && activeSPS->getMaxDecPicBuffering(0) == 1)
+          SEIShutterIntervalInfo *seiShutterIntervalInfo = (SEIShutterIntervalInfo*) *(shutterIntervalInfo.begin());
+          if (!seiShutterIntervalInfo->m_siiFixedSIwithinCLVS)
           {
-            fprintf(stderr, "Warning: Shutter Interval SEI message processing is disabled for single TempLayer and single frame in DPB\n");
+            UInt arraySize = seiShutterIntervalInfo->m_siiMaxSubLayersMinus1 + 1;
+            UInt numUnitsLFR = seiShutterIntervalInfo->m_siiSubLayerNumUnitsInSI[0];
+            UInt numUnitsHFR = seiShutterIntervalInfo->m_siiSubLayerNumUnitsInSI[arraySize - 1];
+            setShutterFilterFlag(numUnitsLFR == 2 * numUnitsHFR);
+
+            const TComSPS* activeSPS = &(pcListPic->front()->getPicSym()->getSPS());
+            if (numUnitsLFR == 2 * numUnitsHFR && activeSPS->getMaxTLayers() == 1 && activeSPS->getMaxDecPicBuffering(0) == 1)
+            {
+              fprintf(stderr, "Warning: Shutter Interval SEI message processing is disabled for single TempLayer and single frame in DPB\n");
+              setShutterFilterFlag(false);
+            }
+          }
+          else
+          {
+            fprintf(stderr, "Warning: Shutter Interval SEI message processing is disabled for fixed shutter interval case\n");
             setShutterFilterFlag(false);
           }
         }
+        else
+        {
+          fprintf(stderr, "Warning: Shutter Interval information should be specified in SII-SEI message\n");
+          setShutterFilterFlag(false);
+        }
       }
+
       if ((!m_shutterIntervalPostFileName.empty()) && (!openedPostFile) && getShutterFilterFlag())
       {
         const BitDepths &bitDepths = pcListPic->front()->getPicSym()->getSPS().getBitDepths();
@@ -721,27 +736,33 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
         }
         pcPic->setOutputMark(false);
       }
-#if !SHUTTER_INTERVAL_SEI_PROCESSING
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+      if (pcPic != NULL && (m_shutterIntervalPostFileName.empty() || !getShutterFilterFlag()))
+#else
       if(pcPic != NULL)
+#endif
       {
         pcPic->destroy();
         delete pcPic;
         pcPic = NULL;
       }
-#endif
       iterPic++;
     }
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-    while (iterPic != pcListPic->end())
+    if (!m_shutterIntervalPostFileName.empty() && getShutterFilterFlag())
     {
-      pcPic = *(iterPic);
-      if (pcPic != NULL)
+      iterPic = pcListPic->begin();
+      while (iterPic != pcListPic->end())
       {
-        pcPic->destroy();
-        delete pcPic;
-        pcPic = NULL;
+        pcPic = *(iterPic);
+        if (pcPic != NULL)
+        {
+          pcPic->destroy();
+          delete pcPic;
+          pcPic = NULL;
+        }
+        iterPic++;
       }
-      iterPic++;
     }
 #endif
   }

@@ -2041,7 +2041,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
     }
     else
     {
-      printf("Warning: Input number of units in Sii SEI should be greater than 1 and number of LFR units should be 2 times of number of HFR units\n");
+      printf("Warning: SII-processing is applied for multiple shutter intervals and number of LFR units should be 2 times of number of HFR units\n");
     }
 #endif
   }

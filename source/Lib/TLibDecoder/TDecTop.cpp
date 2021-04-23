@@ -169,9 +169,17 @@ Void TDecTop::xGetNewPicBuffer ( const TComSPS &sps, const TComPPS &pps, TComPic
     rpcPic = new TComPic();
 
 #if REDUCED_ENCODER_MEMORY
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+    rpcPic->create ( sps, pps, false, true, getShutterFilterFlag() );
+#else
     rpcPic->create ( sps, pps, false, true);
+#endif
+#else
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+    rpcPic->create ( sps, pps, true, getShutterFilterFlag());
 #else
     rpcPic->create ( sps, pps, true);
+#endif
 #endif
 
     m_cListPic.pushBack( rpcPic );
@@ -210,9 +218,17 @@ Void TDecTop::xGetNewPicBuffer ( const TComSPS &sps, const TComPPS &pps, TComPic
   }
   rpcPic->destroy();
 #if REDUCED_ENCODER_MEMORY
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  rpcPic->create ( sps, pps, false, true, getShutterFilterFlag() );
+#else
   rpcPic->create ( sps, pps, false, true);
+#endif
+#else
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  rpcPic->create ( sps, pps, true, getShutterFilterFlag() );
 #else
   rpcPic->create ( sps, pps, true);
+#endif
 #endif
 }
 

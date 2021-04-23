@@ -122,13 +122,25 @@ TEncPic::~TEncPic()
  * \param bIsVirtual
  */
 #if REDUCED_ENCODER_MEMORY
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, const Bool bCreateForProcessedReconstruction )
+{
+  TComPic::create( sps, pps, true, false, bCreateForProcessedReconstruction );
+#else
 Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth )
 {
   TComPic::create( sps, pps, true, false );
+#endif
+#else
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual, const Bool bCreateForProcessedReconstruction )
+{
+  TComPic::create( sps, pps, bIsVirtual, bCreateForProcessedReconstruction );
 #else
 Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual )
 {
   TComPic::create( sps, pps, bIsVirtual );
+#endif
 #endif
   const Int  iWidth      = sps.getPicWidthInLumaSamples();
   const Int  iHeight     = sps.getPicHeightInLumaSamples();
