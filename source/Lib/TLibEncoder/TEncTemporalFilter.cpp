@@ -42,7 +42,7 @@
 // Constructor / destructor / initialization / destroy
 // ====================================================================================================================
 
-#if JVET_V0056
+#if JVET_V0056_MCTF
 const Int TEncTemporalFilter::s_range = 4;
 #else
 const Int TEncTemporalFilter::s_range = 2;
@@ -72,7 +72,7 @@ const Int TEncTemporalFilter::s_interpolationFilter[16][8] =
     {   0,   0,  -2,   4,  64,  -3,   1,   0 }    //15-->-->
 };
 
-#if JVET_V0056
+#if JVET_V0056_MCTF
 const Double TEncTemporalFilter::s_refStrengths[3][4] =
 { // abs(POC offset)
   //  1,    2     3     4
@@ -378,7 +378,7 @@ Int TEncTemporalFilter::motionErrorLuma(const TComPicYuv &orig,
 Void TEncTemporalFilter::motionEstimationLuma(Array2D<MotionVector> &mvs, const TComPicYuv &orig, const TComPicYuv &buffer, const Int blockSize,
     const Array2D<MotionVector> *previous, const Int factor, const Bool doubleRes) const
 {
-#if JVET_V0056
+#if JVET_V0056_MCTF
   Int range = doubleRes ? 0 : 5;
 #else
   Int range = 5;
@@ -388,7 +388,7 @@ Void TEncTemporalFilter::motionEstimationLuma(Array2D<MotionVector> &mvs, const 
   const Int origWidth  = orig.getWidth(COMPONENT_Y);
   const Int origHeight = orig.getHeight(COMPONENT_Y);
 
-#if JVET_V0056
+#if JVET_V0056_MCTF
   for (Int blockY = 0; blockY + blockSize <= origHeight; blockY += stepSize)
   {
     for (Int blockX = 0; blockX + blockSize <= origWidth; blockX += stepSize)
@@ -406,14 +406,14 @@ Void TEncTemporalFilter::motionEstimationLuma(Array2D<MotionVector> &mvs, const 
       }
       else
       {
-#if JVET_V0056
+#if JVET_V0056_MCTF
         for (Int py = -1; py <= 1; py++)
 #else
         for (Int py = -2; py <= 2; py++)
 #endif
         {
           Int testy = blockY / (2 * blockSize) + py;
-#if JVET_V0056
+#if JVET_V0056_MCTF
           for (Int px = -1; px <= 1; px++)
 #else
           for (Int px = -2; px <= 2; px++)
@@ -431,7 +431,7 @@ Void TEncTemporalFilter::motionEstimationLuma(Array2D<MotionVector> &mvs, const 
             }
           }
         }
-#if JVET_V0056
+#if JVET_V0056_MCTF
         Int error = motionErrorLuma(orig, buffer, blockX, blockY, 0, 0, blockSize, best.error);
         if (error < best.error)
         {
@@ -481,7 +481,7 @@ Void TEncTemporalFilter::motionEstimationLuma(Array2D<MotionVector> &mvs, const 
           }
         }
       }
-#if JVET_V0056
+#if JVET_V0056_MCTF
       if (blockY > 0)
       {
         MotionVector aboveMV = mvs.get(blockX / stepSize, (blockY - stepSize) / stepSize);
@@ -636,7 +636,7 @@ Void TEncTemporalFilter::applyMotion(const Array2D<MotionVector> &mvs, const TCo
 }
 
 Void TEncTemporalFilter::bilateralFilter(const TComPicYuv &orgPic,
-#if JVET_V0056
+#if JVET_V0056_MCTF
                                                std::deque<TemporalFilterSourcePicInfo> &srcFrameInfo,
 #else
                                          const std::deque<TemporalFilterSourcePicInfo> &srcFrameInfo,
@@ -678,7 +678,7 @@ Void TEncTemporalFilter::bilateralFilter(const TComPicYuv &orgPic,
     const Double weightScaling = overallStrength * (isChroma(compID) ? s_chromaFactor : 0.4);
     const Pel maxSampleValue = (1<<m_internalBitDepth[toChannelType(compID)])-1;
     const Double bitDepthDiffWeighting=1024.0 / (maxSampleValue+1);
-#if JVET_V0056
+#if JVET_V0056_MCTF
     const Int blkSize = isLuma(compID) ? 8 : 4;
 #endif
 
@@ -691,7 +691,7 @@ Void TEncTemporalFilter::bilateralFilter(const TComPicYuv &orgPic,
         const Int orgVal = (Int) *srcPel;
         Double temporalWeightSum = 1.0;
         Double newVal = (Double) orgVal;
-#if JVET_V0056
+#if JVET_V0056_MCTF
         if ((y % blkSize == 0) && (x % blkSize == 0))
         {
           for (Int i = 0; i < numRefs; i++)
@@ -729,7 +729,7 @@ Void TEncTemporalFilter::bilateralFilter(const TComPicYuv &orgPic,
 #endif
         for (Int i = 0; i < numRefs; i++)
         {
-#if JVET_V0056
+#if JVET_V0056_MCTF
           const Int error = srcFrameInfo[i].mvs.get(x / blkSize, y / blkSize).error;
           const Int noise = srcFrameInfo[i].mvs.get(x / blkSize, y / blkSize).noise;
 #endif
@@ -738,7 +738,7 @@ Void TEncTemporalFilter::bilateralFilter(const TComPicYuv &orgPic,
           Double diff = (Double)(refVal - orgVal);
           diff *= bitDepthDiffWeighting;
           Double diffSq = diff * diff;
-#if JVET_V0056
+#if JVET_V0056_MCTF
           const Int index = std::min(3, std::abs(srcFrameInfo[i].origOffset) - 1);
           Double ww = 1, sw = 1;
           ww *= (noise < 25) ? 1 : 1.2;
