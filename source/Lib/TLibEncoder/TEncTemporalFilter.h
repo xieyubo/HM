@@ -50,7 +50,7 @@ struct MotionVector
 {
   Int x, y;
   Int error;
-#if JVET_V0056
+#if JVET_V0056_MCTF
   Int noise;
   MotionVector() : x(0), y(0), error(INT_LEAST32_MAX), noise(0) {}
 #else
@@ -134,7 +134,7 @@ private:
   static const Int s_motionVectorFactor;
   static const Int s_padding;
   static const Int s_interpolationFilter[16][8];
-#if JVET_V0056
+#if JVET_V0056_MCTF
   static const Double s_refStrengths[3][4];
 #else
   static const Double s_refStrengths[3][2];
@@ -165,7 +165,7 @@ private:
       const Array2D<MotionVector> *previous=0, const Int factor = 1, const Bool doubleRes = false) const;
   Void motionEstimation(Array2D<MotionVector> &mvs, const TComPicYuv &orgPic, const TComPicYuv &buffer, const TComPicYuv &origSubsampled2, const TComPicYuv &origSubsampled4) const;
 
-#if JVET_V0056
+#if JVET_V0056_MCTF
   Void bilateralFilter(const TComPicYuv &orgPic, std::deque<TemporalFilterSourcePicInfo> &srcFrameInfo, TComPicYuv &newOrgPic, Double overallStrength) const;
 #else
   Void bilateralFilter(const TComPicYuv &orgPic, const std::deque<TemporalFilterSourcePicInfo> &srcFrameInfo, TComPicYuv &newOrgPic, Double overallStrength) const;
