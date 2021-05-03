@@ -522,7 +522,7 @@ Void TEncTemporalFilter::motionEstimationLuma(Array2D<MotionVector> &mvs, const 
           variance = variance + (pix - avg) * (pix - avg);
         }
       }
-      best.error = 20 * ((best.error + 5.0) / (variance + 5.0)) + (best.error / (blockSize * blockSize)) / 50;
+      best.error = (Int) (20 * ((best.error + 5.0) / (variance + 5.0)) + (best.error / (blockSize * blockSize)) / 50);
 #endif
       mvs.get(blockX / stepSize, blockY / stepSize) = best;
     }
