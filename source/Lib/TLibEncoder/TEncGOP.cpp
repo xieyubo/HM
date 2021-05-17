@@ -2307,8 +2307,8 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
       
       iOrgStride[ch]    = pOrgPicYuv->getStride(ch);
       iRecStride[ch]    = picd.getStride(ch);
-      iWidth[ch]        = pcPicD->getWidth (ch) - (m_pcEncTop->getPad(0) >> pcPic->getComponentScaleX(ch));
-      iHeight[ch]       = pcPicD->getHeight(ch) - ((m_pcEncTop->getPad(1) >> (pcPic->isField()?1:0)) >> pcPic->getComponentScaleY(ch));
+      iWidth[ch]        = pcPicD->getWidth (ch) - (m_pcEncTop->getSourcePadding(0) >> pcPic->getComponentScaleX(ch));
+      iHeight[ch]       = pcPicD->getHeight(ch) - ((m_pcEncTop->getSourcePadding(1) >> (pcPic->isField()?1:0)) >> pcPic->getComponentScaleY(ch));
       iSize[ch]         = iWidth[ch]*iHeight[ch];
       uiSSDtemp[ch]     = 0;
       uiShiftWidth[ch]  = (ch == COMPONENT_Y || pcPicD->getChromaFormat() == CHROMA_444) ? 0 : 1;
@@ -2378,8 +2378,8 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
       const Int   iOrgStride = pOrgPicYuv->getStride(ch);
       Pel*  pRec             = picd.getAddr(ch);
       const Int   iRecStride = picd.getStride(ch);
-      const Int   iWidth  = pcPicD->getWidth (ch) - (m_pcEncTop->getPad(0) >> pcPic->getComponentScaleX(ch));
-      const Int   iHeight = pcPicD->getHeight(ch) - ((m_pcEncTop->getPad(1) >> (pcPic->isField()?1:0)) >> pcPic->getComponentScaleY(ch));
+      const Int   iWidth  = pcPicD->getWidth (ch) - (m_pcEncTop->getSourcePadding(0) >> pcPic->getComponentScaleX(ch));
+      const Int   iHeight = pcPicD->getHeight(ch) - ((m_pcEncTop->getSourcePadding(1) >> (pcPic->isField()?1:0)) >> pcPic->getComponentScaleY(ch));
 
       Int   iSize   = iWidth*iHeight;
 
@@ -2414,8 +2414,8 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
       const Int   orgStride = pOrgPicYuv->getStride(ch);
       const Pel*  pRec      = picd.getAddr(ch);
       const Int   recStride = picd.getStride(ch);
-      const Int   width     = pcPicD->getWidth (ch) - (m_pcEncTop->getPad(0) >> pcPic->getComponentScaleX(ch));
-      const Int   height    = pcPicD->getHeight(ch) - ((m_pcEncTop->getPad(1) >> (pcPic->isField()?1:0)) >> pcPic->getComponentScaleY(ch));
+      const Int   width     = pcPicD->getWidth (ch) - (m_pcEncTop->getSourcePadding(0) >> pcPic->getComponentScaleX(ch));
+      const Int   height    = pcPicD->getHeight(ch) - ((m_pcEncTop->getSourcePadding(1) >> (pcPic->isField()?1:0)) >> pcPic->getComponentScaleY(ch));
       const UInt  bitDepth  = pcPic->getPicSym()->getSPS().getBitDepth(toChannelType(ch));
  
       result.MSSSIM[ch] = xCalculateMSSSIM (pOrg, orgStride, pRec, recStride, width, height, bitDepth);
@@ -2777,8 +2777,8 @@ Void TEncGOP::xCalculateInterlacedAddPSNR( TComPic* pcPicOrgFirstField, TComPic*
         const ComponentID ch=ComponentID(chan);
         iOrgStride[ch]    = pOrgPicYuv->getStride(ch);
         iRecStride[ch]    = pcPicD->getStride(ch);
-        iWidth[ch]        = pcPicD->getWidth (ch) - (m_pcEncTop->getPad(0) >> pcPic->getComponentScaleX(ch));
-        iHeight[ch]       = pcPicD->getHeight(ch) - ((m_pcEncTop->getPad(1) >> 1) >> pcPic->getComponentScaleY(ch));
+        iWidth[ch]        = pcPicD->getWidth (ch) - (m_pcEncTop->getSourcePadding(0) >> pcPic->getComponentScaleX(ch));
+        iHeight[ch]       = pcPicD->getHeight(ch) - ((m_pcEncTop->getSourcePadding(1) >> 1) >> pcPic->getComponentScaleY(ch));
         iSize[ch]         = iWidth[ch]*iHeight[ch];
         uiSSDtemp[ch]     = 0;
         uiShiftWidth[ch]  = (ch == COMPONENT_Y || pcPicD->getChromaFormat() == CHROMA_444) ? 0 : 1;
@@ -2847,8 +2847,8 @@ Void TEncGOP::xCalculateInterlacedAddPSNR( TComPic* pcPicOrgFirstField, TComPic*
       assert(apcPicRecFields[0]->getHeight(ch)==apcPicRecFields[1]->getHeight(ch));
 
       UInt64 uiSSDtemp=0;
-      const Int   iWidth  = apcPicRecFields[0]->getWidth (ch) - (m_pcEncTop->getPad(0) >> apcPicRecFields[0]->getComponentScaleX(ch));
-      const Int   iHeight = apcPicRecFields[0]->getHeight(ch) - ((m_pcEncTop->getPad(1) >> 1) >> apcPicRecFields[0]->getComponentScaleY(ch));
+      const Int   iWidth  = apcPicRecFields[0]->getWidth (ch) - (m_pcEncTop->getSourcePadding(0) >> apcPicRecFields[0]->getComponentScaleX(ch));
+      const Int   iHeight = apcPicRecFields[0]->getHeight(ch) - ((m_pcEncTop->getSourcePadding(1) >> 1) >> apcPicRecFields[0]->getComponentScaleY(ch));
 
       Int   iSize   = iWidth*iHeight;
 
@@ -2889,8 +2889,8 @@ Void TEncGOP::xCalculateInterlacedAddPSNR( TComPic* pcPicOrgFirstField, TComPic*
       assert(apcPicRecFields[0]->getHeight(ch)==apcPicRecFields[1]->getHeight(ch));
 
       Double sumOverFieldsMSSSIM = 0.0;
-      const Int   width  = apcPicRecFields[0]->getWidth (ch) - ( m_pcEncTop->getPad(0)       >> apcPicRecFields[0]->getComponentScaleX(ch));
-      const Int   height = apcPicRecFields[0]->getHeight(ch) - ((m_pcEncTop->getPad(1) >> 1) >> apcPicRecFields[0]->getComponentScaleY(ch));
+      const Int   width  = apcPicRecFields[0]->getWidth (ch) - ( m_pcEncTop->getSourcePadding(0)       >> apcPicRecFields[0]->getComponentScaleX(ch));
+      const Int   height = apcPicRecFields[0]->getHeight(ch) - ((m_pcEncTop->getSourcePadding(1) >> 1) >> apcPicRecFields[0]->getComponentScaleY(ch));
 
       for(UInt fieldNum=0; fieldNum<2; fieldNum++)
       {

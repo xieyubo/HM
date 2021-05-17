@@ -117,8 +117,8 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setFrameRate                                         ( m_iFrameRate );
   m_cTEncTop.setFrameSkip                                         ( m_FrameSkip );
   m_cTEncTop.setTemporalSubsampleRatio                            ( m_temporalSubsampleRatio );
-  m_cTEncTop.setSourceWidth                                       ( m_iSourceWidth );
-  m_cTEncTop.setSourceHeight                                      ( m_iSourceHeight );
+  m_cTEncTop.setSourceWidth                                       ( m_sourceWidth );
+  m_cTEncTop.setSourceHeight                                      ( m_sourceHeight );
   m_cTEncTop.setConformanceWindow                                 ( m_confWinLeft, m_confWinRight, m_confWinTop, m_confWinBottom );
   m_cTEncTop.setFramesToBeEncoded                                 ( m_framesToBeEncoded );
 
@@ -145,7 +145,7 @@ Void TAppEncTop::xInitLibCfg()
 
   m_cTEncTop.setIntraQPOffset                                     ( m_intraQPOffset );
   m_cTEncTop.setLambdaFromQPEnable                                ( m_lambdaFromQPEnable );
-  m_cTEncTop.setPad                                               ( m_aiPad );
+  m_cTEncTop.setSourcePadding                                     ( m_sourcePadding );
 
   m_cTEncTop.setAccessUnitDelimiter                               ( m_AccessUnitDelimiter );
 
@@ -623,13 +623,13 @@ Void TAppEncTop::encode()
   // allocate original YUV buffer
   if( m_isField )
   {
-    pcPicYuvOrg->create  ( m_iSourceWidth, m_iSourceHeightOrg, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxTotalCUDepth, true );
-    cPicYuvTrueOrg.create(m_iSourceWidth, m_iSourceHeightOrg, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxTotalCUDepth, true);
+    pcPicYuvOrg->create  ( m_sourceWidth, m_sourceHeightOrg, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxTotalCUDepth, true );
+    cPicYuvTrueOrg.create(m_sourceWidth, m_sourceHeightOrg, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxTotalCUDepth, true);
   }
   else
   {
-    pcPicYuvOrg->create  ( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxTotalCUDepth, true );
-    cPicYuvTrueOrg.create(m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxTotalCUDepth, true );
+    pcPicYuvOrg->create  ( m_sourceWidth, m_sourceHeight, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxTotalCUDepth, true );
+    cPicYuvTrueOrg.create(m_sourceWidth, m_sourceHeight, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxTotalCUDepth, true );
   }
 
 #if EXTENSION_360_VIDEO
@@ -638,8 +638,8 @@ Void TAppEncTop::encode()
   TEncTemporalFilter temporalFilter;
   if (m_gopBasedTemporalFilterEnabled)
   {
-    temporalFilter.init(m_FrameSkip, m_inputBitDepth, m_MSBExtendedBitDepth, m_internalBitDepth, m_iSourceWidth, m_iSourceHeight,
-      m_aiPad, m_framesToBeEncoded, m_bClipInputVideoToRec709Range, m_inputFileName, m_chromaFormatIDC,
+    temporalFilter.init(m_FrameSkip, m_inputBitDepth, m_MSBExtendedBitDepth, m_internalBitDepth, m_sourceWidth, m_sourceHeight,
+      m_sourcePadding, m_framesToBeEncoded, m_bClipInputVideoToRec709Range, m_inputFileName, m_chromaFormatIDC,
       m_inputColourSpaceConvert, m_iQP, m_iGOPSize, m_gopBasedTemporalFilterStrengths,
       m_gopBasedTemporalFilterFutureReference);
   }
@@ -656,10 +656,10 @@ Void TAppEncTop::encode()
     }
     else
     {
-      m_cTVideoIOYuvInputFile.read( pcPicYuvOrg, &cPicYuvTrueOrg, ipCSC, m_aiPad, m_InputChromaFormatIDC, m_bClipInputVideoToRec709Range );
+      m_cTVideoIOYuvInputFile.read( pcPicYuvOrg, &cPicYuvTrueOrg, ipCSC, m_sourcePadding, m_InputChromaFormatIDC, m_bClipInputVideoToRec709Range );
     }
 #else
-    m_cTVideoIOYuvInputFile.read( pcPicYuvOrg, &cPicYuvTrueOrg, ipCSC, m_aiPad, m_InputChromaFormatIDC, m_bClipInputVideoToRec709Range );
+    m_cTVideoIOYuvInputFile.read( pcPicYuvOrg, &cPicYuvTrueOrg, ipCSC, m_sourcePadding, m_InputChromaFormatIDC, m_bClipInputVideoToRec709Range );
 #endif
 
     if (m_gopBasedTemporalFilterEnabled)
@@ -749,7 +749,7 @@ Void TAppEncTop::xGetBuffer( TComPicYuv*& rpcPicYuvRec)
   {
     rpcPicYuvRec = new TComPicYuv;
 
-    rpcPicYuvRec->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxTotalCUDepth, true );
+    rpcPicYuvRec->create( m_sourceWidth, m_sourceHeight, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxTotalCUDepth, true );
 
   }
   m_cListPicYuvRec.pushBack( rpcPicYuvRec );

@@ -94,7 +94,7 @@ void TEncTemporalFilter::init(const Int frameSkip,
                               const Int internalBitDepth[MAX_NUM_CHANNEL_TYPE],
                               const Int width,
                               const Int height,
-                              const Int *pad,
+                              const Int *padding,
                               const Int frames,
                               const Bool Rec709,
                               const std::string &filename,
@@ -117,7 +117,7 @@ void TEncTemporalFilter::init(const Int frameSkip,
   m_sourceHeight = height;
   for (Int i = 0; i < 2; i++)
   {
-    m_aiPad[i] = pad[i];
+    m_sourcePadding[i] = padding[i];
   }
   m_framesToBeEncoded = frames; // NOT USED.
   m_bClipInputVideoToRec709Range = Rec709;
@@ -155,7 +155,7 @@ Bool TEncTemporalFilter::filter(TComPicYuv *orgPic, Int receivedPoc)
     Int offset = m_FrameSkip;
     TVideoIOYuv yuvFrames;
     yuvFrames.open(m_inputFileName, false, m_inputBitDepth, m_MSBExtendedBitDepth, m_internalBitDepth);
-    yuvFrames.skipFrames(std::max(offset + receivedPoc - s_range, 0), m_sourceWidth - m_aiPad[0], m_sourceHeight - m_aiPad[1], m_chromaFormatIDC);
+    yuvFrames.skipFrames(std::max(offset + receivedPoc - s_range, 0), m_sourceWidth - m_sourcePadding[0], m_sourceHeight - m_sourcePadding[1], m_chromaFormatIDC);
 
 
     std::deque<TemporalFilterSourcePicInfo> srcFrameInfo;
@@ -191,7 +191,7 @@ Bool TEncTemporalFilter::filter(TComPicYuv *orgPic, Int receivedPoc)
       }
       else if (poc == offset + receivedPoc)
       { // hop over frame that will be filtered
-        yuvFrames.skipFrames(1, m_sourceWidth - m_aiPad[0], m_sourceHeight - m_aiPad[1], m_chromaFormatIDC);
+        yuvFrames.skipFrames(1, m_sourceWidth - m_sourcePadding[0], m_sourceHeight - m_sourcePadding[1], m_chromaFormatIDC);
         origOffset++;
         continue;
       }
@@ -201,7 +201,7 @@ Bool TEncTemporalFilter::filter(TComPicYuv *orgPic, Int receivedPoc)
       TComPicYuv     dummyPicBufferTO; // Only used temporary in yuvFrames.read
       srcPic.picBuffer.createWithoutCUInfo(m_sourceWidth, m_sourceHeight, m_chromaFormatIDC, true, s_padding, s_padding);
       dummyPicBufferTO.createWithoutCUInfo(m_sourceWidth, m_sourceHeight, m_chromaFormatIDC, true, s_padding, s_padding);
-      if (!yuvFrames.read(&srcPic.picBuffer, &dummyPicBufferTO, m_inputColourSpaceConvert, m_aiPad, m_chromaFormatIDC, m_bClipInputVideoToRec709Range))
+      if (!yuvFrames.read(&srcPic.picBuffer, &dummyPicBufferTO, m_inputColourSpaceConvert, m_sourcePadding, m_chromaFormatIDC, m_bClipInputVideoToRec709Range))
       {
         return false; // eof or read fail
       }

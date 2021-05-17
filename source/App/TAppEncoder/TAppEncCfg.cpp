@@ -787,8 +787,8 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("InputPathPrefix,-ipp",                            inputPathPrefix,                             string(""), "pathname to prepend to input filename")
   ("BitstreamFile,b",                                 m_bitstreamFileName,                         string(""), "Bitstream output file name")
   ("ReconFile,o",                                     m_reconFileName,                             string(""), "Reconstructed YUV output file name")
-  ("SourceWidth,-wdt",                                m_iSourceWidth,                                       0, "Source picture width")
-  ("SourceHeight,-hgt",                               m_iSourceHeight,                                      0, "Source picture height")
+  ("SourceWidth,-wdt",                                m_sourceWidth,                                        0, "Source picture width")
+  ("SourceHeight,-hgt",                               m_sourceHeight,                                       0, "Source picture height")
   ("InputBitDepth",                                   m_inputBitDepth[CHANNEL_TYPE_LUMA],                   8, "Bit-depth of input file")
   ("OutputBitDepth",                                  m_outputBitDepth[CHANNEL_TYPE_LUMA],                  0, "Bit-depth of output file (default:InternalBitDepth)")
   ("MSBExtendedBitDepth",                             m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA],             0, "bit depth of luma component after addition of MSBs of value 0 (used for synthesising High Dynamic Range source material). (default:InputBitDepth)")
@@ -814,14 +814,9 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("xPSNRCrWeight,-xPS2",                             m_dXPSNRWeight[COMPONENT_Cr],            ( Double )1.0, "xPSNR weighting factor for Cr (default: 1.0)")
   ("CabacZeroWordPaddingEnabled",                     m_cabacZeroWordPaddingEnabled,                     true, "0 do not add conforming cabac-zero-words to bit streams, 1 (default) = add cabac-zero-words as required")
   ("ChromaFormatIDC,-cf",                             tmpChromaFormat,                                      0, "ChromaFormatIDC (400|420|422|444 or set 0 (default) for same as InputChromaFormat)")
-  ("ConformanceMode",                                 m_conformanceWindowMode,                              0, "Deprecated alias of ConformanceWindowMode")
-  ("ConformanceWindowMode",                           m_conformanceWindowMode,                              0, "Window conformance mode (0: no window, 1:automatic padding, 2:padding, 3:conformance")
-  ("HorizontalPadding,-pdx",                          m_aiPad[0],                                           0, "Horizontal source padding for conformance window mode 2")
-  ("VerticalPadding,-pdy",                            m_aiPad[1],                                           0, "Vertical source padding for conformance window mode 2")
-  ("ConfLeft",                                        m_confWinLeft,                                        0, "Deprecated alias of ConfWinLeft")
-  ("ConfRight",                                       m_confWinRight,                                       0, "Deprecated alias of ConfWinRight")
-  ("ConfTop",                                         m_confWinTop,                                         0, "Deprecated alias of ConfWinTop")
-  ("ConfBottom",                                      m_confWinBottom,                                      0, "Deprecated alias of ConfWinBottom")
+  ("ConformanceWindowMode",                           m_conformanceWindowMode,                              0, "Window conformance mode (0: no window, 1:automatic padding, 2:padding parameters specified, 3:conformance window parameters specified")
+  ("HorizontalPadding,-pdx",                          m_sourcePadding[0],                                   0, "Horizontal source padding for conformance window mode 2")
+  ("VerticalPadding,-pdy",                            m_sourcePadding[1],                                   0, "Vertical source padding for conformance window mode 2")
   ("ConfWinLeft",                                     m_confWinLeft,                                        0, "Left offset for window conformance mode 3")
   ("ConfWinRight",                                    m_confWinRight,                                       0, "Right offset for window conformance mode 3")
   ("ConfWinTop",                                      m_confWinTop,                                         0, "Top offset for window conformance mode 3")
@@ -1374,8 +1369,8 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   /*
    * Set any derived parameters
    */
-  m_inputFileWidth  = m_iSourceWidth;
-  m_inputFileHeight = m_iSourceHeight;
+  m_inputFileWidth  = m_sourceWidth;
+  m_inputFileHeight = m_sourceHeight;
 
   if (!inputPathPrefix.empty() && inputPathPrefix.back() != '/' && inputPathPrefix.back() != '\\' )
   {
@@ -1388,9 +1383,9 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   if(m_isField)
   {
     //Frame height
-    m_iSourceHeightOrg = m_iSourceHeight;
+    m_sourceHeightOrg = m_sourceHeight;
     //Field height
-    m_iSourceHeight = m_iSourceHeight >> 1;
+    m_sourceHeight = m_sourceHeight >> 1;
     //number of fields to encode
     m_framesToBeEncoded *= 2;
   }
@@ -1663,8 +1658,11 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
       break;
   }
 
-
   m_inputColourSpaceConvert = stringToInputColourSpaceConvert(inputColourSpaceConvert, true);
+
+  // Picture width and height must be multiples of 8 and minCuSize
+  const Int minCuSize = m_uiMaxCUHeight >> (m_uiMaxCUDepth - 1);
+  const Int minResolutionMultiple = std::max(8, minCuSize);
 
   switch (m_conformanceWindowMode)
   {
@@ -1672,47 +1670,54 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
     {
       // no conformance or padding
       m_confWinLeft = m_confWinRight = m_confWinTop = m_confWinBottom = 0;
-      m_aiPad[1] = m_aiPad[0] = 0;
+      m_sourcePadding[1] = m_sourcePadding[0] = 0;
       break;
     }
   case 1:
     {
       // automatic padding to minimum CU size
-      Int minCuSize = m_uiMaxCUHeight >> (m_uiMaxCUDepth - 1);
-      if (m_iSourceWidth % minCuSize)
+      if (m_sourceWidth % minResolutionMultiple)
       {
-        m_aiPad[0] = m_confWinRight  = ((m_iSourceWidth / minCuSize) + 1) * minCuSize - m_iSourceWidth;
-        m_iSourceWidth  += m_confWinRight;
+        m_sourcePadding[0] = m_confWinRight  = ((m_sourceWidth / minResolutionMultiple) + 1) * minResolutionMultiple - m_sourceWidth;
+        m_sourceWidth  += m_confWinRight;
       }
-      if (m_iSourceHeight % minCuSize)
+      if (m_sourceHeight % minResolutionMultiple)
       {
-        m_aiPad[1] = m_confWinBottom = ((m_iSourceHeight / minCuSize) + 1) * minCuSize - m_iSourceHeight;
-        m_iSourceHeight += m_confWinBottom;
+        m_sourcePadding[1] = m_confWinBottom = ((m_sourceHeight / minResolutionMultiple) + 1) * minResolutionMultiple - m_sourceHeight;
+        m_sourceHeight += m_confWinBottom;
         if ( m_isField )
         {
-          m_iSourceHeightOrg += m_confWinBottom << 1;
-          m_aiPad[1] = m_confWinBottom << 1;
+          m_sourceHeightOrg += m_confWinBottom << 1;
+          m_sourcePadding[1] = m_confWinBottom << 1;
         }
       }
-      if (m_aiPad[0] % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0)
+      if (m_sourcePadding[0] % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0)
       {
         fprintf(stderr, "Error: picture width is not an integer multiple of the specified chroma subsampling\n");
         exit(EXIT_FAILURE);
       }
-      if (m_aiPad[1] % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0)
+      if (m_sourcePadding[1] % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0)
       {
         fprintf(stderr, "Error: picture height is not an integer multiple of the specified chroma subsampling\n");
         exit(EXIT_FAILURE);
+      }
+      if (m_sourcePadding[0])
+      {
+        fprintf(stderr, "Info: Conformance window automatically enabled. Adding %i lumal pel horizontally\n", m_sourcePadding[0]);
+      }
+      if (m_sourcePadding[1])
+      {
+        fprintf(stderr, "Info: Conformance window automatically enabled. Adding %i lumal pel vertically\n", m_sourcePadding[1]);
       }
       break;
     }
   case 2:
     {
       //padding
-      m_iSourceWidth  += m_aiPad[0];
-      m_iSourceHeight += m_aiPad[1];
-      m_confWinRight  = m_aiPad[0];
-      m_confWinBottom = m_aiPad[1];
+      m_sourceWidth  += m_sourcePadding[0];
+      m_sourceHeight += m_sourcePadding[1];
+      m_confWinRight  = m_sourcePadding[0];
+      m_confWinBottom = m_sourcePadding[1];
       break;
     }
   case 3:
@@ -1722,13 +1727,18 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
       {
         fprintf(stderr, "Warning: Conformance window enabled, but all conformance window parameters set to zero\n");
       }
-      if ((m_aiPad[1] != 0) || (m_aiPad[0]!=0))
+      if ((m_sourcePadding[1] != 0) || (m_sourcePadding[0]!=0))
       {
         fprintf(stderr, "Warning: Conformance window enabled, padding parameters will be ignored\n");
       }
-      m_aiPad[1] = m_aiPad[0] = 0;
+      m_sourcePadding[1] = m_sourcePadding[0] = 0;
       break;
     }
+  }
+  if ((m_sourceWidth% minResolutionMultiple) || (m_sourceHeight % minResolutionMultiple))
+  {
+    fprintf(stderr, "Picture width or height (after padding) is not a multiple of 8 or minCuSize, please use ConformanceWindowMode=1 for automatic adjustment or ConformanceWindowMode=2 to specify padding manually!\n");
+    exit(EXIT_FAILURE);
   }
 
   if (tmpSliceMode<0 || tmpSliceMode>=Int(NUMBER_OF_SLICE_CONSTRAINT_MODES))
@@ -2000,8 +2010,8 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
       info.m_fisheyeSceneRadius                     = cfg_fviSEIFisheyeSceneRadius.values[i];
 
       // check rectangular region is within the conformance window.
-      if ( (!( info.m_fisheyeRectRegionHeight >= 1 && m_confWinTop  <= info.m_fisheyeRectRegionTop  && info.m_fisheyeRectRegionTop  + info.m_fisheyeRectRegionHeight < m_iSourceHeight -m_confWinBottom ) ) ||
-           (!( info.m_fisheyeRectRegionWidth  >= 1 && m_confWinLeft <= info.m_fisheyeRectRegionLeft && info.m_fisheyeRectRegionLeft + info.m_fisheyeRectRegionWidth  < m_iSourceWidth  -m_confWinRight  ) ) )
+      if ( (!( info.m_fisheyeRectRegionHeight >= 1 && m_confWinTop  <= info.m_fisheyeRectRegionTop  && info.m_fisheyeRectRegionTop  + info.m_fisheyeRectRegionHeight < m_sourceHeight -m_confWinBottom ) ) ||
+           (!( info.m_fisheyeRectRegionWidth  >= 1 && m_confWinLeft <= info.m_fisheyeRectRegionLeft && info.m_fisheyeRectRegionLeft + info.m_fisheyeRectRegionWidth  < m_sourceWidth  -m_confWinRight  ) ) )
       {
         fprintf(stderr, "Fisheye region is not within visible area\n");
         exit (EXIT_FAILURE);
@@ -2357,8 +2367,8 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara( (m_uiMaxCUHeight >> m_uiMaxCUDepth) < 4,                                    "Minimum partition height size should be larger than or equal to 8");
   xConfirmPara( m_uiMaxCUWidth < 16,                                                        "Maximum partition width size should be larger than or equal to 16");
   xConfirmPara( m_uiMaxCUHeight < 16,                                                       "Maximum partition height size should be larger than or equal to 16");
-  xConfirmPara( (m_iSourceWidth  % (m_uiMaxCUWidth  >> (m_uiMaxCUDepth-1)))!=0,             "Resulting coded frame width must be a multiple of the minimum CU size");
-  xConfirmPara( (m_iSourceHeight % (m_uiMaxCUHeight >> (m_uiMaxCUDepth-1)))!=0,             "Resulting coded frame height must be a multiple of the minimum CU size");
+  xConfirmPara( (m_sourceWidth  % (m_uiMaxCUWidth  >> (m_uiMaxCUDepth-1)))!=0,             "Resulting coded frame width must be a multiple of the minimum CU size");
+  xConfirmPara( (m_sourceHeight % (m_uiMaxCUHeight >> (m_uiMaxCUDepth-1)))!=0,             "Resulting coded frame height must be a multiple of the minimum CU size");
 
   xConfirmPara( m_uiQuadtreeTULog2MinSize < 2,                                        "QuadtreeTULog2MinSize must be 2 or greater.");
   xConfirmPara( m_uiQuadtreeTULog2MaxSize > 5,                                        "QuadtreeTULog2MaxSize must be 5 or smaller.");
@@ -2406,11 +2416,11 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara( tileFlag && m_entropyCodingSyncEnabledFlag, "Tiles and entropy-coding-sync (Wavefronts) can not be applied together, except in the High Throughput Intra 4:4:4 16 profile");
   }
 
-  xConfirmPara( m_iSourceWidth  % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0, "Picture width must be an integer multiple of the specified chroma subsampling");
-  xConfirmPara( m_iSourceHeight % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0, "Picture height must be an integer multiple of the specified chroma subsampling");
+  xConfirmPara( m_sourceWidth  % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0, "Picture width must be an integer multiple of the specified chroma subsampling");
+  xConfirmPara( m_sourceHeight % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0, "Picture height must be an integer multiple of the specified chroma subsampling");
 
-  xConfirmPara( m_aiPad[0] % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0, "Horizontal padding must be an integer multiple of the specified chroma subsampling");
-  xConfirmPara( m_aiPad[1] % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0, "Vertical padding must be an integer multiple of the specified chroma subsampling");
+  xConfirmPara( m_sourcePadding[0] % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0, "Horizontal padding must be an integer multiple of the specified chroma subsampling");
+  xConfirmPara( m_sourcePadding[1] % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0, "Vertical padding must be an integer multiple of the specified chroma subsampling");
 
   xConfirmPara( m_confWinLeft   % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0, "Left conformance window offset must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_confWinRight  % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0, "Right conformance window offset must be an integer multiple of the specified chroma subsampling");
@@ -2777,7 +2787,7 @@ Void TAppEncCfg::xCheckParameter()
 
 #if DPB_ENCODER_USAGE_CHECK
   // Check DPB Usage:
-  Int dpbSize=profileLevelTierFeatures.getMaxDPBNumFrames(m_iSourceWidth*m_iSourceHeight);
+  Int dpbSize=profileLevelTierFeatures.getMaxDPBNumFrames(m_sourceWidth*m_sourceHeight);
   if (dpbSize!=-1)
   {
     Int dpbUsage=xDPBUsage(0);
@@ -2792,13 +2802,13 @@ Void TAppEncCfg::xCheckParameter()
 
   if(m_vuiParametersPresentFlag && m_bitstreamRestrictionFlag)
   {
-    Int PicSizeInSamplesY =  m_iSourceWidth * m_iSourceHeight;
+    Int PicSizeInSamplesY =  m_sourceWidth * m_sourceHeight;
     if(tileFlag)
     {
       Int maxTileWidth = 0;
       Int maxTileHeight = 0;
-      Int widthInCU = (m_iSourceWidth % m_uiMaxCUWidth) ? m_iSourceWidth/m_uiMaxCUWidth + 1: m_iSourceWidth/m_uiMaxCUWidth;
-      Int heightInCU = (m_iSourceHeight % m_uiMaxCUHeight) ? m_iSourceHeight/m_uiMaxCUHeight + 1: m_iSourceHeight/m_uiMaxCUHeight;
+      Int widthInCU = (m_sourceWidth % m_uiMaxCUWidth) ? m_sourceWidth/m_uiMaxCUWidth + 1: m_sourceWidth/m_uiMaxCUWidth;
+      Int heightInCU = (m_sourceHeight % m_uiMaxCUHeight) ? m_sourceHeight/m_uiMaxCUHeight + 1: m_sourceHeight/m_uiMaxCUHeight;
       if(m_tileUniformSpacingFlag)
       {
         maxTileWidth = m_uiMaxCUWidth*((widthInCU+m_numTileColumnsMinus1)/(m_numTileColumnsMinus1+1));
@@ -2807,20 +2817,20 @@ Void TAppEncCfg::xCheckParameter()
         // the maxTileHeight becomes smaller if the last row of treeblocks has lower height than the others
         if(!((heightInCU-1)%(m_numTileRowsMinus1+1)))
         {
-          maxTileHeight = maxTileHeight - m_uiMaxCUHeight + (m_iSourceHeight % m_uiMaxCUHeight);
+          maxTileHeight = maxTileHeight - m_uiMaxCUHeight + (m_sourceHeight % m_uiMaxCUHeight);
         }
         // if only the last tile-column is one treeblock wider than the others
         // the maxTileWidth becomes smaller if the last column of treeblocks has lower width than the others
         if(!((widthInCU-1)%(m_numTileColumnsMinus1+1)))
         {
-          maxTileWidth = maxTileWidth - m_uiMaxCUWidth + (m_iSourceWidth % m_uiMaxCUWidth);
+          maxTileWidth = maxTileWidth - m_uiMaxCUWidth + (m_sourceWidth % m_uiMaxCUWidth);
         }
       }
       else // not uniform spacing
       {
         if(m_numTileColumnsMinus1<1)
         {
-          maxTileWidth = m_iSourceWidth;
+          maxTileWidth = m_sourceWidth;
         }
         else
         {
@@ -2834,7 +2844,7 @@ Void TAppEncCfg::xCheckParameter()
         }
         if(m_numTileRowsMinus1<1)
         {
-          maxTileHeight = m_iSourceHeight;
+          maxTileHeight = m_sourceHeight;
         }
         else
         {
@@ -2852,7 +2862,7 @@ Void TAppEncCfg::xCheckParameter()
     }
     else if(m_entropyCodingSyncEnabledFlag)
     {
-      m_minSpatialSegmentationIdc = 4*PicSizeInSamplesY/((2*m_iSourceHeight+m_iSourceWidth)*m_uiMaxCUHeight)-4;
+      m_minSpatialSegmentationIdc = 4*PicSizeInSamplesY/((2*m_sourceHeight+m_sourceWidth)*m_uiMaxCUHeight)-4;
     }
     else if(m_sliceMode == FIXED_NUMBER_OF_CTU)
     {
@@ -3130,8 +3140,8 @@ Void TAppEncCfg::xPrintParameter()
   printf("Input          File                    : %s\n", m_inputFileName.c_str()          );
   printf("Bitstream      File                    : %s\n", m_bitstreamFileName.c_str()      );
   printf("Reconstruction File                    : %s\n", m_reconFileName.c_str()          );
-  printf("Real     Format                        : %dx%d %gHz\n", m_iSourceWidth - m_confWinLeft - m_confWinRight, m_iSourceHeight - m_confWinTop - m_confWinBottom, (Double)m_iFrameRate/m_temporalSubsampleRatio );
-  printf("Internal Format                        : %dx%d %gHz\n", m_iSourceWidth, m_iSourceHeight, (Double)m_iFrameRate/m_temporalSubsampleRatio );
+  printf("Real     Format                        : %dx%d %gHz\n", m_sourceWidth - m_confWinLeft - m_confWinRight, m_sourceHeight - m_confWinTop - m_confWinBottom, (Double)m_iFrameRate/m_temporalSubsampleRatio );
+  printf("Internal Format                        : %dx%d %gHz\n", m_sourceWidth, m_sourceHeight, (Double)m_iFrameRate/m_temporalSubsampleRatio );
   printf("Sequence PSNR output                   : %s\n", (m_printMSEBasedSequencePSNR ? "Linear average, MSE-based" : "Linear average only") );
   printf("Sequence MSE output                    : %s\n", (m_printSequenceMSE ? "Enabled" : "Disabled") );
   printf("Frame MSE output                       : %s\n", (m_printFrameMSE    ? "Enabled" : "Disabled") );
@@ -3321,7 +3331,7 @@ Void TAppEncCfg::xPrintParameter()
   printf("WPP:%d ", (Int)m_useWeightedPred);
   printf("WPB:%d ", (Int)m_useWeightedBiPred);
   printf("PME:%d ", m_log2ParallelMergeLevel);
-  const Int iWaveFrontSubstreams = m_entropyCodingSyncEnabledFlag ? (m_iSourceHeight + m_uiMaxCUHeight - 1) / m_uiMaxCUHeight : 1;
+  const Int iWaveFrontSubstreams = m_entropyCodingSyncEnabledFlag ? (m_sourceHeight + m_uiMaxCUHeight - 1) / m_uiMaxCUHeight : 1;
   printf(" WaveFrontSynchro:%d WaveFrontSubstreams:%d", m_entropyCodingSyncEnabledFlag?1:0, iWaveFrontSubstreams);
   printf(" ScalingList:%d ", m_useScalingListId );
   printf("TMVPMode:%d ", m_TMVPModeId     );
