@@ -180,6 +180,14 @@ protected:
 #if ADAPTIVE_QP_SELECTION
   Bool      m_bUseAdaptQpSelect;
 #endif
+#if JVET_V0078
+  Bool      m_bSmoothQPReductionEnable;
+  Double    m_dSmoothQPReductionThreshold;
+  Double    m_dSmoothQPReductionModelScale;
+  Double    m_dSmoothQPReductionModelOffset;
+  Int       m_iSmoothQPReductionPeriodicity;
+  Int       m_iSmoothQPReductionLimit;
+#endif
   TComSEIMasteringDisplay m_masteringDisplay;
 
   Bool      m_bUseAdaptiveQP;                                 ///< Flag for enabling QP adaptation based on a psycho-visual model

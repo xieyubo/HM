@@ -219,6 +219,9 @@ Void TEncCu::init( TEncTop* pcEncTop )
   m_pcRateCtrl         = pcEncTop->getRateCtrl();
   m_lumaQPOffset       = 0;
   initLumaDeltaQpLUT();
+#if JVET_V0078
+  m_smoothQPoffset     = 0;
+#endif
 }
 
 // ====================================================================================================================
@@ -355,6 +358,86 @@ Int TEncCu::calculateLumaDQP(TComDataCU *pCU, const UInt absPartIdx, const TComY
   return QP;
 }
 
+#if JVET_V0078
+int TEncCu::calculateLumaDQPsmooth(TComDataCU *pCU, const UInt absPartIdx, const TComYuv * pOrgYuv, Int iBaseQP)
+{
+  const Pel *pY = pOrgYuv->getAddr(COMPONENT_Y, absPartIdx);
+  const Int stride = pOrgYuv->getStride(COMPONENT_Y);
+  Double avg = 0;
+  Double diff = 0;
+  Int width = pCU->getWidth(absPartIdx);
+  Int height = pCU->getHeight(absPartIdx);
+  Double thr = (Double)m_pcEncCfg->getSmoothQPReductionThreshold()*height*width;
+  Int iQP = 0;
+  if (height == 64 && width == 64)
+  {
+    Int sum = 0;
+    for (Int y = 0; y < height; y++)
+    {
+      for (Int x = 0; x < width; x++)
+      {
+        sum += pY[x];
+      }
+      pY += stride;
+    }
+    avg = (Double)sum;
+
+    // determine parameters for 1+x+y+x*x+y*y model
+    const Int numBasis = 6;
+    Double invb[numBasis][numBasis] = { {0.001*0.244140625000000,                   0,                   0,                   0,                   0,                   0},
+                                        {0,   0.001*0.013204564833946,   0.001*0.002080251479290, -0.001*0.000066039729501, -0.001*0.000165220364313,   0.000000000000000},
+                                        {0,   0.001*0.002080251479290,   0.001*0.013204564833946, -0.001*0.000066039729501,   0.000000000000000, -0.001*0.000165220364313},
+                                        {0, -0.001*0.000066039729501, -0.001*0.000066039729501,   0.001*0.000002096499349, 0.000000000000000, 0.000000000000000},
+                                        {0, -0.001*0.000165220364313,   0.000000000000000, 0.000000000000000,   0.001*0.000002622545465, 0.000000000000000},
+                                        {0,   0.000000000000000, -0.001*0.000165220364313, 0.000000000000000, 0.000000000000000,   0.001*0.000002622545465} };
+    Double boffset[5] = { -31.5, -31.5, -992.25, -1333.5, -1333.5 };
+
+    Double b1sum = avg;
+    Double b2sum = 0.0;
+    Double b3sum = 0.0;
+    Double b4sum = 0.0;
+    Double b5sum = 0.0;;
+    Double b6sum = 0.0;;
+
+    const Pel *pY1 = pOrgYuv->getAddr(COMPONENT_Y, absPartIdx);
+    for (uint32_t y = 0; y < height; y++)
+    {
+      for (uint32_t x = 0; x < width; x++)
+      {
+        b2sum += ((Double)pY1[x])*((Double)x + boffset[0]);
+        b3sum += ((Double)pY1[x])*((Double)y + boffset[1]);
+        b4sum += ((Double)pY1[x])*((Double)x*(Double)y + boffset[2]);
+        b5sum += ((double)pY1[x])*((Double)x*(Double)x + boffset[3]);
+        b6sum += ((double)pY1[x])*((Double)y*(Double)y + boffset[4]);
+      }
+      pY1 += stride;
+    }
+
+    Double r[numBasis];
+    for (uint32_t b = 0; b < numBasis; b++)
+    {
+      r[b] = invb[b][0] * b1sum + invb[b][1] * b2sum + invb[b][2] * b3sum + invb[b][3] * b4sum + invb[b][4] * b5sum + invb[b][5] * b6sum;
+    }
+
+    // compute SAD for model
+    const Pel *pY2 = pOrgYuv->getAddr(COMPONENT_Y, absPartIdx);
+    for (uint32_t y = 0; y < height; y++)
+    {
+      for (uint32_t x = 0; x < width; x++)
+      {
+        diff += abs((Int)pY2[x] - (Int)(r[0] + r[1] * ((Double)x + boffset[0]) + r[2] * ((Double)y + boffset[1]) + r[3] * ((Double)x*(Double)y + boffset[2]) + r[4] * ((Double)x*(Double)x + boffset[3]) + r[5] * ((Double)y*(Double)y + boffset[4])));
+      }
+      pY2 += stride;
+    }
+    if (diff < thr)
+    {
+      iQP = std::max(m_pcEncCfg->getSmoothQPReductionLimit(), std::min(0, (int)(m_pcEncCfg->getSmoothQPReductionModelScale()*(double)iBaseQP + m_pcEncCfg->getSmoothQPReductionModelOffset())));
+    }
+  }
+  return iQP;
+}
+#endif
+
 //! Derive small set of test modes for AMP encoder speed-up
 #if AMP_ENC_SPEEDUP
 #if AMP_MRG
@@ -489,6 +572,47 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, const 
     iMaxQP = iMinQP; // force encode choose the modified QO
   }
 
+#if JVET_V0078
+  if (m_pcEncCfg->getSmoothQPReductionEnable())
+  {
+    if (uiDepth <= pps.getMaxCuDQPDepth())
+    {
+      m_smoothQPoffset = 0;
+
+      // enable smooth QP reduction on selected frames
+      bool checkSmoothQP = false;
+      if (m_pcEncCfg->getSmoothQPReductionPeriodicity() != 0)
+      {
+        checkSmoothQP = ((m_pcEncCfg->getSmoothQPReductionPeriodicity() == 0) && rpcTempCU->getSlice()->isIntra()) || (m_pcEncCfg->getSmoothQPReductionPeriodicity() == 1) || ((rpcTempCU->getSlice()->getPOC() % m_pcEncCfg->getSmoothQPReductionPeriodicity()) == 0);
+      }
+      else
+      {
+        checkSmoothQP = ((m_pcEncCfg->getSmoothQPReductionPeriodicity() == 0) && rpcTempCU->getSlice()->isIntra());
+      }
+      if (checkSmoothQP)
+      {
+        if (m_pcEncCfg->getLumaLevelToDeltaQPMapping().isEnabled())
+        {
+          m_smoothQPoffset = calculateLumaDQPsmooth(rpcTempCU, 0, m_ppcOrigYuv[uiDepth], iBaseQP - m_lumaQPOffset);
+        }
+        else
+        {
+          m_smoothQPoffset = calculateLumaDQPsmooth(rpcTempCU, 0, m_ppcOrigYuv[uiDepth], iBaseQP);
+        }
+      }
+    }
+    if (m_pcEncCfg->getLumaLevelToDeltaQPMapping().isEnabled())
+    {
+      iMinQP = Clip3(-sps.getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, iBaseQP - m_lumaQPOffset + m_smoothQPoffset);
+    }
+    else
+    {
+      iMinQP = Clip3(-sps.getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, iBaseQP + m_smoothQPoffset);
+    }
+    iMaxQP = iMinQP; // force encode choose the modified QO
+  }
+#endif
+
   if ( m_pcEncCfg->getUseRateCtrl() )
   {
     iMinQP = m_pcRateCtrl->getRCQP();
@@ -523,7 +647,11 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, const 
       {
         iQP = lowestQP;
       }
-      if ( m_pcEncCfg->getLumaLevelToDeltaQPMapping().isEnabled() && uiDepth <= pps.getMaxCuDQPDepth() )
+#if JVET_V0078
+	  if ((m_pcEncCfg->getLumaLevelToDeltaQPMapping().isEnabled() || m_pcEncCfg->getSmoothQPReductionEnable()) && uiDepth <= pps.getMaxCuDQPDepth())
+#else
+	  if ( m_pcEncCfg->getLumaLevelToDeltaQPMapping().isEnabled() && uiDepth <= pps.getMaxCuDQPDepth() )
+#endif
       {
         getSliceEncoder()->updateLambda(pcSlice, iQP);
       }
@@ -890,7 +1018,11 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, const 
 
           rpcTempCU->copyPartFrom( pcSubBestPartCU, uiPartUnitIdx, uhNextDepth );         // Keep best part data to current temporary data.
           xCopyYuv2Tmp( pcSubBestPartCU->getTotalNumPart()*uiPartUnitIdx, uhNextDepth );
-          if ( m_pcEncCfg->getLumaLevelToDeltaQPMapping().isEnabled() && pps.getMaxCuDQPDepth() >= 1 )
+#if JVET_V0078
+		  if ((m_pcEncCfg->getLumaLevelToDeltaQPMapping().isEnabled() || m_pcEncCfg->getSmoothQPReductionEnable()) && pps.getMaxCuDQPDepth() >= 1)
+#else
+		  if ( m_pcEncCfg->getLumaLevelToDeltaQPMapping().isEnabled() && pps.getMaxCuDQPDepth() >= 1 )
+#endif
           {
             splitTotalCost += pcSubBestPartCU->getTotalCost();
           }
@@ -907,7 +1039,11 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, const 
       {
         m_pcEntropyCoder->resetBits();
         m_pcEntropyCoder->encodeSplitFlag( rpcTempCU, 0, uiDepth, true );
-        if ( m_pcEncCfg->getLumaLevelToDeltaQPMapping().isEnabled() && pps.getMaxCuDQPDepth() >= 1 )
+#if JVET_V0078
+		if ((m_pcEncCfg->getLumaLevelToDeltaQPMapping().isEnabled() || m_pcEncCfg->getSmoothQPReductionEnable()) && pps.getMaxCuDQPDepth() >= 1)
+#else
+		if ( m_pcEncCfg->getLumaLevelToDeltaQPMapping().isEnabled() && pps.getMaxCuDQPDepth() >= 1 )
+#endif
         {
           Int splitBits = m_pcEntropyCoder->getNumberOfWrittenBits();
           Double splitBitCost = m_pcRdCost->calcRdCost( splitBits, 0 );
@@ -918,7 +1054,11 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, const 
         rpcTempCU->getTotalBins() += ((TEncBinCABAC *)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
       }
 
-      if ( m_pcEncCfg->getLumaLevelToDeltaQPMapping().isEnabled() && pps.getMaxCuDQPDepth() >= 1 )
+#if JVET_V0078
+	  if ((m_pcEncCfg->getLumaLevelToDeltaQPMapping().isEnabled() || m_pcEncCfg->getSmoothQPReductionEnable()) && pps.getMaxCuDQPDepth() >= 1)
+#else
+	  if ( m_pcEncCfg->getLumaLevelToDeltaQPMapping().isEnabled() && pps.getMaxCuDQPDepth() >= 1 )
+#endif
       {
         rpcTempCU->getTotalCost() = splitTotalCost;
       }

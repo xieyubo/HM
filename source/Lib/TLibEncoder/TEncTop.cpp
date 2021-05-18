@@ -922,6 +922,13 @@ Void TEncTop::xInitPPS(TComPPS &pps, const TComSPS &sps)
     bUseDQP = true;
   }
 
+#if JVET_V0078
+  if (getSmoothQPReductionEnable())
+  {
+	  bUseDQP = true;
+  }
+#endif
+
   if (m_costMode==COST_SEQUENCE_LEVEL_LOSSLESS || m_costMode==COST_LOSSLESS_CODING)
   {
     bUseDQP=false;
@@ -1415,7 +1422,11 @@ Int TEncCfg::getQPForPicture(const UInt gopIndex, const TComSlice *pSlice) const
     else
     {
       // Only adjust QP when not lossless
+#if JVET_V0078
+      if (!((getMaxDeltaQP() == 0) && (!getLumaLevelToDeltaQPMapping().isEnabled()) && (!getSmoothQPReductionEnable()) && (qp == -lumaQpBDOffset) && (pSlice->getPPS()->getTransquantBypassEnabledFlag())))
+#else
       if (!(( getMaxDeltaQP() == 0 ) && (!getLumaLevelToDeltaQPMapping().isEnabled()) && (qp == -lumaQpBDOffset ) && (pSlice->getPPS()->getTransquantBypassEnabledFlag())))
+#endif
       {
         const GOPEntry &gopEntry=getGOPEntry(gopIndex);
         // adjust QP according to the QP offset for the GOP entry.

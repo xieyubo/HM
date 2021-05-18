@@ -184,6 +184,14 @@ Void TAppEncTop::xInitLibCfg()
 #if ADAPTIVE_QP_SELECTION
   m_cTEncTop.setUseAdaptQpSelect                                  ( m_bUseAdaptQpSelect   );
 #endif
+#if  JVET_V0078
+  m_cTEncTop.setSmoothQPReductionEnable                           (m_bSmoothQPReductionEnable);
+  m_cTEncTop.setSmoothQPReductionThreshold                        (m_dSmoothQPReductionThreshold);
+  m_cTEncTop.setSmoothQPReductionModelScale                       (m_dSmoothQPReductionModelScale);
+  m_cTEncTop.setSmoothQPReductionModelOffset                      (m_dSmoothQPReductionModelOffset);
+  m_cTEncTop.setSmoothQPReductionLimit                            (m_iSmoothQPReductionLimit);
+  m_cTEncTop.setSmoothQPReductionPeriodicity                      (m_iSmoothQPReductionPeriodicity);
+#endif
 
   m_cTEncTop.setUseAdaptiveQP                                     ( m_bUseAdaptiveQP  );
   m_cTEncTop.setQPAdaptationRange                                 ( m_iQPAdaptationRange );
