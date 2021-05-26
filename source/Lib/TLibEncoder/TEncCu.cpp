@@ -400,9 +400,9 @@ Int TEncCu::calculateLumaDQPsmooth(TComDataCU *pCU, const UInt absPartIdx, const
     Double b6sum = 0.0;;
 
     const Pel *pY1 = pOrgYuv->getAddr(COMPONENT_Y, absPartIdx);
-    for (uint32_t y = 0; y < height; y++)
+    for (Int y = 0; y < height; y++)
     {
-      for (uint32_t x = 0; x < width; x++)
+      for (Int x = 0; x < width; x++)
       {
         b2sum += ((Double)pY1[x])*((Double)x + boffset[0]);
         b3sum += ((Double)pY1[x])*((Double)y + boffset[1]);
@@ -414,16 +414,16 @@ Int TEncCu::calculateLumaDQPsmooth(TComDataCU *pCU, const UInt absPartIdx, const
     }
 
     Double r[numBasis];
-    for (uint32_t b = 0; b < numBasis; b++)
+    for (Int b = 0; b < numBasis; b++)
     {
       r[b] = invb[b][0] * b1sum + invb[b][1] * b2sum + invb[b][2] * b3sum + invb[b][3] * b4sum + invb[b][4] * b5sum + invb[b][5] * b6sum;
     }
 
     // compute SAD for model
     const Pel *pY2 = pOrgYuv->getAddr(COMPONENT_Y, absPartIdx);
-    for (uint32_t y = 0; y < height; y++)
+    for (Int y = 0; y < height; y++)
     {
-      for (uint32_t x = 0; x < width; x++)
+      for (Int x = 0; x < width; x++)
       {
         diff += abs((Int)pY2[x] - (Int)(r[0] + r[1] * ((Double)x + boffset[0]) + r[2] * ((Double)y + boffset[1]) + r[3] * ((Double)x*(Double)y + boffset[2]) + r[4] * ((Double)x*(Double)x + boffset[3]) + r[5] * ((Double)y*(Double)y + boffset[4])));
       }
