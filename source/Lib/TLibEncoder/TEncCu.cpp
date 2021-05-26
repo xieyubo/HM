@@ -359,7 +359,7 @@ Int TEncCu::calculateLumaDQP(TComDataCU *pCU, const UInt absPartIdx, const TComY
 }
 
 #if JVET_V0078
-int TEncCu::calculateLumaDQPsmooth(TComDataCU *pCU, const UInt absPartIdx, const TComYuv * pOrgYuv, Int iBaseQP)
+Int TEncCu::calculateLumaDQPsmooth(TComDataCU *pCU, const UInt absPartIdx, const TComYuv * pOrgYuv, Int iBaseQP)
 {
   const Pel *pY = pOrgYuv->getAddr(COMPONENT_Y, absPartIdx);
   const Int stride = pOrgYuv->getStride(COMPONENT_Y);
@@ -407,8 +407,8 @@ int TEncCu::calculateLumaDQPsmooth(TComDataCU *pCU, const UInt absPartIdx, const
         b2sum += ((Double)pY1[x])*((Double)x + boffset[0]);
         b3sum += ((Double)pY1[x])*((Double)y + boffset[1]);
         b4sum += ((Double)pY1[x])*((Double)x*(Double)y + boffset[2]);
-        b5sum += ((double)pY1[x])*((Double)x*(Double)x + boffset[3]);
-        b6sum += ((double)pY1[x])*((Double)y*(Double)y + boffset[4]);
+        b5sum += ((Double)pY1[x])*((Double)x*(Double)x + boffset[3]);
+        b6sum += ((Double)pY1[x])*((Double)y*(Double)y + boffset[4]);
       }
       pY1 += stride;
     }
@@ -431,7 +431,7 @@ int TEncCu::calculateLumaDQPsmooth(TComDataCU *pCU, const UInt absPartIdx, const
     }
     if (diff < thr)
     {
-      iQP = std::max(m_pcEncCfg->getSmoothQPReductionLimit(), std::min(0, (int)(m_pcEncCfg->getSmoothQPReductionModelScale()*(double)iBaseQP + m_pcEncCfg->getSmoothQPReductionModelOffset())));
+      iQP = std::max(m_pcEncCfg->getSmoothQPReductionLimit(), std::min(0, (Int)(m_pcEncCfg->getSmoothQPReductionModelScale()*(Double)iBaseQP + m_pcEncCfg->getSmoothQPReductionModelOffset())));
     }
   }
   return iQP;
