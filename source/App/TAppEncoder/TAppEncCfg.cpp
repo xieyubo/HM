@@ -930,6 +930,14 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
 #if ADAPTIVE_QP_SELECTION
   ("AdaptiveQpSelection,-aqps",                       m_bUseAdaptQpSelect,                              false, "AdaptiveQpSelection")
 #endif
+#if JVET_V0078
+  ("SmoothQPReductionEnable",                         m_bSmoothQPReductionEnable,                       false, "Enable QP reduction for smooth blocks according to: Clip3(SmoothQPReductionLimit, 0, SmoothQPReductionModelScale*baseQP+SmoothQPReductionModelOffset)")
+  ("SmoothQPReductionThreshold",                      m_dSmoothQPReductionThreshold,                      3.0, "Threshold parameter for smoothness (SmoothQPReductionThreshold * number of samples in block)")
+  ("SmoothQPReductionModelScale",                     m_dSmoothQPReductionModelScale,                    -1.0, "Scale parameter of the QP reduction model")
+  ("SmoothQPReductionModelOffset",                    m_dSmoothQPReductionModelOffset,                   27.0, "Offset parameter of the QP reduction model")
+  ("SmoothQPReductionLimit",                          m_iSmoothQPReductionLimit,                          -16, "Threshold parameter for controlling maximum amount of QP reduction by the QP reduction model")
+  ("SmoothQPReductionPeriodicity",                    m_iSmoothQPReductionPeriodicity,                      1, "Periodicity parameter of the QP reduction model, 1: all frames, 0: only intra pictures, 2: every second frame, etc")
+#endif
 
   ("AdaptiveQP,-aq",                                  m_bUseAdaptiveQP,                                 false, "QP adaptation based on a psycho-visual model")
   ("MaxQPAdaptationRange,-aqr",                       m_iQPAdaptationRange,                                 6, "QP adaptation range")

@@ -268,6 +268,14 @@ protected:
   Int*      m_aidQP;
   UInt      m_uiDeltaQpRD;
   Bool      m_bFastDeltaQP;
+#if JVET_V0078
+  Bool      m_bSmoothQPReductionEnable;
+  Double    m_dSmoothQPReductionThreshold;
+  Double    m_dSmoothQPReductionModelScale;
+  Double    m_dSmoothQPReductionModelOffset;
+  Int       m_iSmoothQPReductionLimit;
+  Int       m_iSmoothQPReductionPeriodicity;
+#endif
 
   Bool      m_bUseConstrainedIntraPred;
   Bool      m_bFastUDIUseMPMEnabled;
@@ -660,6 +668,21 @@ public:
 #if ADAPTIVE_QP_SELECTION
   Void      setUseAdaptQpSelect             ( Bool   i ) { m_bUseAdaptQpSelect    = i; }
   Bool      getUseAdaptQpSelect             ()           { return   m_bUseAdaptQpSelect; }
+#endif
+
+#if JVET_V0078
+  Bool      getSmoothQPReductionEnable       () const        { return m_bSmoothQPReductionEnable; }
+  void      setSmoothQPReductionEnable       (Bool value)    { m_bSmoothQPReductionEnable = value; }
+  Double    getSmoothQPReductionThreshold    () const        { return m_dSmoothQPReductionThreshold; }
+  void      setSmoothQPReductionThreshold    (Double value)  { m_dSmoothQPReductionThreshold = value; }
+  Double    getSmoothQPReductionModelScale   () const        { return m_dSmoothQPReductionModelScale; }
+  void      setSmoothQPReductionModelScale   (Double value)  { m_dSmoothQPReductionModelScale = value; }
+  Double    getSmoothQPReductionModelOffset  () const        { return m_dSmoothQPReductionModelOffset; }
+  void      setSmoothQPReductionModelOffset  (Double value)  { m_dSmoothQPReductionModelOffset = value; }
+  Int       getSmoothQPReductionLimit        ()              const { return m_iSmoothQPReductionLimit; }
+  void      setSmoothQPReductionLimit        (Int value)     { m_iSmoothQPReductionLimit = value; }
+  Int       getSmoothQPReductionPeriodicity  ()  const       { return m_iSmoothQPReductionPeriodicity; }
+  void      setSmoothQPReductionPeriodicity  (Int value)     { m_iSmoothQPReductionPeriodicity = value; }
 #endif
 
   Bool      getExtendedPrecisionProcessingFlag         ()         const { return m_extendedPrecisionProcessingFlag;  }

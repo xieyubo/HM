@@ -86,6 +86,9 @@ private:
   Int                     m_lumaLevelToDeltaQPLUT[LUMA_LEVEL_TO_DQP_LUT_MAXSIZE];
   Int                     m_lumaQPOffset;
   TEncSlice*              m_pcSliceEncoder;
+#if JVET_V0078
+  Int                     m_smoothQPoffset;
+#endif
 
   //  Access channel
   TEncCfg*                m_pcEncCfg;
@@ -109,6 +112,9 @@ public:
   TEncSlice* getSliceEncoder() { return m_pcSliceEncoder; }
   Void       initLumaDeltaQpLUT();
   Int        calculateLumaDQP( TComDataCU *pCU, const UInt absPartIdx, const TComYuv * pOrgYuv );
+#if JVET_V0078
+  Int        calculateLumaDQPsmooth(TComDataCU *pCU, const UInt absPartIdx, const TComYuv * pOrgYuv, Int iBaseQP);
+#endif
 
   /// create internal buffers
   Void  create              ( UChar uhTotalDepth, UInt iMaxWidth, UInt iMaxHeight, ChromaFormat chromaFormat );
