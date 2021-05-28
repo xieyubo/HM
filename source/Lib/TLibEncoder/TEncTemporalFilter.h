@@ -143,7 +143,7 @@ private:
   Int m_QP;
   Int m_GOPSize;
   std::map<Int, Double> m_temporalFilterStrengths;
-  Int m_aiPad[2];
+  Int m_sourcePadding[2];
   Int m_framesToBeEncoded;
   Bool m_bClipInputVideoToRec709Range;
   InputColourSpaceConversion m_inputColourSpaceConvert;

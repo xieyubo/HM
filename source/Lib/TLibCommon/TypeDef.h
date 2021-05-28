@@ -959,13 +959,13 @@ public:
   Int  getWindowBottomOffset() const  { return m_enabledFlag ? m_winBottomOffset: 0;   }
   Void setWindowBottomOffset(Int val) { m_winBottomOffset = val; m_enabledFlag = true; }
 
-  Void setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom)
+  Void setWindow(Int offsetLeft, Int offsetRight, Int offsetTop, Int offsetBottom)
   {
-    m_enabledFlag     = true;
+    m_enabledFlag     = (offsetLeft || offsetRight || offsetTop || offsetBottom);
     m_winLeftOffset   = offsetLeft;
-    m_winRightOffset  = offsetLRight;
-    m_winTopOffset    = offsetLTop;
-    m_winBottomOffset = offsetLBottom;
+    m_winRightOffset  = offsetRight;
+    m_winTopOffset    = offsetTop;
+    m_winBottomOffset = offsetBottom;
   }
   Bool operator == (const Window &rhs) const
   {

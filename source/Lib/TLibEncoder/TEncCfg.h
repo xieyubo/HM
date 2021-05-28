@@ -175,7 +175,7 @@ protected:
   Int       m_iQP;                              //  if (AdaptiveQP == OFF)
   Int       m_intraQPOffset;                    ///< QP offset for intra slice (integer)
   Int       m_lambdaFromQPEnable;               ///< enable lambda derivation from QP
-  Int       m_aiPad[2];
+  Int       m_sourcePadding[2];
 
   Bool      m_AccessUnitDelimiter;               ///< add Access Unit Delimiter NAL units
 
@@ -607,7 +607,7 @@ public:
   Void      setQP                           ( Int   i )      { m_iQP = i; }
   Void      setIntraQPOffset                ( Int   i )         { m_intraQPOffset = i; }
   Void      setLambdaFromQPEnable           ( Bool  b )         { m_lambdaFromQPEnable = b; }
-  Void      setPad                          ( Int*  iPad                   )      { for ( Int i = 0; i < 2; i++ ) m_aiPad[i] = iPad[i]; }
+  Void      setSourcePadding                ( Int*  padding )   { for ( Int i = 0; i < 2; i++ ) m_sourcePadding[i] = padding[i]; }
 
   Int       getMaxRefPicNum                 ()                              { return m_iMaxRefPicNum;           }
   Void      setMaxRefPicNum                 ( Int iMaxRefPicNum )           { m_iMaxRefPicNum = iMaxRefPicNum;  }
@@ -723,7 +723,7 @@ protected:
   Int       getBaseQP                       () const { return  m_iQP; } // public should use getQPForPicture.
 public:
   Int       getQPForPicture                 (const UInt gopIndex, const TComSlice *pSlice) const; // Function actually defined in TEncTop.cpp
-  Int       getPad                          ( Int i )      { assert (i < 2 );                      return  m_aiPad[i]; }
+  Int       getSourcePadding                ( Int i )  const  { assert (i < 2 ); return  m_sourcePadding[i]; }
 
   Bool      getAccessUnitDelimiter() const  { return m_AccessUnitDelimiter; }
   Void      setAccessUnitDelimiter(Bool val){ m_AccessUnitDelimiter = val; }

@@ -84,12 +84,12 @@ protected:
   Int       m_iFrameRate;                                     ///< source frame-rates (Hz)
   UInt      m_FrameSkip;                                      ///< number of skipped frames from the beginning
   UInt      m_temporalSubsampleRatio;                         ///< temporal subsample ratio, 2 means code every two frames
-  Int       m_iSourceWidth;                                   ///< source width in pixel
-  Int       m_iSourceHeight;                                  ///< source height in pixel (when interlaced = field height)
+  Int       m_sourceWidth;                                    ///< source width in pixel
+  Int       m_sourceHeight;                                   ///< source height in pixel (when interlaced = field height)
   Int       m_inputFileWidth;                                 ///< width of image in input file  (this is equivalent to sourceWidth,  if sourceWidth  is not subsequently altered due to padding)
   Int       m_inputFileHeight;                                ///< height of image in input file (this is equivalent to sourceHeight, if sourceHeight is not subsequently altered due to padding)
 
-  Int       m_iSourceHeightOrg;                               ///< original source height in pixel (when interlaced = frame height)
+  Int       m_sourceHeightOrg;                                ///< original source height in pixel (when interlaced = frame height)
 
   Bool      m_isField;                                        ///< enable field coding
   Bool      m_isTopFieldFirst;
@@ -101,8 +101,8 @@ protected:
   Int       m_confWinRight;
   Int       m_confWinTop;
   Int       m_confWinBottom;
+  Int       m_sourcePadding[2];                               ///< number of padded pixels for width and height
   Int       m_framesToBeEncoded;                              ///< number of encoded frames
-  Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
   Bool      m_AccessUnitDelimiter;                            ///< add Access Unit Delimiter NAL units
   InputColourSpaceConversion m_inputColourSpaceConvert;       ///< colour space conversion to apply to input video
   Bool      m_snrInternalColourSpace;                       ///< if true, then no colour space conversion is applied for snr calculation, otherwise inverse of input is applied.
