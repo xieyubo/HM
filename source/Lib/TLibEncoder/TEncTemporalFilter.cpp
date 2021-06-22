@@ -42,7 +42,11 @@
 // Constructor / destructor / initialization / destroy
 // ====================================================================================================================
 
+#if JVET_V0056_MCTF
+const Int TEncTemporalFilter::s_range = 4;
+#else
 const Int TEncTemporalFilter::s_range = 2;
+#endif
 const Double TEncTemporalFilter::s_chromaFactor = 0.55;
 const Double TEncTemporalFilter::s_sigmaMultiplier = 9.0;
 const Double TEncTemporalFilter::s_sigmaZeroPoint = 10.0;
@@ -68,6 +72,15 @@ const Int TEncTemporalFilter::s_interpolationFilter[16][8] =
     {   0,   0,  -2,   4,  64,  -3,   1,   0 }    //15-->-->
 };
 
+#if JVET_V0056_MCTF
+const Double TEncTemporalFilter::s_refStrengths[3][4] =
+{ // abs(POC offset)
+  //  1,    2     3     4
+  {0.85, 0.57, 0.41, 0.33},  // m_range * 2
+  {1.13, 0.97, 0.81, 0.57},  // m_range
+  {0.30, 0.30, 0.30, 0.30}   // otherwise
+};
+#else
 const Double TEncTemporalFilter::s_refStrengths[3][2] =
 { // abs(POC offset)
   //  1,    2
@@ -75,6 +88,7 @@ const Double TEncTemporalFilter::s_refStrengths[3][2] =
   {1.20, 1.00},  // s_range
   {0.30, 0.30}   // otherwise
 };
+#endif
 
 TEncTemporalFilter::TEncTemporalFilter() :
   m_FrameSkip(0),
@@ -279,10 +293,10 @@ Int TEncTemporalFilter::motionErrorLuma(const TComPicYuv &orig,
                                         const Int besterror = 8 * 8 * 1024 * 1024) const
 {
 
-  const Pel* origOrigin =orig.getAddr(COMPONENT_Y);
-  const Int origStride  =orig.getStride(COMPONENT_Y);
-  const Pel *buffOrigin =buffer.getAddr(COMPONENT_Y);
-  const Int buffStride  =buffer.getStride(COMPONENT_Y);
+  const Pel* origOrigin = orig.getAddr(COMPONENT_Y);
+  const Int origStride  = orig.getStride(COMPONENT_Y);
+  const Pel *buffOrigin = buffer.getAddr(COMPONENT_Y);
+  const Int buffStride  = buffer.getStride(COMPONENT_Y);
   Int error = 0;// dx * 10 + dy * 10;
   if (((dx | dy) & 0xF) == 0)
   {
@@ -364,15 +378,25 @@ Int TEncTemporalFilter::motionErrorLuma(const TComPicYuv &orig,
 Void TEncTemporalFilter::motionEstimationLuma(Array2D<MotionVector> &mvs, const TComPicYuv &orig, const TComPicYuv &buffer, const Int blockSize,
     const Array2D<MotionVector> *previous, const Int factor, const Bool doubleRes) const
 {
+#if JVET_V0056_MCTF
+  Int range = doubleRes ? 0 : 5;
+#else
   Int range = 5;
+#endif
   const Int stepSize = blockSize;
 
   const Int origWidth  = orig.getWidth(COMPONENT_Y);
   const Int origHeight = orig.getHeight(COMPONENT_Y);
 
+#if JVET_V0056_MCTF
+  for (Int blockY = 0; blockY + blockSize <= origHeight; blockY += stepSize)
+  {
+    for (Int blockX = 0; blockX + blockSize <= origWidth; blockX += stepSize)
+#else
   for (Int blockY = 0; blockY + blockSize < origHeight; blockY += stepSize)
   {
     for (Int blockX = 0; blockX + blockSize < origWidth; blockX += stepSize)
+#endif
     {
       MotionVector best;
 
@@ -382,10 +406,18 @@ Void TEncTemporalFilter::motionEstimationLuma(Array2D<MotionVector> &mvs, const 
       }
       else
       {
+#if JVET_V0056_MCTF
+        for (Int py = -1; py <= 1; py++)
+#else
         for (Int py = -2; py <= 2; py++)
+#endif
         {
           Int testy = blockY / (2 * blockSize) + py;
+#if JVET_V0056_MCTF
+          for (Int px = -1; px <= 1; px++)
+#else
           for (Int px = -2; px <= 2; px++)
+#endif
           {
             Int testx = blockX / (2 * blockSize) + px;
             if ((testx >= 0) && (testx < origWidth / (2 * blockSize)) && (testy >= 0) && (testy < origHeight / (2 * blockSize)))
@@ -399,6 +431,13 @@ Void TEncTemporalFilter::motionEstimationLuma(Array2D<MotionVector> &mvs, const 
             }
           }
         }
+#if JVET_V0056_MCTF
+        Int error = motionErrorLuma(orig, buffer, blockX, blockY, 0, 0, blockSize, best.error);
+        if (error < best.error)
+        {
+          best.set(0, 0, error);
+        }
+#endif
       }
       MotionVector prevBest = best;
       for (Int y2 = prevBest.y / s_motionVectorFactor - range; y2 <= prevBest.y / s_motionVectorFactor + range; y2++)
@@ -425,7 +464,6 @@ Void TEncTemporalFilter::motionEstimationLuma(Array2D<MotionVector> &mvs, const 
             {
               best.set(x2, y2, error);
             }
-
           }
         }
 
@@ -440,11 +478,52 @@ Void TEncTemporalFilter::motionEstimationLuma(Array2D<MotionVector> &mvs, const 
             {
               best.set(x2, y2, error);
             }
-
           }
         }
-
       }
+#if JVET_V0056_MCTF
+      if (blockY > 0)
+      {
+        MotionVector aboveMV = mvs.get(blockX / stepSize, (blockY - stepSize) / stepSize);
+        int error = motionErrorLuma(orig, buffer, blockX, blockY, aboveMV.x, aboveMV.y, blockSize, best.error);
+        if (error < best.error)
+        {
+          best.set(aboveMV.x, aboveMV.y, error);
+        }
+      }
+      if (blockX > 0)
+      {
+        MotionVector leftMV = mvs.get((blockX - stepSize) / stepSize, blockY / stepSize);
+        int error = motionErrorLuma(orig, buffer, blockX, blockY, leftMV.x, leftMV.y, blockSize, best.error);
+        if (error < best.error)
+        {
+          best.set(leftMV.x, leftMV.y, error);
+        }
+      }
+
+      // calculate average
+      double avg = 0.0;
+      for (int x1 = 0; x1 < blockSize; x1++)
+      {
+        for (int y1 = 0; y1 < blockSize; y1++)
+        {
+          avg = avg + *(orig.getAddr(COMPONENT_Y) + (blockX + x1 + orig.getStride(COMPONENT_Y) * (blockY + y1)));
+        }
+      }
+      avg = avg / (blockSize * blockSize);
+
+      // calculate variance
+      double variance = 0;
+      for (int x1 = 0; x1 < blockSize; x1++)
+      {
+        for (int y1 = 0; y1 < blockSize; y1++)
+        {
+          int pix = *(orig.getAddr(COMPONENT_Y) + (blockX + x1 + orig.getStride(COMPONENT_Y) * (blockY + y1)));
+          variance = variance + (pix - avg) * (pix - avg);
+        }
+      }
+      best.error = (Int) (20 * ((best.error + 5.0) / (variance + 5.0)) + (best.error / (blockSize * blockSize)) / 50);
+#endif
       mvs.get(blockX / stepSize, blockY / stepSize) = best;
     }
   }
@@ -557,7 +636,11 @@ Void TEncTemporalFilter::applyMotion(const Array2D<MotionVector> &mvs, const TCo
 }
 
 Void TEncTemporalFilter::bilateralFilter(const TComPicYuv &orgPic,
+#if JVET_V0056_MCTF
+                                               std::deque<TemporalFilterSourcePicInfo> &srcFrameInfo,
+#else
                                          const std::deque<TemporalFilterSourcePicInfo> &srcFrameInfo,
+#endif
                                                TComPicYuv &newOrgPic,
                                                Double overallStrength) const
 {
@@ -595,6 +678,9 @@ Void TEncTemporalFilter::bilateralFilter(const TComPicYuv &orgPic,
     const Double weightScaling = overallStrength * (isChroma(compID) ? s_chromaFactor : 0.4);
     const Pel maxSampleValue = (1<<m_internalBitDepth[toChannelType(compID)])-1;
     const Double bitDepthDiffWeighting=1024.0 / (maxSampleValue+1);
+#if JVET_V0056_MCTF
+    const Int blkSize = isLuma(compID) ? 8 : 4;
+#endif
 
     for (Int y = 0; y < height; y++, srcPelRow+=srcStride, dstPelRow+=dstStride)
     {
@@ -605,15 +691,66 @@ Void TEncTemporalFilter::bilateralFilter(const TComPicYuv &orgPic,
         const Int orgVal = (Int) *srcPel;
         Double temporalWeightSum = 1.0;
         Double newVal = (Double) orgVal;
+#if JVET_V0056_MCTF
+        if ((y % blkSize == 0) && (x % blkSize == 0))
+        {
+          for (Int i = 0; i < numRefs; i++)
+          {
+            Double variance = 0, diffsum = 0;
+            for (Int y1 = 0; y1 < blkSize - 1; y1++)
+            {
+              for (Int x1 = 0; x1 < blkSize - 1; x1++)
+              {
+                Int pix  = *(srcPel + x1);
+                Int pixR = *(srcPel + x1 + 1);
+                Int pixD = *(srcPel + x1 + srcStride);
+                Int ref  = *(correctedPics[i].getAddr(compID) + ((y + y1) * correctedPics[i].getStride(compID) + x + x1));
+                Int refR = *(correctedPics[i].getAddr(compID) + ((y + y1) * correctedPics[i].getStride(compID) + x + x1 + 1));
+                Int refD = *(correctedPics[i].getAddr(compID) + ((y + y1 + 1) * correctedPics[i].getStride(compID) + x + x1));
+
+                Int diff  = pix  - ref;
+                Int diffR = pixR - refR;
+                Int diffD = pixD - refD;
+
+                variance += diff * diff;
+                diffsum  += (diffR - diff) * (diffR - diff);
+                diffsum  += (diffD - diff) * (diffD - diff);
+              }
+            }
+            srcFrameInfo[i].mvs.get(x / blkSize, y / blkSize).noise = (int) round((300 * variance + 50) / (10 * diffsum + 50));
+          }
+        }
+
+        Double minError = 9999999;
         for (Int i = 0; i < numRefs; i++)
         {
+          minError = std::min(minError, (Double) srcFrameInfo[i].mvs.get(x / blkSize, y / blkSize).error);
+        }
+#endif
+        for (Int i = 0; i < numRefs; i++)
+        {
+#if JVET_V0056_MCTF
+          const Int error = srcFrameInfo[i].mvs.get(x / blkSize, y / blkSize).error;
+          const Int noise = srcFrameInfo[i].mvs.get(x / blkSize, y / blkSize).noise;
+#endif
           const Pel *pCorrectedPelPtr=correctedPics[i].getAddr(compID)+(y*correctedPics[i].getStride(compID)+x);
           const Int refVal = (Int) *pCorrectedPelPtr;
           Double diff = (Double)(refVal - orgVal);
           diff *= bitDepthDiffWeighting;
           Double diffSq = diff * diff;
+#if JVET_V0056_MCTF
+          const Int index = std::min(3, std::abs(srcFrameInfo[i].origOffset) - 1);
+          Double ww = 1, sw = 1;
+          ww *= (noise < 25) ? 1 : 1.2;
+          sw *= (noise < 25) ? 1.3 : 0.8;
+          ww *= (error < 50) ? 1.2 : ((error > 100) ? 0.8 : 1);
+          sw *= (error < 50) ? 1.3 : 1;
+          ww *= ((minError + 1) / (error + 1));
+          const Double weight = weightScaling * s_refStrengths[refStrengthRow][index] * ww * exp(-diffSq / (2 * sw * sigmaSq));
+#else
           const Int index = std::min(1, std::abs(srcFrameInfo[i].origOffset) - 1);
           const Double weight = weightScaling * s_refStrengths[refStrengthRow][index] * exp(-diffSq / (2 * sigmaSq));
+#endif
           newVal += weight * refVal;
           temporalWeightSum += weight;
         }

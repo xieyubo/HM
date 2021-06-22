@@ -84,6 +84,8 @@
 // Tool Switches - transitory (these macros are likely to be removed in future revisions)
 // ====================================================================================================================
 
+#define JVET_V0056_MCTF                                   1 // JVET-V0056: Changes to MCTF
+
 #define JVET_K0390_RATE_CTRL                              1
 #if JVET_K0390_RATE_CTRL
 #define JVET_M0600_RATE_CTRL                              1
