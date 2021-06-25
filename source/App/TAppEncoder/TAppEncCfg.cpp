@@ -787,6 +787,9 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("InputPathPrefix,-ipp",                            inputPathPrefix,                             string(""), "pathname to prepend to input filename")
   ("BitstreamFile,b",                                 m_bitstreamFileName,                         string(""), "Bitstream output file name")
   ("ReconFile,o",                                     m_reconFileName,                             string(""), "Reconstructed YUV output file name")
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  ("SEIShutterIntervalPreFilename,-sii",              m_shutterIntervalPreFileName,                string(""), "File name of Pre-Filtering video. If empty, not output video\n")
+#endif
   ("SourceWidth,-wdt",                                m_sourceWidth,                                        0, "Source picture width")
   ("SourceHeight,-hgt",                               m_sourceHeight,                                       0, "Source picture height")
   ("InputBitDepth",                                   m_inputBitDepth[CHANNEL_TYPE_LUMA],                   8, "Bit-depth of input file")
@@ -2043,6 +2046,9 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
       }
     }
   }
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  m_ShutterFilterEnable = false;
+#endif
 #if SHUTTER_INTERVAL_SEI_MESSAGE
   if (m_siiSEIEnabled)
   {
@@ -2063,6 +2069,22 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
       m_siiSEINumUnitsInShutterInterval = cfg_siiSEIInputNumUnitsInSI.values[0];
       assert(m_siiSEINumUnitsInShutterInterval >= 0 && m_siiSEINumUnitsInShutterInterval <= MAX_UINT);
     }
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+    if (arraySize > 1 && m_siiSEISubLayerNumUnitsInSI[0] == 2 * m_siiSEISubLayerNumUnitsInSI[arraySize - 1])
+    {
+      m_ShutterFilterEnable = true;
+      const Double shutterAngle = 360.0;
+      Double fpsHFR = (Double)m_iFrameRate, fpsLFR = (Double)m_iFrameRate / 2.0;
+      UInt numUnitsHFR = (UInt)(((Double)m_siiSEITimeScale / fpsHFR) * (shutterAngle / 360.0));
+      UInt numUnitsLFR = (UInt)(((Double)m_siiSEITimeScale / fpsLFR) * (shutterAngle / 360.0));
+      for (Int i = 0; i < arraySize - 1; i++) m_siiSEISubLayerNumUnitsInSI[i] = numUnitsLFR;
+      m_siiSEISubLayerNumUnitsInSI[arraySize - 1] = numUnitsHFR;
+    }
+    else
+    {
+      printf("Warning: SII-processing is applied for multiple shutter intervals and number of LFR units should be 2 times of number of HFR units\n");
+    }
+#endif
   }
 #endif
   if(m_timeCodeSEIEnabled)
@@ -2993,6 +3015,14 @@ Void TAppEncCfg::xCheckParameter()
   }
 #endif
 
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  if (m_siiSEIEnabled && m_ShutterFilterEnable && m_maxTempLayer == 1 && m_maxDecPicBuffering[0] == 1)
+  {
+    printf("Warning: Shutter Interval SEI message processing is disabled for single TempLayer and single frame in DPB\n");
+    m_ShutterFilterEnable = false;
+  }
+#endif
+
   if(m_timeCodeSEIEnabled)
   {
     xConfirmPara(m_timeCodeSEINumTs > MAX_TIMECODE_SEI_SETS, "Number of time sets cannot exceed 3");
@@ -3148,6 +3178,12 @@ Void TAppEncCfg::xPrintParameter()
   printf("Input          File                    : %s\n", m_inputFileName.c_str()          );
   printf("Bitstream      File                    : %s\n", m_bitstreamFileName.c_str()      );
   printf("Reconstruction File                    : %s\n", m_reconFileName.c_str()          );
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  if (m_ShutterFilterEnable && !m_shutterIntervalPreFileName.empty())
+  {
+    printf("SII Pre-processed File                 : %s\n", m_shutterIntervalPreFileName.c_str());
+  }
+#endif
   printf("Real     Format                        : %dx%d %gHz\n", m_sourceWidth - m_confWinLeft - m_confWinRight, m_sourceHeight - m_confWinTop - m_confWinBottom, (Double)m_iFrameRate/m_temporalSubsampleRatio );
   printf("Internal Format                        : %dx%d %gHz\n", m_sourceWidth, m_sourceHeight, (Double)m_iFrameRate/m_temporalSubsampleRatio );
   printf("Sequence PSNR output                   : %s\n", (m_printMSEBasedSequencePSNR ? "Linear average, MSE-based" : "Linear average only") );

@@ -72,6 +72,9 @@ Void TAppDecTop::destroy()
 #if FGS_RDD5_ENABLE
   m_SEIFGSFileName.clear();
 #endif
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  m_shutterIntervalPostFileName.clear();
+#endif
 }
 
 // ====================================================================================================================
@@ -143,6 +146,11 @@ Void TAppDecTop::decode()
   Bool openedSEIFGSFile = false; // reconstruction file (with FGS) not yet opened. (must be performed after SPS is seen)
 #endif
   Bool loopFiltered = false;
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  Bool openedPostFile = false;
+  setShutterFilterFlag(!m_shutterIntervalPostFileName.empty());   // not apply shutter interval SEI processing if filename is not specified.
+  m_cTDecTop.setShutterFilterFlag(getShutterFilterFlag());
+#endif
 
   while (!!bitstreamFile)
   {
@@ -253,6 +261,65 @@ Void TAppDecTop::decode()
         openedSEIFGSFile = true;
       }
 #endif
+
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+      TComList<TComPic*>::iterator iterPic = pcListPic->begin();
+      TComPic* pcPic = *(iterPic);
+      SEIMessages shutterIntervalInfo = getSeisByType(pcPic->getSEIs(), SEI::SHUTTER_INTERVAL_INFO);
+      if (!m_shutterIntervalPostFileName.empty())
+      {
+        if (shutterIntervalInfo.size() > 0)
+        {
+          SEIShutterIntervalInfo *seiShutterIntervalInfo = (SEIShutterIntervalInfo*) *(shutterIntervalInfo.begin());
+          if (!seiShutterIntervalInfo->m_siiFixedSIwithinCLVS)
+          {
+            UInt arraySize = seiShutterIntervalInfo->m_siiMaxSubLayersMinus1 + 1;
+            UInt numUnitsLFR = seiShutterIntervalInfo->m_siiSubLayerNumUnitsInSI[0];
+            UInt numUnitsHFR = seiShutterIntervalInfo->m_siiSubLayerNumUnitsInSI[arraySize - 1];
+            setShutterFilterFlag(numUnitsLFR == 2 * numUnitsHFR);
+
+            const TComSPS* activeSPS = &(pcListPic->front()->getPicSym()->getSPS());
+            if (numUnitsLFR == 2 * numUnitsHFR && activeSPS->getMaxTLayers() == 1 && activeSPS->getMaxDecPicBuffering(0) == 1)
+            {
+              fprintf(stderr, "Warning: Shutter Interval SEI message processing is disabled for single TempLayer and single frame in DPB\n");
+              setShutterFilterFlag(false);
+            }
+          }
+          else
+          {
+            fprintf(stderr, "Warning: Shutter Interval SEI message processing is disabled for fixed shutter interval case\n");
+            setShutterFilterFlag(false);
+          }
+        }
+        else
+        {
+          fprintf(stderr, "Warning: Shutter Interval information should be specified in SII-SEI message\n");
+          setShutterFilterFlag(false);
+        }
+      }
+
+      if ((!m_shutterIntervalPostFileName.empty()) && (!openedPostFile) && getShutterFilterFlag())
+      {
+        const BitDepths &bitDepths = pcListPic->front()->getPicSym()->getSPS().getBitDepths();
+        for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
+        {
+          if (m_outputBitDepth[channelType] == 0)
+          {
+            m_outputBitDepth[channelType] = bitDepths.recon[channelType];
+          }
+        }
+
+        std::ofstream ofile(m_shutterIntervalPostFileName.c_str());
+        if (!ofile.good() || !ofile.is_open())
+        {
+          fprintf(stderr, "\nUnable to open file '%s' for writing shutter-interval-SEI video\n", m_shutterIntervalPostFileName.c_str());
+          exit(EXIT_FAILURE);
+        }
+
+        m_cTVideoIOYuvSIIPostFile.open(m_shutterIntervalPostFileName, true, m_outputBitDepth, m_outputBitDepth, bitDepths.recon); // write mode
+        openedPostFile = true;
+      }
+#endif
       // write reconstruction to file
       if( bNewPicture )
       {
@@ -313,6 +380,12 @@ Void TAppDecTop::xDestroyDecLib()
   if (!m_SEIFGSFileName.empty())
   {
     m_cTVideoIOYuvSEIFGSFile.close();
+  }
+#endif
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  if (!m_shutterIntervalPostFileName.empty() && getShutterFilterFlag())
+  {
+    m_cTVideoIOYuvSIIPostFile.close();
   }
 #endif
 
@@ -531,6 +604,24 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
           xOutputColourRemapPic(pcPic);
         }
 
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+        if (!m_shutterIntervalPostFileName.empty() && getShutterFilterFlag())
+        {
+          pcPic->xOutputPostFilteredPic(pcPic, pcListPic);
+
+          const Window &conf = pcPic->getConformanceWindow();
+          const Window  defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
+
+          m_cTVideoIOYuvSIIPostFile.write( pcPic->getPicYuvPostRec(),
+                                        m_outputColourSpaceConvert,
+                                        conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
+                                        conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
+                                        conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+                                        conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset(),
+                                        NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range  );
+        }
+#endif
+
         // update POC of display order
         m_iPOCLastDisplay = pcPic->getPOC();
 
@@ -664,7 +755,25 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
                                           NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range);
         }
 #endif
-       if (!m_colourRemapSEIFileName.empty())
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+        if (!m_shutterIntervalPostFileName.empty() && getShutterFilterFlag())
+        {
+          pcPic->xOutputPostFilteredPic(pcPic, pcListPic);
+
+          const Window &conf = pcPic->getConformanceWindow();
+          const Window  defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
+
+          m_cTVideoIOYuvSIIPostFile.write( pcPic->getPicYuvPostRec(),
+                                        m_outputColourSpaceConvert,
+                                        conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
+                                        conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
+                                        conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+                                        conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset(),
+                                        NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range  );
+        }
+#endif
+
+        if (!m_colourRemapSEIFileName.empty())
         {
           xOutputColourRemapPic(pcPic);
         }
@@ -687,7 +796,11 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
         }
         pcPic->setOutputMark(false);
       }
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+      if (pcPic != NULL && (m_shutterIntervalPostFileName.empty() || !getShutterFilterFlag()))
+#else
       if(pcPic != NULL)
+#endif
       {
         pcPic->destroy();
         delete pcPic;
@@ -695,6 +808,23 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
       }
       iterPic++;
     }
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+    if (!m_shutterIntervalPostFileName.empty() && getShutterFilterFlag())
+    {
+      iterPic = pcListPic->begin();
+      while (iterPic != pcListPic->end())
+      {
+        pcPic = *(iterPic);
+        if (pcPic != NULL)
+        {
+          pcPic->destroy();
+          delete pcPic;
+          pcPic = NULL;
+        }
+        iterPic++;
+      }
+    }
+#endif
   }
   pcListPic->clear();
   m_iPOCLastDisplay = -MAX_INT;

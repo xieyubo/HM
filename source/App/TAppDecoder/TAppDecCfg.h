@@ -69,6 +69,9 @@ protected:
 #if FGS_RDD5_ENABLE
   std::string   m_SEIFGSFileName;                     ///< output reconstruction file name
 #endif
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  std::string   m_shutterIntervalPostFileName;        ///< output Post Filtering file name
+#endif
   std::string   m_annotatedRegionsSEIFileName;        ///< annotated regions file name
   std::vector<Int> m_targetDecLayerIdSet;             ///< set of LayerIds to be included in the sub-bitstream extraction process.
   Int           m_respectDefDispWindow;               ///< Only output content inside the default display window
@@ -94,6 +97,9 @@ public:
   , m_colourRemapSEIFileName()
 #if FGS_RDD5_ENABLE
   , m_SEIFGSFileName()
+#endif
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  , m_shutterIntervalPostFileName()
 #endif
   , m_annotatedRegionsSEIFileName()
   , m_targetDecLayerIdSet()

@@ -89,6 +89,9 @@ Bool TAppDecCfg::parseCfg( Int argc, TChar* argv[] )
 #if FGS_RDD5_ENABLE
   ("SEIFGSFilename",            m_SEIFGSFileName,                      string(""), "FGS YUV output file name. If empty, no film grain is applied (ignore SEI message)\n")
 #endif
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  ("SEIShutterIntervalPostFilename,-sii", m_shutterIntervalPostFileName,  string(""), "Post Filtering with Shutter Interval SEI. If empty, no filtering is applied (ignore SEI message)\n")
+#endif
   ("SEIAnnotatedRegionsInfoFilename",  m_annotatedRegionsSEIFileName,   string(""), "Annotated regions output file name. If empty, no object information will be saved (ignore SEI message)\n")
 #if O0043_BEST_EFFORT_DECODING
   ("ForceDecodeBitDepth",       m_forceDecodeBitDepth,                 0U,         "Force the decoder to operate at a particular bit-depth (best effort decoding)")

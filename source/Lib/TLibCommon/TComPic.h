@@ -59,7 +59,16 @@
 class TComPic
 {
 public:
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  typedef enum { PIC_YUV_ORG = 0, PIC_YUV_REC = 1, PIC_YUV_TRUE_ORG = 2, PIC_YUV_POST_REC = 3, NUM_PIC_YUV = 4 } PIC_YUV_T;
+  TComPicYuv*   getPicYuvPostRec()        { return  m_apcPicYuv[PIC_YUV_POST_REC]; }
+
+  TComPic*  findPrevPicPOC(TComPic* pcPic, TComList<TComPic*>* pcListPic);
+  Void  xOutputPostFilteredPic(TComPic* pcPic, TComList<TComPic*>* pcListPic);
+  Void  xOutputPreFilteredPic(TComPic* pcPic, TComList<TComPic*>* pcListPic);
+#else
   typedef enum { PIC_YUV_ORG=0, PIC_YUV_REC=1, PIC_YUV_TRUE_ORG=2, NUM_PIC_YUV=3 } PIC_YUV_T;
+#endif
      // TRUE_ORG is the input file without any pre-encoder colour space conversion (but with possible bit depth increment)
   TComPicYuv*   getPicYuvTrueOrg()        { return  m_apcPicYuv[PIC_YUV_TRUE_ORG]; }
 
@@ -89,14 +98,26 @@ public:
   virtual ~TComPic();
 
 #if REDUCED_ENCODER_MEMORY
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  Void          create( const TComSPS &sps, const TComPPS &pps, const Bool bCreateEncoderSourcePicYuv, const Bool bCreateForImmediateReconstruction, const Bool bCreateForProcessedReconstruction );
+#else
   Void          create( const TComSPS &sps, const TComPPS &pps, const Bool bCreateEncoderSourcePicYuv, const Bool bCreateForImmediateReconstruction );
+#endif
   Void          prepareForEncoderSourcePicYuv();
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  Void          prepareForReconstruction( const Bool bCreateForProcessedReconstruction );
+#else
   Void          prepareForReconstruction();
+#endif
   Void          releaseReconstructionIntermediateData();
   Void          releaseAllReconstructionData();
   Void          releaseEncoderSourceImageData();
 #else
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  Void          create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual /*= false*/, const Bool bCreateForProcessedReconstruction );
+#else
   Void          create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual /*= false*/ );
+#endif
 #endif
 
   virtual Void  destroy();

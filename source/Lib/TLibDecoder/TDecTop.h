@@ -112,6 +112,9 @@ private:
   Int                     m_lastPOCNoOutputPriorPics;
   Bool                    m_isNoOutputPriorPics;
   Bool                    m_craNoRaslOutputFlag;    //value of variable NoRaslOutputFlag of the last CRA pic
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  Bool                    m_ShutterFilterEnable;    // Shutter Interval SEI Processing
+#endif
 #if O0043_BEST_EFFORT_DECODING
   UInt                    m_forceDecodeBitDepth;
 #endif
@@ -156,6 +159,10 @@ public:
   Void  setFirstSliceInPicture (bool val)  { m_bFirstSliceInPicture = val; }
   Bool  getFirstSliceInSequence ()         { return m_bFirstSliceInSequence; }
   Void  setFirstSliceInSequence (bool val) { m_bFirstSliceInSequence = val; }
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  Bool  getShutterFilterFlag () const     { return m_ShutterFilterEnable; }
+  Void  setShutterFilterFlag (Bool value) { m_ShutterFilterEnable = value; }
+#endif
 #if O0043_BEST_EFFORT_DECODING
   Void  setForceDecodeBitDepth(UInt bitDepth) { m_forceDecodeBitDepth = bitDepth; }
 #endif

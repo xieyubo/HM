@@ -65,6 +65,11 @@ private:
 #if FGS_RDD5_ENABLE
   TVideoIOYuv                     m_cTVideoIOYuvSEIFGSFile;       ///< reconstruction YUV class
 #endif
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  Bool                            m_ShutterFilterEnable;          ///< enable Post-processing with Shutter Interval SEI
+  TVideoIOYuv                     m_cTVideoIOYuvSIIPostFile;      ///< post-filtered YUV class
+#endif
+
   // for output control
   Int                             m_iPOCLastDisplay;              ///< last POC in display order
   std::ofstream                   m_seiMessageFileStream;         ///< Used for outputing SEI messages.
@@ -83,6 +88,11 @@ public:
   Void  destroy           (); ///< destroy internal members
   Void  decode            (); ///< main decoding function
   UInt  getNumberOfChecksumErrorsDetected() const { return m_cTDecTop.getNumberOfChecksumErrorsDetected(); }
+
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  Bool  getShutterFilterFlag()        const { return m_ShutterFilterEnable; }
+  Void  setShutterFilterFlag(Bool value)    { m_ShutterFilterEnable = value; }
+#endif
 
 protected:
   Void  xCreateDecLib     (); ///< create internal classes

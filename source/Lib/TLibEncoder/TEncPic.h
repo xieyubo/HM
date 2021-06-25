@@ -103,9 +103,17 @@ public:
   virtual ~TEncPic();
 
 #if REDUCED_ENCODER_MEMORY
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  Void          create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, const Bool bCreateForProcessedReconstruction );
+#else
   Void          create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth );
+#endif
+#else
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  Void          create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual /* = false*/, const Bool bCreateForProcessedReconstruction );
 #else
   Void          create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual /* = false*/ );
+#endif
 #endif
   virtual Void  destroy();
 

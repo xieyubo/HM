@@ -342,6 +342,14 @@ Void TEncTop::encode( Bool flush, TComPicYuv* pcPicYuvOrg, TComPicYuv* pcPicYuvT
     pcPicYuvOrg->copyToPic( pcPicCurr->getPicYuvOrg() );
     pcPicYuvTrueOrg->copyToPic( pcPicCurr->getPicYuvTrueOrg() );
 
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+    if ( getShutterFilterFlag() )
+    {
+      pcPicCurr->xOutputPreFilteredPic(pcPicCurr, &m_cListPic);
+      pcPicCurr->getPicYuvOrg()->copyToPic(pcPicYuvOrg);
+    }
+#endif
+
     // compute image characteristics
     if ( getUseAdaptiveQP() )
     {
@@ -538,9 +546,17 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic, Int ppsId )
     {
       TEncPic* pcEPic = new TEncPic;
 #if REDUCED_ENCODER_MEMORY
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+      pcEPic->create( sps, pps, pps.getMaxCuDQPDepth() + 1, getShutterFilterFlag() );
+#else
       pcEPic->create( sps, pps, pps.getMaxCuDQPDepth()+1);
+#endif
+#else
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+      pcEPic->create(sps, pps, pps.getMaxCuDQPDepth() + 1, false, getShutterFilterFlag() );
 #else
       pcEPic->create( sps, pps, pps.getMaxCuDQPDepth()+1, false);
+#endif
 #endif
       rpcPic = pcEPic;
     }
@@ -548,9 +564,17 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic, Int ppsId )
     {
       rpcPic = new TComPic;
 #if REDUCED_ENCODER_MEMORY
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+      rpcPic->create( sps, pps, true, false, getShutterFilterFlag() );
+#else
       rpcPic->create( sps, pps, true, false );
+#endif
+#else
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+      rpcPic->create( sps, pps, false, getShutterFilterFlag() );
 #else
       rpcPic->create( sps, pps, false );
+#endif
 #endif
     }
 

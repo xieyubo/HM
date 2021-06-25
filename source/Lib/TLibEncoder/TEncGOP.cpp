@@ -1275,7 +1275,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     xGetBuffer( rcListPic, rcListPicYuvRecOut, iNumPicRcvd, iTimeOffset, pcPic, pcPicYuvRecOut, pocCurr, isField );
 
 #if REDUCED_ENCODER_MEMORY
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+    pcPic->prepareForReconstruction( m_pcCfg->getShutterFilterFlag() );
+#else
     pcPic->prepareForReconstruction();
+#endif
 
 #endif
     //  Slice data initialization

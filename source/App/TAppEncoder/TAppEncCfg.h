@@ -74,6 +74,10 @@ protected:
   std::string m_inputFileName;                                ///< source file name
   std::string m_bitstreamFileName;                            ///< output bitstream file
   std::string m_reconFileName;                                ///< output reconstruction file
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+  Bool        m_ShutterFilterEnable;                          ///< enable Pre-Filtering with Shutter Interval SEI
+  std::string m_shutterIntervalPreFileName;                   ///< output Pre-Filtering video
+#endif
 
   // Lambda modifiers
   Double    m_adLambdaModifier[ MAX_TLAYER ];                 ///< Lambda modifier array for each temporal layer

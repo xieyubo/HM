@@ -97,6 +97,9 @@
 #define DPB_ENCODER_USAGE_CHECK                           1 ///< Adds DPB encoder usage check.
 #define FGS_RDD5_ENABLE                                   1 // SMPTE RDD5 based film grain synthesis enabled
 
+#if SHUTTER_INTERVAL_SEI_MESSAGE
+#define SHUTTER_INTERVAL_SEI_PROCESSING                   1 ///< JCTVC-AM0024: pre-/post-processing to use shutter interval SEI
+#endif
 // ====================================================================================================================
 // Tool Switches
 // ====================================================================================================================
