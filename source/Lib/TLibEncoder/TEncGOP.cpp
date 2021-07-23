@@ -294,6 +294,26 @@ Void TEncGOP::xWriteLeadingSEIOrdered (SEIMessages& seiMessages, SEIMessages& du
   g_HLSTraceEnable = !testWrite;
 #endif
   // The case that a specific SEI is not present is handled in xWriteSEI (empty list)
+#if JCTVC_AD0021_SEI_MANIFEST
+  // When SEI Manifest SEI message is present in an SEI NAL unit, the SEI Manifest SEI message shall be the first SEI message in the SEI NAL unit (D3.45 in ISO/IEC 23008-2).
+  if (m_pcCfg->getSmSeiManifestSeiEnabled())
+  {
+      currentMessages = extractSeisByType(localMessages, SEI::SEI_MANIFEST);
+      assert(currentMessages.size() <= 1);
+      xWriteSEI(NAL_UNIT_PREFIX_SEI, currentMessages, accessUnit, itNalu, temporalId, sps);
+      xClearSEIs(currentMessages, !testWrite);
+  }
+#endif
+#if JCTVC_AD0021_SEI_PREFIX_INDICATION
+ // When SEI Manifest SEI message is present in an SEI NAL unit, the SEI Manifest SEI message shall be the first SEI message in the SEI NAL unit (D3.45 in ISO/IEC 23008-2).
+  if (m_pcCfg->getSpiPrefixIndicationSeiEnabled())
+  {
+      currentMessages = extractSeisByType(localMessages, SEI::SEI_PREFIX_INDICATION);
+      assert(currentMessages.size() <= 1);
+      xWriteSEI(NAL_UNIT_PREFIX_SEI, currentMessages, accessUnit, itNalu, temporalId, sps);
+      xClearSEIs(currentMessages, !testWrite);
+  }
+#endif
 
   // Active parameter sets SEI must always be the first SEI
   currentMessages = extractSeisByType(localMessages, SEI::ACTIVE_PARAMETER_SETS);
@@ -691,6 +711,42 @@ Void TEncGOP::xCreatePerPictureSEIMessages (Int picInGOP, SEIMessages& seiMessag
     SEIFilmGrainCharacteristics *fgcSEI = new SEIFilmGrainCharacteristics;
     m_seiEncoder.initSEIFilmGrainCharacteristics(fgcSEI);
     seiMessages.push_back(fgcSEI);
+  }
+#endif
+
+#if JCTVC_AD0021_SEI_MANIFEST
+  // Make sure that sei_manifest and sei_prefix are the last two initialized sei_msg, otherwise it will cause these two
+  // Sei messages to not be able to enter all SEI messages
+  if (m_pcCfg->getSmSeiManifestSeiEnabled())
+  {
+      SEIManifest* seiSEIManifest = new SEIManifest;
+      m_seiEncoder.initSEISeiManifest(seiSEIManifest, seiMessages);
+      seiMessages.push_back(seiSEIManifest);
+  }
+#endif
+#if JCTVC_AD0021_SEI_PREFIX_INDICATION
+  if (m_pcCfg->getSpiPrefixIndicationSeiEnabled())
+  {
+      int NumOfSEIPrefixMsg = 0;
+      for (auto& it : seiMessages)
+      {
+          if (it->payloadType() == 200)
+          {
+              break;
+          }
+          NumOfSEIPrefixMsg++;
+      }
+      for (auto& it : seiMessages)
+      {
+          if (NumOfSEIPrefixMsg == 0 || it->payloadType() == 200)
+          {
+              break;
+          }
+          SEIPrefixIndication* seiSEIPrefixIndication = new SEIPrefixIndication;
+          m_seiEncoder.initSEISeiPrefixIndication(seiSEIPrefixIndication, it);
+          seiMessages.push_back(seiSEIPrefixIndication);
+          NumOfSEIPrefixMsg--;
+      }
   }
 #endif
 }

@@ -389,6 +389,18 @@ Void SEIReader::xReadSEIPayloadData(Int const payloadType, Int const payloadSize
       xParseSEIShutterInterval((SEIShutterIntervalInfo&)*sei, payloadSize, pDecodedMessageOutputStream);
       break;
 #endif
+#if JCTVC_AD0021_SEI_MANIFEST
+    case SEI::SEI_MANIFEST:
+      sei = new SEIManifest;
+      xParseSEISeiManifest((SEIManifest&)*sei, payloadSize, pDecodedMessageOutputStream);
+      break;
+#endif
+#if JCTVC_AD0021_SEI_PREFIX_INDICATION
+    case SEI::SEI_PREFIX_INDICATION:
+      sei = new SEIPrefixIndication;
+      xParseSEISeiPrefixIndication((SEIPrefixIndication&)*sei, payloadSize, pDecodedMessageOutputStream);
+      break;
+#endif
     default:
       for (UInt i = 0; i < payloadSize; i++)
       {
@@ -2096,6 +2108,57 @@ Void SEIReader::xParseSEIRegionalNesting( SEIRegionalNesting& sei, UInt payloadS
     sei.addRegionalSEI( seiWithRegionIndices ) ;
   }
 }
+
+#if JCTVC_AD0021_SEI_MANIFEST
+Void SEIReader::xParseSEISeiManifest(SEIManifest& sei, UInt payloadSize, std::ostream* pDecodedMessageOutputStream)
+{
+    output_sei_message_header(sei, pDecodedMessageOutputStream, payloadSize);
+    UInt val;
+    sei_read_code(pDecodedMessageOutputStream, 16, val, "manifest_num_sei_msg_types");          sei.m_manifestNumSeiMsgTypes = val;
+
+    if (sei.m_manifestNumSeiMsgTypes > 0)
+    {
+        sei.m_manifestSeiPayloadType.resize(sei.m_manifestNumSeiMsgTypes);
+        sei.m_manifestSeiDescription.resize(sei.m_manifestNumSeiMsgTypes);
+        for (Int i = 0; i < sei.m_manifestNumSeiMsgTypes; i++)
+        {
+            sei_read_code(pDecodedMessageOutputStream, 16, val, "manifest_sei_payload_types");           sei.m_manifestSeiPayloadType[i] = val;
+            sei_read_code(pDecodedMessageOutputStream, 8, val, "manifest_sei_description");             sei.m_manifestSeiDescription[i] = val;
+        }
+    }
+}
+#endif
+
+#if JCTVC_AD0021_SEI_PREFIX_INDICATION
+Void SEIReader::xParseSEISeiPrefixIndication(SEIPrefixIndication& sei, UInt payloadSize, std::ostream* pDecodedMessageOutputStream)
+{
+    output_sei_message_header(sei, pDecodedMessageOutputStream, payloadSize);
+    UInt val;
+    UInt bitsRead = 0;
+    sei_read_code(pDecodedMessageOutputStream, 16, val, "prefix_sei_payload_type");                sei.m_prefixSeiPayloadType = val;
+    sei_read_code(pDecodedMessageOutputStream, 8, val, "num_sei_prefix_indications_minus1");      sei.m_numSeiPrefixIndicationsMinus1 = val;
+    if (sei.m_numSeiPrefixIndicationsMinus1 >= 0)
+    {
+        sei.m_numBitsInPrefixIndicationMinus1.resize(sei.m_numSeiPrefixIndicationsMinus1 + 1);
+        sei.m_seiPrefixDataBit.resize(sei.m_numSeiPrefixIndicationsMinus1 + 1);
+        for (Int i = 0; i <= sei.m_numSeiPrefixIndicationsMinus1; i++)
+        {
+            sei_read_code(pDecodedMessageOutputStream, 16, val, "num_bits_in_prefix_indication_minus1");   sei.m_numBitsInPrefixIndicationMinus1[i] = val;
+            sei.m_seiPrefixDataBit[i].resize(sei.m_numBitsInPrefixIndicationMinus1[i] + 1);
+            for (Int j = 0; j <= sei.m_numBitsInPrefixIndicationMinus1[i]; j++)
+            {
+                sei_read_code(pDecodedMessageOutputStream, 1, val, "sei_prefix_data_bit");   sei.m_seiPrefixDataBit[i][j] = val;
+                bitsRead += 1;
+            }
+            while (bitsRead % 8 != 0)
+            {
+                sei_read_code(pDecodedMessageOutputStream, 1, val, "byte_alignment_bit_equal_to_one");   sei.m_byteAlignmentBitEqualToOne = val;
+                bitsRead += 1;
+            }
+        }
+    }
+}
+#endif
 
 
 //! \}
