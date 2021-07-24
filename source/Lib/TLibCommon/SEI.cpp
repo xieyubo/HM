@@ -256,53 +256,54 @@ Void SEIRegionalNesting::addRegionalSEI(RegionalSEI *regSEI)
 #if JCTVC_AD0021_SEI_MANIFEST
 SEIManifest::SEIManifestDescription SEIManifest::getSEIMessageDescription(const PayloadType payloadType)
 {
-    std::vector<PayloadType> nessary = { FRAME_PACKING, EQUIRECTANGULAR_PROJECTION  /*,GENERALIZED_CUBEMAP_PROJECTION*/,
-                                         SPHERE_ROTATION, REGION_WISE_PACKING };
+  std::vector<PayloadType> necessary = { FRAME_PACKING, EQUIRECTANGULAR_PROJECTION  /*,GENERALIZED_CUBEMAP_PROJECTION*/
+    ,SPHERE_ROTATION, REGION_WISE_PACKING };
 
-    std::vector<PayloadType> undetermined = { USER_DATA_REGISTERED_ITU_T_T35, USER_DATA_UNREGISTERED };
+  std::vector<PayloadType> undetermined = { USER_DATA_REGISTERED_ITU_T_T35, USER_DATA_UNREGISTERED };
 
-    for (auto pt : nessary) {
-        if (payloadType == pt)
-        {
-            return NESSARY_SEI_MESSAGE;
-        }
-    }
-    for (auto pt : undetermined)
+  for (auto pt : necessary)
+  {
+    if (payloadType == pt)
     {
-        if (payloadType == pt)
-        {
-            return UNDETERMINED_SEI_MESSAGE;
-        }
+      return NECESSARY_SEI_MESSAGE;
     }
-    return UNNESSARY_SEI_MESSAGE;
+  }
+  for (auto pt : undetermined)
+  {
+    if (payloadType == pt)
+    {
+      return UNDETERMINED_SEI_MESSAGE;
+    }
+  }
+  return UNNECESSARY_SEI_MESSAGE;
 }
 #endif
 
 #if JCTVC_AD0021_SEI_PREFIX_INDICATION
 uint8_t SEIPrefixIndication::getNumsOfSeiPrefixIndications(const SEI* sei)
 {
-    PayloadType payloadType = sei->payloadType();
+  PayloadType payloadType = sei->payloadType();
 
-    //Unable to determine how many indicators are needed, it will be determined in xWriteSEIPrefixIndication() return 3
-    std::vector<PayloadType> indicationN = { REGION_WISE_PACKING };
-    // Need two indicators to finish writing the SEI prefix indication message(return 2)
-    std::vector<PayloadType> indication2 = { SPHERE_ROTATION };
+  //Unable to determine how many indicators are needed, it will be determined in xWriteSEIPrefixIndication() return 3
+  std::vector<PayloadType> indicationN = { REGION_WISE_PACKING };
+  // Need two indicators to finish writing the SEI prefix indication message(return 2)
+  std::vector<PayloadType> indication2 = { SPHERE_ROTATION };
 
-    for (auto pt : indicationN)
+  for (auto pt : indicationN)
+  {
+    if (payloadType == pt)
     {
-        if (payloadType == pt)
-        {
-            return 3;
-        }
+      return 3;
     }
-    for (auto pt : indication2)
+  }
+  for (auto pt : indication2)
+  {
+    if (payloadType == pt)
     {
-        if (payloadType == pt)
-        {
-            return 2;
-        }
+      return 2;
     }
-    return 1;
+  }
+  return 1;
 }
 #endif
 

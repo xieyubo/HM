@@ -536,10 +536,10 @@ protected:
 #endif
 
 #if JCTVC_AD0021_SEI_MANIFEST
-  Bool       m_smSeiManifestSeiEnabled;
+  Bool       m_SEIManifestSEIEnabled;
 #endif
 #if JCTVC_AD0021_SEI_PREFIX_INDICATION
-  Bool       m_spiSeiPrefixIndicationSeiEnabled;
+  Bool       m_SEIPrefixIndicationSEIEnabled;
 #endif
 
   // internal member functions

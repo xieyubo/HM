@@ -1212,25 +1212,25 @@ private:
 class SEIManifest : public SEI
 {
 public:
-    PayloadType payloadType() const { return SEI_MANIFEST; }
+  PayloadType payloadType() const { return SEI_MANIFEST; }
 
-    SEIManifest() {}
-    virtual ~SEIManifest() {}
+  SEIManifest() {}
+  virtual ~SEIManifest() {}
 
-    enum SEIManifestDescription
-    {
-        NO_SEI_MESSAGE = 0,
-        NESSARY_SEI_MESSAGE = 1,
-        UNNESSARY_SEI_MESSAGE = 2,
-        UNDETERMINED_SEI_MESSAGE = 3,
+  enum SEIManifestDescription
+  {
+    NO_SEI_MESSAGE = 0,
+    NECESSARY_SEI_MESSAGE = 1,
+    UNNECESSARY_SEI_MESSAGE = 2,
+    UNDETERMINED_SEI_MESSAGE = 3,
 
-        NUM_OF_DESCROPTION = 255,
-    };
-    uint16_t                    m_manifestNumSeiMsgTypes;
-    std::vector<uint16_t>       m_manifestSeiPayloadType;
-    std::vector<uint8_t>        m_manifestSeiDescription;
+    NUM_OF_DESCROPTION = 255,
+  };
+  uint16_t                    m_manifestNumSeiMsgTypes;
+  std::vector<uint16_t>       m_manifestSeiPayloadType;
+  std::vector<uint8_t>        m_manifestSeiDescription;
 
-    SEIManifestDescription getSEIMessageDescription(const PayloadType payloadType);
+  SEIManifestDescription getSEIMessageDescription(const PayloadType payloadType);
 };
 #endif
 
@@ -1238,19 +1238,18 @@ public:
 class SEIPrefixIndication : public SEI
 {
 public:
-    PayloadType payloadType() const { return SEI_PREFIX_INDICATION; }
+  PayloadType payloadType() const { return SEI_PREFIX_INDICATION; }
 
-    SEIPrefixIndication() {}
-    virtual ~SEIPrefixIndication() {}
+  SEIPrefixIndication() {}
+  virtual ~SEIPrefixIndication() {}
 
-    uint16_t                      m_prefixSeiPayloadType;
-    uint8_t                       m_numSeiPrefixIndicationsMinus1;
-    std::vector<uint16_t>         m_numBitsInPrefixIndicationMinus1;
-    std::vector<std::vector<int>> m_seiPrefixDataBit;
-    int                           m_byteAlignmentBitEqualToOne;
-    const SEI* m_payload;
+  uint16_t                      m_prefixSeiPayloadType;
+  uint8_t                       m_numSeiPrefixIndicationsMinus1;
+  std::vector<uint16_t>         m_numBitsInPrefixIndicationMinus1;
+  std::vector<std::vector<int>> m_seiPrefixDataBit;
+  const SEI* m_payload;
 
-    uint8_t getNumsOfSeiPrefixIndications(const SEI* sei);
+  uint8_t getNumsOfSeiPrefixIndications(const SEI* sei);
 };
 #endif 
 

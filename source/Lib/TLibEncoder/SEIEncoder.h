@@ -110,10 +110,10 @@ public:
   Bool initSEIAnnotatedRegions(SEIAnnotatedRegions *sei, Int currPOC);
   Void readAnnotatedRegionSEI(std::istream &fic, SEIAnnotatedRegions *seiAnnoRegion, Bool &failed);
 #if JCTVC_AD0021_SEI_MANIFEST
-  Void initSEISeiManifest(SEIManifest* seiSeiManifest, const SEIMessages& seiMessage);
+  Void initSEISEIManifest(SEIManifest* seiSeiManifest, const SEIMessages& seiMessage);
 #endif
 #if JCTVC_AD0021_SEI_PREFIX_INDICATION
-  Void initSEISeiPrefixIndication(SEIPrefixIndication* seiSeiPrefixIndications, const SEI* sei);
+  Void initSEISEIPrefixIndication(SEIPrefixIndication* seiSeiPrefixIndications, const SEI* sei);
 #endif
   // trailing SEIs
   Void initDecodedPictureHashSEI(SEIDecodedPictureHash *sei, TComPic *pcPic, std::string &rHashString, const BitDepths &bitDepths);

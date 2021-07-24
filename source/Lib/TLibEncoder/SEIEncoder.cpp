@@ -1511,33 +1511,30 @@ Void SEIEncoder::initSEIGreenMetadataInfo(SEIGreenMetadataInfo *seiGreenMetadata
 }
 
 #if JCTVC_AD0021_SEI_MANIFEST
-Void SEIEncoder::initSEISeiManifest(SEIManifest* seiSeiManifest, const SEIMessages& seiMessages)
+Void SEIEncoder::initSEISEIManifest(SEIManifest* seiSeiManifest, const SEIMessages& seiMessages)
 {
-    assert(m_isInitialized);
-    assert(seiSeiManifest != NULL);
-    seiSeiManifest->m_manifestNumSeiMsgTypes = 0;
-    for (auto& it : seiMessages)
-    {
-        seiSeiManifest->m_manifestNumSeiMsgTypes += 1;
-        auto tempPayloadType = it->payloadType();
-        seiSeiManifest->m_manifestSeiPayloadType.push_back(tempPayloadType);
-        auto description = seiSeiManifest->getSEIMessageDescription(tempPayloadType);
-        seiSeiManifest->m_manifestSeiDescription.push_back(description);
-    }
+  assert(m_isInitialized);
+  assert(seiSeiManifest != NULL);
+  seiSeiManifest->m_manifestNumSeiMsgTypes = 0;
+  for (auto& it : seiMessages)
+  {
+    seiSeiManifest->m_manifestNumSeiMsgTypes += 1;
+    auto tempPayloadType = it->payloadType();
+    seiSeiManifest->m_manifestSeiPayloadType.push_back(tempPayloadType);
+    auto description = seiSeiManifest->getSEIMessageDescription(tempPayloadType);
+    seiSeiManifest->m_manifestSeiDescription.push_back(description);
+  }
 }
 #endif
 
 #if JCTVC_AD0021_SEI_PREFIX_INDICATION
-Void SEIEncoder::initSEISeiPrefixIndication(SEIPrefixIndication* seiSeiPrefixIndications, const SEI* sei)
+Void SEIEncoder::initSEISEIPrefixIndication(SEIPrefixIndication* seiSeiPrefixIndications, const SEI* sei)
 {
-    assert(m_isInitialized);
-    assert(seiSeiPrefixIndications != NULL);
-    seiSeiPrefixIndications->m_prefixSeiPayloadType = sei->payloadType();
-    seiSeiPrefixIndications->m_numSeiPrefixIndicationsMinus1 = seiSeiPrefixIndications->getNumsOfSeiPrefixIndications(sei) - 1;
-    seiSeiPrefixIndications->m_numBitsInPrefixIndicationMinus1.resize(seiSeiPrefixIndications->m_numSeiPrefixIndicationsMinus1 + 1);
-    seiSeiPrefixIndications->m_seiPrefixDataBit.resize(seiSeiPrefixIndications->m_numSeiPrefixIndicationsMinus1 + 1);
-    seiSeiPrefixIndications->m_byteAlignmentBitEqualToOne = 1;
-    seiSeiPrefixIndications->m_payload = sei;
+  assert(m_isInitialized);
+  assert(seiSeiPrefixIndications != NULL);
+  seiSeiPrefixIndications->m_prefixSeiPayloadType = sei->payloadType();
+  seiSeiPrefixIndications->m_numSeiPrefixIndicationsMinus1 = seiSeiPrefixIndications->getNumsOfSeiPrefixIndications(sei) - 1;
+  seiSeiPrefixIndications->m_payload = sei;
 }
 #endif 
 

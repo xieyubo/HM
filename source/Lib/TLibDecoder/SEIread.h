@@ -114,10 +114,10 @@ protected:
   Void xParseSEIShutterInterval               (SEIShutterIntervalInfo& sei,           UInt payloadSize,                     std::ostream *pDecodedMessageOutputStream);
 #endif
 #if JCTVC_AD0021_SEI_MANIFEST
-  Void xParseSEISeiManifest(SEIManifest & sei, UInt payloadSize, std::ostream * pDecodedMessageOutputStream);
+  Void xParseSEISEIManifest(SEIManifest & sei, UInt payloadSize, std::ostream * pDecodedMessageOutputStream);
 #endif
 #if JCTVC_AD0021_SEI_PREFIX_INDICATION
-  Void xParseSEISeiPrefixIndication(SEIPrefixIndication & sei, UInt payloadSize, std::ostream * pDecodedMessageOutputStream);
+  Void xParseSEISEIPrefixIndication(SEIPrefixIndication & sei, UInt payloadSize, std::ostream * pDecodedMessageOutputStream);
 #endif
 
   Void sei_read_scode(std::ostream *pOS, UInt uiLength, Int& ruiCode, const TChar *pSymbolName);

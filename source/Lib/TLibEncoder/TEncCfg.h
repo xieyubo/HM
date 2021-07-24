@@ -546,10 +546,10 @@ protected:
   UInt        m_summaryVerboseness;                           ///< Specifies the level of the verboseness of the text output.
 
 #if JCTVC_AD0021_SEI_MANIFEST
-  Bool        m_smSeiManifestSeiEnabled;
+  Bool        m_SEIManifestSEIEnabled;
 #endif
 #if JCTVC_AD0021_SEI_PREFIX_INDICATION
-  Bool        m_spiSeiPrefixIndicationSeiEnabled;
+  Bool        m_SEIPrefixIndicationSEIEnabled;
 #endif
 
 public:
@@ -1384,12 +1384,12 @@ public:
   UInt      getSummaryVerboseness( ) const                           { return m_summaryVerboseness; }
 
 #if JCTVC_AD0021_SEI_MANIFEST
-  Void     setSmSEIManifestSeiEnabled(Bool b) { m_smSeiManifestSeiEnabled = b; }
-  Bool     getSmSeiManifestSeiEnabled() { return m_smSeiManifestSeiEnabled; }
+  Void     setSEIManifestSEIEnabled(Bool b) { m_SEIManifestSEIEnabled = b; }
+  Bool     getSEIManifestSEIEnabled() { return m_SEIManifestSEIEnabled; }
 #endif
 #if JCTVC_AD0021_SEI_PREFIX_INDICATION
-  Void     setSpiPrefixIndicationSeiEnabled(Bool b) { m_spiSeiPrefixIndicationSeiEnabled = b; }
-  Bool     getSpiPrefixIndicationSeiEnabled() { return m_spiSeiPrefixIndicationSeiEnabled; }
+  Void     setSEIPrefixIndicationSEIEnabled(Bool b) { m_SEIPrefixIndicationSEIEnabled = b; }
+  Bool     getSEIPrefixIndicationSEIEnabled() { return m_SEIPrefixIndicationSEIEnabled; }
 #endif
 
 };

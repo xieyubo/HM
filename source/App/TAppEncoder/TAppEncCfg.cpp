@@ -1335,10 +1335,10 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("SEIRegionalNestingFileRoot,-rns",                 m_regionalNestingSEIFileRoot,                    string(""), "Regional nesting SEI parameters root file name (wo num ext); only the file name base is to be added. Underscore and POC would be automatically addded to . E.g. \"-rns rns\" will search for files rns_0.txt, rns_1.txt, ...")
   ("SEIAnnotatedRegionsFileRoot,-ar",                 m_arSEIFileRoot,                                 string(""), "Annotated region SEI parameters root file name (wo num ext); only the file name base is to be added. Underscore and POC would be automatically addded to . E.g. \"-ar ar\" will search for files ar_0.txt, ar_1.txt, ...")
 #if JCTVC_AD0021_SEI_MANIFEST
-  ("SEISMEnabled",                                    m_smSeiManifestSeiEnabled,                false,                                   "Controls if SEI Manifest SEI messages enabled")
+  ("SEISEIManifestEnabled",                           m_SEIManifestSEIEnabled,                  false,                                   "Controls if SEI Manifest SEI messages enabled")
 #endif
 #if JCTVC_AD0021_SEI_PREFIX_INDICATION
-  ("SEISPIEnabled",                                   m_spiSeiPrefixIndicationSeiEnabled,       false,                                   "Controls if SEI Prefix Indications SEI messages enabled")
+  ("SEISEIPrefixIndicationEnabled",                   m_SEIPrefixIndicationSEIEnabled,          false,                                   "Controls if SEI Prefix Indications SEI messages enabled")
 #endif
   ;
 
