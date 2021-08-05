@@ -309,7 +309,6 @@ Void TEncGOP::xWriteLeadingSEIOrdered (SEIMessages& seiMessages, SEIMessages& du
   if (m_pcCfg->getSEIPrefixIndicationSEIEnabled())
   {
     currentMessages = extractSeisByType(localMessages, SEI::SEI_PREFIX_INDICATION);
-    assert(currentMessages.size() <= 1);
     xWriteSEI(NAL_UNIT_PREFIX_SEI, currentMessages, accessUnit, itNalu, temporalId, sps);
     xClearSEIs(currentMessages, !testWrite);
   }
