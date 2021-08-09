@@ -1342,6 +1342,7 @@ Void SEIEncoder::readAnnotatedRegionSEI(std::istream &fic, SEIAnnotatedRegions *
         }
       }
     }
+
     UInt numObjectUpdates=0;
     readTokenValueAndValidate<UInt>(numObjectUpdates, failed, fic, "SEIArNumObjUpdates", UInt(0), UInt(255));
     seiAnnoRegion->m_annotatedRegions.resize(numObjectUpdates);
@@ -1361,22 +1362,27 @@ Void SEIEncoder::readAnnotatedRegionSEI(std::istream &fic, SEIAnnotatedRegions *
           {
             readTokenValueAndValidate<UInt>(ar.objLabelIdx, failed, fic, "SEIArObjectLabelIdc[c]", UInt(0), UInt(255));
           }
-          readTokenValueAndValidate(ar.boundingBoxValid, failed, fic, "SEIArBoundBoxUpdateFlag[c]");
-          if (ar.boundingBoxValid)
-          {
-            readTokenValueAndValidate<UInt>(ar.boundingBoxTop, failed, fic, "SEIArObjTop[c]", UInt(0), UInt(0x7fffffff));
-            readTokenValueAndValidate<UInt>(ar.boundingBoxLeft, failed, fic, "SEIArObjLeft[c]", UInt(0), UInt(0x7fffffff));
-            readTokenValueAndValidate<UInt>(ar.boundingBoxWidth, failed, fic, "SEIArObjWidth[c]", UInt(0), UInt(0x7fffffff));
-            readTokenValueAndValidate<UInt>(ar.boundingBoxHeight, failed, fic, "SEIArObjHeight[c]", UInt(0), UInt(0x7fffffff));
-            if (seiAnnoRegion->m_hdr.m_partialObjectFlagPresentFlag)
+        }
+
+        readTokenValueAndValidate(ar.boundingBoxValid, failed, fic, "SEIArBoundBoxUpdateFlag[c]");
+        if (ar.boundingBoxValid)
+        {
+            readTokenValueAndValidate(ar.boundingBoxCancelFlag, failed, fic, "SEIArBoundBoxCancelFlag[c]");
+            if (!ar.boundingBoxCancelFlag)
             {
-              readTokenValueAndValidate(ar.partialObjectFlag, failed, fic, "SEIArObjPartUpdateFlag[c]");
+              readTokenValueAndValidate<UInt>(ar.boundingBoxTop, failed, fic, "SEIArObjTop[c]", UInt(0), UInt(0x7fffffff));
+              readTokenValueAndValidate<UInt>(ar.boundingBoxLeft, failed, fic, "SEIArObjLeft[c]", UInt(0), UInt(0x7fffffff));
+              readTokenValueAndValidate<UInt>(ar.boundingBoxWidth, failed, fic, "SEIArObjWidth[c]", UInt(0), UInt(0x7fffffff));
+              readTokenValueAndValidate<UInt>(ar.boundingBoxHeight, failed, fic, "SEIArObjHeight[c]", UInt(0), UInt(0x7fffffff));
+              if (seiAnnoRegion->m_hdr.m_partialObjectFlagPresentFlag)
+              {
+                readTokenValueAndValidate(ar.partialObjectFlag, failed, fic, "SEIArObjPartUpdateFlag[c]");
+              }
+              if (seiAnnoRegion->m_hdr.m_objectConfidenceInfoPresentFlag)
+              {
+                readTokenValueAndValidate<UInt>(ar.objectConfidence, failed, fic, "SEIArObjDetConf[c]", UInt(0), UInt(1<<seiAnnoRegion->m_hdr.m_objectConfidenceLength)-1);
+              }
             }
-            if (seiAnnoRegion->m_hdr.m_objectConfidenceInfoPresentFlag)
-            {
-              readTokenValueAndValidate<UInt>(ar.objectConfidence, failed, fic, "SEIArObjDetConf[c]", UInt(0), UInt(1<<seiAnnoRegion->m_hdr.m_objectConfidenceLength)-1);
-            }
-          }
         }
       }
     }

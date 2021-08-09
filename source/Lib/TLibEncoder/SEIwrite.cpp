@@ -1496,18 +1496,22 @@ Void SEIWriter::xWriteSEIAnnotatedRegions(const SEIAnnotatedRegions &sei, const 
         WRITE_FLAG(ar.boundingBoxValid, "ar_object_bounding_box_update_flag");
         if (ar.boundingBoxValid)
         {
-          WRITE_CODE(ar.boundingBoxTop,   16, "ar_bounding_box_top");
-          WRITE_CODE(ar.boundingBoxLeft,  16, "ar_bounding_box_left");
-          WRITE_CODE(ar.boundingBoxWidth, 16, "ar_bounding_box_width");
-          WRITE_CODE(ar.boundingBoxHeight,16, "ar_bounding_box_height");
-          if (sei.m_hdr.m_partialObjectFlagPresentFlag)
+          WRITE_FLAG(ar.boundingBoxCancelFlag, "ar_object_bounding_box_cancel_flag");
+          if (!ar.boundingBoxCancelFlag)
           {
-            WRITE_UVLC(ar.partialObjectFlag, "ar_partial_object_flag");
-          }
-          if (sei.m_hdr.m_objectConfidenceInfoPresentFlag)
-          {
-            assert(ar.objectConfidence < (1<<sei.m_hdr.m_objectConfidenceLength));
-            WRITE_CODE(ar.objectConfidence, sei.m_hdr.m_objectConfidenceLength, "ar_object_confidence");
+            WRITE_CODE(ar.boundingBoxTop,   16, "ar_bounding_box_top");
+            WRITE_CODE(ar.boundingBoxLeft,  16, "ar_bounding_box_left");
+            WRITE_CODE(ar.boundingBoxWidth, 16, "ar_bounding_box_width");
+            WRITE_CODE(ar.boundingBoxHeight,16, "ar_bounding_box_height");
+            if (sei.m_hdr.m_partialObjectFlagPresentFlag)
+            {
+              WRITE_UVLC(ar.partialObjectFlag, "ar_partial_object_flag");
+            }
+            if (sei.m_hdr.m_objectConfidenceInfoPresentFlag)
+            {
+              assert(ar.objectConfidence < (1<<sei.m_hdr.m_objectConfidenceLength));
+              WRITE_CODE(ar.objectConfidence, sei.m_hdr.m_objectConfidenceLength, "ar_object_confidence");
+            }
           }
         }
       }

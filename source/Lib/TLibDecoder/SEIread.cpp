@@ -1694,7 +1694,7 @@ Void SEIReader::xParseSEIAnnotatedRegions(SEIAnnotatedRegions& sei, UInt payload
           }
         } while (val != '\0');
       }
-    }
+
 
     UInt numLabelUpdates;
     sei_read_uvlc(pDecodedMessageOutputStream, numLabelUpdates, "ar_num_label_updates");
@@ -1728,6 +1728,7 @@ Void SEIReader::xParseSEIAnnotatedRegions(SEIAnnotatedRegions& sei, UInt payload
         } while (val != '\0');
       }
     }
+   }
 
     UInt numObjUpdates;
     sei_read_uvlc(pDecodedMessageOutputStream, numObjUpdates, "ar_num_object_updates");
@@ -1757,17 +1758,21 @@ Void SEIReader::xParseSEIAnnotatedRegions(SEIAnnotatedRegions& sei, UInt payload
         sei_read_flag(pDecodedMessageOutputStream, val, "ar_bounding_box_update_flag");              ar.boundingBoxValid = val;
         if (ar.boundingBoxValid)
         {
-          sei_read_code(pDecodedMessageOutputStream, 16, val, "ar_bounding_box_top");                      ar.boundingBoxTop = val;
-          sei_read_code(pDecodedMessageOutputStream, 16, val, "ar_bounding_box_left");                     ar.boundingBoxLeft = val;
-          sei_read_code(pDecodedMessageOutputStream, 16, val, "ar_bounding_box_width");                    ar.boundingBoxWidth = val;
-          sei_read_code(pDecodedMessageOutputStream, 16, val, "ar_bounding_box_height");                   ar.boundingBoxHeight = val;
-          if (sei.m_hdr.m_partialObjectFlagPresentFlag)
+          sei_read_flag(pDecodedMessageOutputStream, val, "ar_bounding_box_cancel_flag");             ar.boundingBoxCancelFlag = val;
+          if (!ar.boundingBoxCancelFlag)
           {
-            sei_read_flag(pDecodedMessageOutputStream, val, "ar_partial_object_flag");                ar.partialObjectFlag = val;
-          }
-          if (sei.m_hdr.m_objectConfidenceInfoPresentFlag)
-          {
-            sei_read_code(pDecodedMessageOutputStream, sei.m_hdr.m_objectConfidenceLength, val, "ar_object_confidence"); ar.objectConfidence = val;
+            sei_read_code(pDecodedMessageOutputStream, 16, val, "ar_bounding_box_top");                      ar.boundingBoxTop = val;
+            sei_read_code(pDecodedMessageOutputStream, 16, val, "ar_bounding_box_left");                     ar.boundingBoxLeft = val;
+            sei_read_code(pDecodedMessageOutputStream, 16, val, "ar_bounding_box_width");                    ar.boundingBoxWidth = val;
+            sei_read_code(pDecodedMessageOutputStream, 16, val, "ar_bounding_box_height");                   ar.boundingBoxHeight = val;
+            if (sei.m_hdr.m_partialObjectFlagPresentFlag)
+            {
+              sei_read_flag(pDecodedMessageOutputStream, val, "ar_partial_object_flag");                ar.partialObjectFlag = val;
+            }
+            if (sei.m_hdr.m_objectConfidenceInfoPresentFlag)
+            {
+              sei_read_code(pDecodedMessageOutputStream, sei.m_hdr.m_objectConfidenceLength, val, "ar_object_confidence"); ar.objectConfidence = val;
+            }
           }
         }
       }
