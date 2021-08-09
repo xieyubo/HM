@@ -1406,6 +1406,13 @@ Void SEIEncoder::readAnnotatedRegionSEI(std::istream &fic, SEIAnnotatedRegions *
       }
     }
   }
+#if JVET_T0050_ANNOTATED_REGIONS_SEI
+  else
+  {
+    seiAnnoRegion->m_annotatedRegions.clear();
+    seiAnnoRegion->m_annotatedLabels.clear();
+  }
+#endif
 }
 
 Bool SEIEncoder::initSEIAnnotatedRegions(SEIAnnotatedRegions* SEIAnnoReg, Int currPOC)
