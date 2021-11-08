@@ -679,7 +679,11 @@ Void TEncTemporalFilter::bilateralFilter(const TComPicYuv &orgPic,
     const Pel maxSampleValue = (1<<m_internalBitDepth[toChannelType(compID)])-1;
     const Double bitDepthDiffWeighting=1024.0 / (maxSampleValue+1);
 #if JVET_V0056_MCTF
-    const Int blkSize = isLuma(compID) ? 8 : 4;
+    static const Int lumaBlockSize=8;    
+    const Int csx=getComponentScaleX(compID, m_chromaFormatIDC);
+    const Int csy=getComponentScaleY(compID, m_chromaFormatIDC);
+    const Int blkSizeX = lumaBlockSize>>csx;
+    const Int blkSizeY = lumaBlockSize>>csy;    
 #endif
 
     for (Int y = 0; y < height; y++, srcPelRow+=srcStride, dstPelRow+=dstStride)
@@ -692,14 +696,14 @@ Void TEncTemporalFilter::bilateralFilter(const TComPicYuv &orgPic,
         Double temporalWeightSum = 1.0;
         Double newVal = (Double) orgVal;
 #if JVET_V0056_MCTF
-        if ((y % blkSize == 0) && (x % blkSize == 0))
+        if ((y % blkSizeY == 0) && (x % blkSizeX == 0))
         {
           for (Int i = 0; i < numRefs; i++)
           {
             Double variance = 0, diffsum = 0;
-            for (Int y1 = 0; y1 < blkSize - 1; y1++)
+            for (Int y1 = 0; y1 < blkSizeY - 1; y1++)
             {
-              for (Int x1 = 0; x1 < blkSize - 1; x1++)
+              for (Int x1 = 0; x1 < blkSizeX - 1; x1++)
               {
                 Int pix  = *(srcPel + x1);
                 Int pixR = *(srcPel + x1 + 1);
@@ -717,21 +721,21 @@ Void TEncTemporalFilter::bilateralFilter(const TComPicYuv &orgPic,
                 diffsum  += (diffD - diff) * (diffD - diff);
               }
             }
-            srcFrameInfo[i].mvs.get(x / blkSize, y / blkSize).noise = (int) round((300 * variance + 50) / (10 * diffsum + 50));
+            srcFrameInfo[i].mvs.get(x / blkSizeX, y / blkSizeY).noise = (int) round((300 * variance + 50) / (10 * diffsum + 50));
           }
         }
 
         Double minError = 9999999;
         for (Int i = 0; i < numRefs; i++)
         {
-          minError = std::min(minError, (Double) srcFrameInfo[i].mvs.get(x / blkSize, y / blkSize).error);
+          minError = std::min(minError, (Double) srcFrameInfo[i].mvs.get(x / blkSizeX, y / blkSizeY).error);
         }
 #endif
         for (Int i = 0; i < numRefs; i++)
         {
 #if JVET_V0056_MCTF
-          const Int error = srcFrameInfo[i].mvs.get(x / blkSize, y / blkSize).error;
-          const Int noise = srcFrameInfo[i].mvs.get(x / blkSize, y / blkSize).noise;
+          const Int error = srcFrameInfo[i].mvs.get(x / blkSizeX, y / blkSizeY).error;
+          const Int noise = srcFrameInfo[i].mvs.get(x / blkSizeX, y / blkSizeY).noise;
 #endif
           const Pel *pCorrectedPelPtr=correctedPics[i].getAddr(compID)+(y*correctedPics[i].getStride(compID)+x);
           const Int refVal = (Int) *pCorrectedPelPtr;
