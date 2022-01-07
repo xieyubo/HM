@@ -1695,40 +1695,38 @@ Void SEIReader::xParseSEIAnnotatedRegions(SEIAnnotatedRegions& sei, UInt payload
         } while (val != '\0');
       }
 
-
-    UInt numLabelUpdates;
-    sei_read_uvlc(pDecodedMessageOutputStream, numLabelUpdates, "ar_num_label_updates");
-    assert(numLabelUpdates<256);
-
-    sei.m_annotatedLabels.clear();
-    sei.m_annotatedLabels.resize(numLabelUpdates);
-    for (auto it=sei.m_annotatedLabels.begin(); it!=sei.m_annotatedLabels.end(); it++)
-    {
-      SEIAnnotatedRegions::AnnotatedRegionLabel &ar = it->second;
-      sei_read_uvlc(pDecodedMessageOutputStream, val, "ar_label_idx[]");             it->first = val;
-      assert(val<256);
-      sei_read_flag(pDecodedMessageOutputStream, val, "ar_label_cancel_flag");       ar.labelValid = !val;
-      if (ar.labelValid)
+      UInt numLabelUpdates;
+      sei_read_uvlc(pDecodedMessageOutputStream, numLabelUpdates, "ar_num_label_updates");
+      assert(numLabelUpdates<256);
+      sei.m_annotatedLabels.clear();
+      sei.m_annotatedLabels.resize(numLabelUpdates);
+      for (auto it=sei.m_annotatedLabels.begin(); it!=sei.m_annotatedLabels.end(); it++)
       {
-        ar.label.clear();
-        // byte alignment
-        while (m_pcBitstream->getNumBitsRead() % 8 != 0)
+        SEIAnnotatedRegions::AnnotatedRegionLabel &ar = it->second;
+        sei_read_uvlc(pDecodedMessageOutputStream, val, "ar_label_idx[]");             it->first = val;
+        assert(val<256);
+        sei_read_flag(pDecodedMessageOutputStream, val, "ar_label_cancel_flag");       ar.labelValid = !val;
+        if (ar.labelValid)
         {
-          UInt code;
-          sei_read_flag(pDecodedMessageOutputStream, code, "ar_bit_equal_to_zero");
-        }
-        do
-        {
-          sei_read_code(pDecodedMessageOutputStream, 8, val, "ar_label[]");
-          if (val)
+          ar.label.clear();
+          // byte alignment
+          while (m_pcBitstream->getNumBitsRead() % 8 != 0)
           {
-            assert(ar.label.size()<256);
-            ar.label.push_back((char)val);
+            UInt code;
+            sei_read_flag(pDecodedMessageOutputStream, code, "ar_bit_equal_to_zero");
           }
-        } while (val != '\0');
+          do
+          {
+            sei_read_code(pDecodedMessageOutputStream, 8, val, "ar_label[]");
+            if (val)
+            {
+              assert(ar.label.size()<256);
+              ar.label.push_back((char)val);
+            }
+          } while (val != '\0');
+        }
       }
     }
-   }
 
     UInt numObjUpdates;
     sei_read_uvlc(pDecodedMessageOutputStream, numObjUpdates, "ar_num_object_updates");
