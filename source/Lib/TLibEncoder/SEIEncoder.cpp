@@ -1404,6 +1404,14 @@ Void SEIEncoder::readAnnotatedRegionSEI(std::istream &fic, SEIAnnotatedRegions *
 #endif
         }
       }
+#if JVET_T0050_ANNOTATED_REGIONS_SEI
+      else
+      {
+        //Object has been marked for deletion
+        auto destIt = m_pcCfg->m_arObjects.find(it->first);
+        m_pcCfg->m_arObjects.erase(destIt);
+      }
+#endif
     }
   }
 #if JVET_T0050_ANNOTATED_REGIONS_SEI
@@ -1411,6 +1419,7 @@ Void SEIEncoder::readAnnotatedRegionSEI(std::istream &fic, SEIAnnotatedRegions *
   {
     seiAnnoRegion->m_annotatedRegions.clear();
     seiAnnoRegion->m_annotatedLabels.clear();
+    m_pcCfg->m_arObjects.clear();
   }
 #endif
 }
