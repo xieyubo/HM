@@ -1409,7 +1409,8 @@ Void SEIEncoder::readAnnotatedRegionSEI(std::istream &fic, SEIAnnotatedRegions *
       {
         //Object has been marked for deletion
         auto destIt = m_pcCfg->m_arObjects.find(it->first);
-        m_pcCfg->m_arObjects.erase(destIt);
+        if (destIt != m_pcCfg->m_arObjects.end())
+          m_pcCfg->m_arObjects.erase(destIt);
       }
 #endif
     }
