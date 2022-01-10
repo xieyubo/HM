@@ -49,6 +49,8 @@
 //! \ingroup TLibCommon
 //! \{
 
+#define JVET_X0079_MODIFIED_BITRATES                      1 // JVET-X0079: Addition of level 6.3
+
 #define JVET_V0078                                        1 // JVET-V0078: QP control for very smooth blocks
 
 // ====================================================================================================================
@@ -616,6 +618,9 @@ namespace Level
     LEVEL6   = 180,
     LEVEL6_1 = 183,
     LEVEL6_2 = 186,
+#if JVET_X0079_MODIFIED_BITRATES
+    LEVEL6_3 = 189,
+#endif
     LEVEL8_5 = 255,
   };
 }

@@ -333,16 +333,28 @@ strToLevel[] =
   {"6",   Level::LEVEL6},
   {"6.1", Level::LEVEL6_1},
   {"6.2", Level::LEVEL6_2},
+#if JVET_X0079_MODIFIED_BITRATES
+  {"6.3", Level::LEVEL6_3},
+#endif
   {"8.5", Level::LEVEL8_5},
 };
 
 #if !DPB_ENCODER_USAGE_CHECK
+#if JVET_X0079_MODIFIED_BITRATES
+UInt g_uiMaxCpbSize[2][28] =
+{
+  //            LEVEL1,          LEVEL2,  LEVEL2_1,      LEVEL3,  LEVEL3_1,       LEVEL4,   LEVEL4_1,       LEVEL5,    LEVEL5_1,  LEVEL5_2,     LEVEL6,    LEVEL6_1,  LEVEL6_2,  LEVEL6_3
+  { 0, 0, 0, 0, 350000, 0, 0, 0, 1500000, 3000000, 0, 0, 6000000, 10000000, 0, 0, 12000000, 20000000, 0, 0,  25000000,  40000000,  60000000, 0,  60000000, 120000000, 240000000,  240000000 },
+  { 0, 0, 0, 0,      0, 0, 0, 0,       0,       0, 0, 0,       0,        0, 0, 0, 30000000, 50000000, 0, 0, 100000000, 160000000, 240000000, 0, 240000000, 480000000, 800000000, 1600000000 }
+};
+#else
 UInt g_uiMaxCpbSize[2][21] =
 {
   //         LEVEL1,        LEVEL2,LEVEL2_1,     LEVEL3, LEVEL3_1,      LEVEL4, LEVEL4_1,       LEVEL5,  LEVEL5_1,  LEVEL5_2,    LEVEL6,  LEVEL6_1,  LEVEL6_2 
   { 0, 0, 0, 350000, 0, 0, 1500000, 3000000, 0, 6000000, 10000000, 0, 12000000, 20000000, 0,  25000000,  40000000,  60000000,  60000000, 120000000, 240000000 },
   { 0, 0, 0,      0, 0, 0,       0,       0, 0,       0,        0, 0, 30000000, 50000000, 0, 100000000, 160000000, 240000000, 240000000, 480000000, 800000000 }
 };
+#endif
 #endif
 
 static const struct MapStrToCostMode
@@ -2958,7 +2970,11 @@ Void TAppEncCfg::xCheckParameter()
 #else
     if ((m_RCCpbSaturationEnabled) && (m_level!=Level::NONE) && (m_profile!=Profile::NONE))
     {
+#if JVET_X0079_MODIFIED_BITRATES
+      UInt uiLevelIdx = (m_level / 30) * 4 + (UInt)((m_level % 30) / 3);
+#else
       UInt uiLevelIdx = (m_level / 10) + (UInt)((m_level % 10) / 3);    // (m_level / 30)*3 + ((m_level % 10) / 3);
+#endif
       xConfirmPara(m_RCCpbSize > g_uiMaxCpbSize[m_levelTier][uiLevelIdx], "RCCpbSize should be smaller than or equal to Max CPB size according to tier and level");
 #endif
       xConfirmPara(m_RCInitialCpbFullness > 1, "RCInitialCpbFullness should be smaller than or equal to 1");
