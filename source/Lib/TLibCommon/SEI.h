@@ -862,6 +862,7 @@ public:
     UInt objLabelIdx;            // only valid if bObjectLabelValid
 
     Bool boundingBoxValid;
+    Bool boundingBoxCancelFlag;
     UInt boundingBoxTop;         // only valid if bBoundingBoxValid
     UInt boundingBoxLeft;
     UInt boundingBoxWidth;
