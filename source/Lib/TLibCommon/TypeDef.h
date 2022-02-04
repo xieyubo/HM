@@ -52,6 +52,7 @@
 #define JVET_X0079_MODIFIED_BITRATES                      1 // JVET-X0079: Addition of level 6.3
 
 #define JVET_V0078                                        1 // JVET-V0078: QP control for very smooth blocks
+#define JVET_Y0077_BIM                                    1 // JVET-Y0077: Block Importance Mapping
 
 #define JVET_Y0105_SW_AND_QDF                             1 // An adaptive smooth window (SW) size and extension of quality dependency factor (QDF) to low frame rate in rate control 
 

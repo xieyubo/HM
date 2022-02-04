@@ -400,6 +400,9 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setOmniViewportSEIHorRange                           ( m_omniViewportSEIHorRange );         
   m_cTEncTop.setOmniViewportSEIVerRange                           ( m_omniViewportSEIVerRange );         
   m_cTEncTop.setGopBasedTemporalFilterEnabled                     ( m_gopBasedTemporalFilterEnabled );
+#if JVET_Y0077_BIM
+  m_cTEncTop.setBIM                                               ( m_bimEnabled );
+#endif
   m_cTEncTop.setCmpSEIEnabled                                     (m_cmpSEIEnabled);
   m_cTEncTop.setCmpSEICmpCancelFlag                               (m_cmpSEICmpCancelFlag);
   m_cTEncTop.setCmpSEICmpPersistenceFlag                          (m_cmpSEICmpPersistenceFlag);
@@ -660,13 +663,22 @@ Void TAppEncTop::encode()
   TExt360AppEncTop           ext360(*this, m_cTEncTop.getGOPEncoder()->getExt360Data(), *(m_cTEncTop.getGOPEncoder()), *pcPicYuvOrg);
 #endif
   TEncTemporalFilter temporalFilter;
+#if JVET_Y0077_BIM
+  if ( m_gopBasedTemporalFilterEnabled || m_bimEnabled )
+#else
   if (m_gopBasedTemporalFilterEnabled)
+#endif
   {
     temporalFilter.init(m_FrameSkip, m_inputBitDepth, m_MSBExtendedBitDepth, m_internalBitDepth, m_sourceWidth, m_sourceHeight,
       m_sourcePadding, m_framesToBeEncoded, m_bClipInputVideoToRec709Range, m_inputFileName, m_chromaFormatIDC,
       m_inputColourSpaceConvert, m_iQP, m_iGOPSize, m_gopBasedTemporalFilterStrengths,
       m_gopBasedTemporalFilterPastRefs, m_gopBasedTemporalFilterFutureRefs,
+#if !JVET_Y0077_BIM
       m_firstValidFrame, m_lastValidFrame);
+#else
+      m_firstValidFrame, m_lastValidFrame,
+      m_gopBasedTemporalFilterEnabled, m_cTEncTop.getAdaptQPmap(), m_bimEnabled);
+#endif
   }
   while ( !bEos )
   {
@@ -687,7 +699,11 @@ Void TAppEncTop::encode()
     m_cTVideoIOYuvInputFile.read( pcPicYuvOrg, &cPicYuvTrueOrg, ipCSC, m_sourcePadding, m_InputChromaFormatIDC, m_bClipInputVideoToRec709Range );
 #endif
 
+#if JVET_Y0077_BIM
+    if ( m_gopBasedTemporalFilterEnabled || m_bimEnabled )
+#else
     if (m_gopBasedTemporalFilterEnabled)
+#endif
     {
       temporalFilter.filter(pcPicYuvOrg, m_iFrameRcvd);
     }
