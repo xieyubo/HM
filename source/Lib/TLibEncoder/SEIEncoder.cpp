@@ -1367,26 +1367,74 @@ Void SEIEncoder::readAnnotatedRegionSEI(std::istream &fic, SEIAnnotatedRegions *
         readTokenValueAndValidate(ar.boundingBoxValid, failed, fic, "SEIArBoundBoxUpdateFlag[c]");
         if (ar.boundingBoxValid)
         {
-            readTokenValueAndValidate(ar.boundingBoxCancelFlag, failed, fic, "SEIArBoundBoxCancelFlag[c]");
-            if (!ar.boundingBoxCancelFlag)
+          readTokenValueAndValidate(ar.boundingBoxCancelFlag, failed, fic, "SEIArBoundBoxCancelFlag[c]");
+          if (!ar.boundingBoxCancelFlag)
+          {
+            readTokenValueAndValidate<UInt>(ar.boundingBoxTop, failed, fic, "SEIArObjTop[c]", UInt(0), UInt(0x7fffffff));
+            readTokenValueAndValidate<UInt>(ar.boundingBoxLeft, failed, fic, "SEIArObjLeft[c]", UInt(0), UInt(0x7fffffff));
+            readTokenValueAndValidate<UInt>(ar.boundingBoxWidth, failed, fic, "SEIArObjWidth[c]", UInt(0), UInt(0x7fffffff));
+            readTokenValueAndValidate<UInt>(ar.boundingBoxHeight, failed, fic, "SEIArObjHeight[c]", UInt(0), UInt(0x7fffffff));
+            if (seiAnnoRegion->m_hdr.m_partialObjectFlagPresentFlag)
             {
-              readTokenValueAndValidate<UInt>(ar.boundingBoxTop, failed, fic, "SEIArObjTop[c]", UInt(0), UInt(0x7fffffff));
-              readTokenValueAndValidate<UInt>(ar.boundingBoxLeft, failed, fic, "SEIArObjLeft[c]", UInt(0), UInt(0x7fffffff));
-              readTokenValueAndValidate<UInt>(ar.boundingBoxWidth, failed, fic, "SEIArObjWidth[c]", UInt(0), UInt(0x7fffffff));
-              readTokenValueAndValidate<UInt>(ar.boundingBoxHeight, failed, fic, "SEIArObjHeight[c]", UInt(0), UInt(0x7fffffff));
-              if (seiAnnoRegion->m_hdr.m_partialObjectFlagPresentFlag)
-              {
-                readTokenValueAndValidate(ar.partialObjectFlag, failed, fic, "SEIArObjPartUpdateFlag[c]");
-              }
-              if (seiAnnoRegion->m_hdr.m_objectConfidenceInfoPresentFlag)
-              {
-                readTokenValueAndValidate<UInt>(ar.objectConfidence, failed, fic, "SEIArObjDetConf[c]", UInt(0), UInt(1<<seiAnnoRegion->m_hdr.m_objectConfidenceLength)-1);
-              }
+              readTokenValueAndValidate(ar.partialObjectFlag, failed, fic, "SEIArObjPartUpdateFlag[c]");
             }
+            if (seiAnnoRegion->m_hdr.m_objectConfidenceInfoPresentFlag)
+            {
+              readTokenValueAndValidate<UInt>(ar.objectConfidence, failed, fic, "SEIArObjDetConf[c]", UInt(0), UInt(1<<seiAnnoRegion->m_hdr.m_objectConfidenceLength)-1);
+            }
+          }
+          if (seiAnnoRegion->m_hdr.m_objectConfidenceInfoPresentFlag)
+          {
+            readTokenValueAndValidate<UInt>(ar.objectConfidence, failed, fic, "SEIArObjDetConf[c]", UInt(0), UInt(1<<seiAnnoRegion->m_hdr.m_objectConfidenceLength)-1);
+          }
+        }
+#if JVET_T0050_ANNOTATED_REGIONS_SEI
+        //Compare with existing attributes to decide whether it's a static object
+        //First check whether it's an existing object (or) new object
+        auto destIt = m_pcCfg->m_arObjects.find(it->first);
+        //New object
+        if (destIt == m_pcCfg->m_arObjects.end())
+        {
+          //New object arrived, needs to be appended to the map of tracked objects
+          m_pcCfg->m_arObjects[it->first] = ar;
+        }
+        //Existing object
+        else
+        {
+          // Size remains the same
+          if(m_pcCfg->m_arObjects[it->first].boundingBoxWidth == ar.boundingBoxWidth &&
+             m_pcCfg->m_arObjects[it->first].boundingBoxHeight == ar.boundingBoxHeight)
+          {
+            if(m_pcCfg->m_arObjects[it->first].boundingBoxTop == ar.boundingBoxTop &&
+               m_pcCfg->m_arObjects[it->first].boundingBoxLeft == ar.boundingBoxLeft)
+            {
+              ar.boundingBoxValid = 0;
+            }
+          }
+        }
+#endif
+      }
+#if JVET_T0050_ANNOTATED_REGIONS_SEI
+      else
+      {
+        //Object has been marked for deletion
+        auto destIt = m_pcCfg->m_arObjects.find(it->first);
+        if (destIt != m_pcCfg->m_arObjects.end())
+        {
+          m_pcCfg->m_arObjects.erase(destIt);
         }
       }
+#endif
     }
   }
+#if JVET_T0050_ANNOTATED_REGIONS_SEI
+  else
+  {
+    seiAnnoRegion->m_annotatedRegions.clear();
+    seiAnnoRegion->m_annotatedLabels.clear();
+    m_pcCfg->m_arObjects.clear();
+  }
+#endif
 }
 
 Bool SEIEncoder::initSEIAnnotatedRegions(SEIAnnotatedRegions* SEIAnnoReg, Int currPOC)

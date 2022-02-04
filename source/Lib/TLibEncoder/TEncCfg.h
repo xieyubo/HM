@@ -44,6 +44,9 @@
 
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComSlice.h"
+#if JVET_T0050_ANNOTATED_REGIONS_SEI
+#include "TLibCommon/SEI.h"
+#endif
 #include <assert.h>
 
 struct GOPEntry
@@ -125,6 +128,10 @@ struct TEncSEIKneeFunctionInformation
   Int       m_outputDispLuminance;
   std::vector<KneePointPair> m_kneeSEIKneePointPairs;
 };
+
+#if JVET_T0050_ANNOTATED_REGIONS_SEI
+  std::map<UInt, SEIAnnotatedRegions::AnnotatedRegionObject> m_arObjects;
+#endif
 
 protected:
   //==== File I/O ========
@@ -1207,8 +1214,11 @@ public:
   UChar getSEIXSDMetricType() const                                  { return m_xsdMetricType; }
   Void  setRegionalNestingSEIFileRoot( const std::string &s )        { m_regionalNestingSEIFileRoot = s; }
   const std::string &getRegionalNestingSEIFileRoot() const           { return m_regionalNestingSEIFileRoot; }
-
+#if JVET_T0050_ANNOTATED_REGIONS_SEI
+  Void  setAnnotatedRegionSEIFileRoot(const std::string &s)          { m_arSEIFileRoot = s; m_arObjects.clear(); }
+#else
   Void  setAnnotatedRegionSEIFileRoot(const std::string &s)          { m_arSEIFileRoot = s; }
+#endif
   const std::string &getAnnotatedRegionSEIFileRoot() const           { return m_arSEIFileRoot; }
 
   const TComSEIMasteringDisplay &getMasteringDisplaySEI() const      { return m_masteringDisplay; }
