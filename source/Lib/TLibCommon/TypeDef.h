@@ -53,6 +53,9 @@
 
 #define JVET_V0078                                        1 // JVET-V0078: QP control for very smooth blocks
 
+#define JVET_Y0105_SW_AND_QDF                             1 // An adaptive smooth window (SW) size and extension of quality dependency factor (QDF) to low frame rate in rate control 
+
+
 // ====================================================================================================================
 // Debugging
 // ====================================================================================================================
