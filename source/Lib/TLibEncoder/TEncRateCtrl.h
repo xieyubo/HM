@@ -120,7 +120,7 @@ public:
 
 public:
 #if JVET_Y0105_SW_AND_QDF
-  Void create( Int totalFrames, Int targetBitrate, Int frameRate, Int GOPSize, Int IntraPeriod, Int picWidth, Int picHeight, Int LCUWidth, Int LCUHeight, Int numberOfLevel, Bool useLCUSeparateModel, Int adaptiveBit );
+  Void create( Int totalFrames, Int targetBitrate, Int frameRate, Int GOPSize, Int intraPeriod, Int picWidth, Int picHeight, Int LCUWidth, Int LCUHeight, Int numberOfLevel, Bool useLCUSeparateModel, Int adaptiveBit );
 #else
   Void create( Int totalFrames, Int targetBitrate, Int frameRate, Int GOPSize, Int picWidth, Int picHeight, Int LCUWidth, Int LCUHeight, Int numberOfLevel, Bool useLCUSeparateModel, Int adaptiveBit );
 #endif
@@ -138,7 +138,7 @@ public:
   Int  getFrameRate()                   { return m_frameRate; }
   Int  getGOPSize()                     { return m_GOPSize; }
 #if JVET_Y0105_SW_AND_QDF
-  Int  getIntraPeriod()                 { return m_IntraPeriod; }
+  Int  getIntraPeriod()                 { return m_intraPeriod; }
 #endif
   Int  getPicWidth()                    { return m_picWidth; }
   Int  getPicHeight()                   { return m_picHeight; }
@@ -181,7 +181,7 @@ private:
   Int m_frameRate;
   Int m_GOPSize;
 #if JVET_Y0105_SW_AND_QDF
-  Int m_IntraPeriod;
+  Int m_intraPeriod;
 #endif
   Int m_picWidth;
   Int m_picHeight;
@@ -360,7 +360,7 @@ public:
 
 public:
 #if JVET_Y0105_SW_AND_QDF
-  Void init( Int totalFrames, Int targetBitrate, Int frameRate, Int GOPSize, Int IntraPeriod, Int picWidth, Int picHeight, Int LCUWidth, Int LCUHeight, Int keepHierBits, Bool useLCUSeparateModel, GOPEntry GOPList[MAX_GOP] );
+  Void init( Int totalFrames, Int targetBitrate, Int frameRate, Int GOPSize, Int intraPeriod, Int picWidth, Int picHeight, Int LCUWidth, Int LCUHeight, Int keepHierBits, Bool useLCUSeparateModel, GOPEntry GOPList[MAX_GOP] );
 #else
   Void init( Int totalFrames, Int targetBitrate, Int frameRate, Int GOPSize, Int picWidth, Int picHeight, Int LCUWidth, Int LCUHeight, Int keepHierBits, Bool useLCUSeparateModel, GOPEntry GOPList[MAX_GOP] );
 #endif

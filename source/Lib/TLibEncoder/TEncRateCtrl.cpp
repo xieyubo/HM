@@ -51,7 +51,7 @@ TEncRCSeq::TEncRCSeq()
   m_targetBits          = 0;
   m_GOPSize             = 0;
 #if JVET_Y0105_SW_AND_QDF
-  m_IntraPeriod         = 0;
+  m_intraPeriod         = 0;
 #endif
   m_picWidth            = 0;
   m_picHeight           = 0;
@@ -78,7 +78,7 @@ TEncRCSeq::~TEncRCSeq()
 }
 
 #if JVET_Y0105_SW_AND_QDF
-Void TEncRCSeq::create( Int totalFrames, Int targetBitrate, Int frameRate, Int GOPSize, Int IntraPeriod, Int picWidth, Int picHeight, Int LCUWidth, Int LCUHeight, Int numberOfLevel, Bool useLCUSeparateModel, Int adaptiveBit )
+Void TEncRCSeq::create( Int totalFrames, Int targetBitrate, Int frameRate, Int GOPSize, Int intraPeriod, Int picWidth, Int picHeight, Int LCUWidth, Int LCUHeight, Int numberOfLevel, Bool useLCUSeparateModel, Int adaptiveBit )
 #else
 Void TEncRCSeq::create( Int totalFrames, Int targetBitrate, Int frameRate, Int GOPSize, Int picWidth, Int picHeight, Int LCUWidth, Int LCUHeight, Int numberOfLevel, Bool useLCUSeparateModel, Int adaptiveBit )
 #endif
@@ -89,7 +89,7 @@ Void TEncRCSeq::create( Int totalFrames, Int targetBitrate, Int frameRate, Int G
   m_frameRate           = frameRate;
   m_GOPSize             = GOPSize;
 #if JVET_Y0105_SW_AND_QDF
-  m_IntraPeriod         = IntraPeriod;
+  m_intraPeriod         = intraPeriod;
 #endif
   m_picWidth            = picWidth;
   m_picHeight           = picHeight;
@@ -1534,7 +1534,7 @@ Void TEncRateCtrl::destroy()
 }
 
 #if JVET_Y0105_SW_AND_QDF
-Void TEncRateCtrl::init( Int totalFrames, Int targetBitrate, Int frameRate, Int GOPSize, Int IntraPeriod, Int picWidth, Int picHeight, Int LCUWidth, Int LCUHeight, Int keepHierBits, Bool useLCUSeparateModel, GOPEntry  GOPList[MAX_GOP] )
+Void TEncRateCtrl::init( Int totalFrames, Int targetBitrate, Int frameRate, Int GOPSize, Int intraPeriod, Int picWidth, Int picHeight, Int LCUWidth, Int LCUHeight, Int keepHierBits, Bool useLCUSeparateModel, GOPEntry  GOPList[MAX_GOP] )
 #else
 Void TEncRateCtrl::init( Int totalFrames, Int targetBitrate, Int frameRate, Int GOPSize, Int picWidth, Int picHeight, Int LCUWidth, Int LCUHeight, Int keepHierBits, Bool useLCUSeparateModel, GOPEntry  GOPList[MAX_GOP] )
 #endif
@@ -1851,7 +1851,7 @@ Void TEncRateCtrl::init( Int totalFrames, Int targetBitrate, Int frameRate, Int 
 
   m_encRCSeq = new TEncRCSeq;
 #if JVET_Y0105_SW_AND_QDF
-  m_encRCSeq->create( totalFrames, targetBitrate, frameRate, GOPSize, IntraPeriod, picWidth, picHeight, LCUWidth, LCUHeight, numberOfLevel, useLCUSeparateModel, adaptiveBit );
+  m_encRCSeq->create( totalFrames, targetBitrate, frameRate, GOPSize, intraPeriod, picWidth, picHeight, LCUWidth, LCUHeight, numberOfLevel, useLCUSeparateModel, adaptiveBit );
 #else
   m_encRCSeq->create( totalFrames, targetBitrate, frameRate, GOPSize, picWidth, picHeight, LCUWidth, LCUHeight, numberOfLevel, useLCUSeparateModel, adaptiveBit );
 #endif
