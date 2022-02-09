@@ -42,11 +42,6 @@
 // Constructor / destructor / initialization / destroy
 // ====================================================================================================================
 
-#if JVET_V0056_MCTF
-const Int TEncTemporalFilter::s_range = 4;
-#else
-const Int TEncTemporalFilter::s_range = 2;
-#endif
 const Double TEncTemporalFilter::s_chromaFactor = 0.55;
 const Double TEncTemporalFilter::s_sigmaMultiplier = 9.0;
 const Double TEncTemporalFilter::s_sigmaZeroPoint = 10.0;
@@ -73,20 +68,18 @@ const Int TEncTemporalFilter::s_interpolationFilter[16][8] =
 };
 
 #if JVET_V0056_MCTF
-const Double TEncTemporalFilter::s_refStrengths[3][4] =
+const Double TEncTemporalFilter::s_refStrengths[2][4] =
 { // abs(POC offset)
   //  1,    2     3     4
-  {0.85, 0.57, 0.41, 0.33},  // m_range * 2
-  {1.13, 0.97, 0.81, 0.57},  // m_range
-  {0.30, 0.30, 0.30, 0.30}   // otherwise
+  {0.85, 0.57, 0.41, 0.33},  // w future refs
+  {1.13, 0.97, 0.81, 0.57},  // w/o future refs
 };
 #else
-const Double TEncTemporalFilter::s_refStrengths[3][2] =
+const Double TEncTemporalFilter::s_refStrengths[2][2] =
 { // abs(POC offset)
   //  1,    2
-  {0.85, 0.60},  // s_range * 2
-  {1.20, 1.00},  // s_range
-  {0.30, 0.30}   // otherwise
+  {0.85, 0.60},  // w future refs
+  {1.20, 1.00},  // w/o future refs
 };
 #endif
 
@@ -117,7 +110,10 @@ void TEncTemporalFilter::init(const Int frameSkip,
                               const Int QP,
                               const Int GOPSize,
                               const std::map<Int, Double> &temporalFilterStrengths,
-                              const Bool gopBasedTemporalFilterFutureReference)
+                              const Int pastRefs,
+                              const Int futureRefs,
+                              const Int firstValidFrame,
+                              const Int lastValidFrame)
 {
   m_FrameSkip = frameSkip;
   for (Int i = 0; i < MAX_NUM_CHANNEL_TYPE; i++)
@@ -141,7 +137,11 @@ void TEncTemporalFilter::init(const Int frameSkip,
   m_QP = QP;
   m_GOPSize = GOPSize; // NOT USED.
   m_temporalFilterStrengths = temporalFilterStrengths;
-  m_gopBasedTemporalFilterFutureReference = gopBasedTemporalFilterFutureReference;
+
+  m_pastRefs = pastRefs;
+  m_futureRefs = futureRefs;
+  m_firstValidFrame = firstValidFrame;
+  m_lastValidFrame = lastValidFrame;
 }
 
 // ====================================================================================================================
@@ -166,21 +166,16 @@ Bool TEncTemporalFilter::filter(TComPicYuv *orgPic, Int receivedPoc)
 
   if (isFilterThisFrame)
   {
-    Int offset = m_FrameSkip;
+    const Int currentFilePoc = receivedPoc + m_FrameSkip;
+    const Int firstFrame = std::max(currentFilePoc - m_pastRefs, m_firstValidFrame);
+    const Int lastFrame = std::min(currentFilePoc + m_futureRefs, m_lastValidFrame);
+
     TVideoIOYuv yuvFrames;
     yuvFrames.open(m_inputFileName, false, m_inputBitDepth, m_MSBExtendedBitDepth, m_internalBitDepth);
-    yuvFrames.skipFrames(std::max(offset + receivedPoc - s_range, 0), m_sourceWidth - m_sourcePadding[0], m_sourceHeight - m_sourcePadding[1], m_chromaFormatIDC);
+    yuvFrames.skipFrames(firstFrame, m_sourceWidth - m_sourcePadding[0], m_sourceHeight - m_sourcePadding[1], m_chromaFormatIDC);
 
 
     std::deque<TemporalFilterSourcePicInfo> srcFrameInfo;
-
-    Int firstFrame = receivedPoc + offset - s_range;
-    Int lastFrame = receivedPoc + offset + s_range;
-    if (!m_gopBasedTemporalFilterFutureReference)
-    {
-      lastFrame = receivedPoc + offset - 1;
-    }
-    Int origOffset = -s_range;
 
     // subsample original picture so it only needs to be done once
     TComPicYuv origPadded;
@@ -198,15 +193,9 @@ Bool TEncTemporalFilter::filter(TComPicYuv *orgPic, Int receivedPoc)
     // determine motion vectors
     for (Int poc = firstFrame; poc <= lastFrame; poc++)
     {
-      if (poc < 0)
-      {
-        origOffset++;
-        continue; // frame not available
-      }
-      else if (poc == offset + receivedPoc)
+      if (poc == currentFilePoc)
       { // hop over frame that will be filtered
         yuvFrames.skipFrames(1, m_sourceWidth - m_sourcePadding[0], m_sourceHeight - m_sourcePadding[1], m_chromaFormatIDC);
-        origOffset++;
         continue;
       }
       srcFrameInfo.push_back(TemporalFilterSourcePicInfo());
@@ -217,14 +206,16 @@ Bool TEncTemporalFilter::filter(TComPicYuv *orgPic, Int receivedPoc)
       dummyPicBufferTO.createWithoutCUInfo(m_sourceWidth, m_sourceHeight, m_chromaFormatIDC, true, s_padding, s_padding);
       if (!yuvFrames.read(&srcPic.picBuffer, &dummyPicBufferTO, m_inputColourSpaceConvert, m_sourcePadding, m_chromaFormatIDC, m_bClipInputVideoToRec709Range))
       {
-        return false; // eof or read fail
+        // eof or read fail
+        srcPic.picBuffer.destroy();
+        srcFrameInfo.pop_back();
+        break;
       }
       srcPic.picBuffer.extendPicBorder();
       srcPic.mvs.allocate(m_sourceWidth / 4, m_sourceHeight / 4);
 
       motionEstimation(srcPic.mvs, origPadded, srcPic.picBuffer, origSubsampled2, origSubsampled4);
-      srcPic.origOffset = origOffset;
-      origOffset++;
+      srcPic.origOffset = poc - currentFilePoc;
     }
 
     // filter
@@ -652,15 +643,7 @@ Void TEncTemporalFilter::bilateralFilter(const TComPicYuv &orgPic,
     applyMotion(srcFrameInfo[i].mvs, srcFrameInfo[i].picBuffer, correctedPics[i]);
   }
 
-  Int refStrengthRow = 2;
-  if (numRefs == s_range*2)
-  {
-    refStrengthRow = 0;
-  }
-  else if (numRefs == s_range)
-  {
-    refStrengthRow = 1;
-  }
+  const Int refStrengthRow = m_futureRefs > 0 ? 0 : 1;
 
   const Double lumaSigmaSq = (m_QP - s_sigmaZeroPoint) * (m_QP - s_sigmaZeroPoint) * s_sigmaMultiplier;
   const Double chromaSigmaSq = 30 * 30;
@@ -701,27 +684,40 @@ Void TEncTemporalFilter::bilateralFilter(const TComPicYuv &orgPic,
           for (Int i = 0; i < numRefs; i++)
           {
             Double variance = 0, diffsum = 0;
-            for (Int y1 = 0; y1 < blkSizeY - 1; y1++)
-            {
-              for (Int x1 = 0; x1 < blkSizeX - 1; x1++)
-              {
-                Int pix  = *(srcPel + x1);
-                Int pixR = *(srcPel + x1 + 1);
-                Int pixD = *(srcPel + x1 + srcStride);
-                Int ref  = *(correctedPics[i].getAddr(compID) + ((y + y1) * correctedPics[i].getStride(compID) + x + x1));
-                Int refR = *(correctedPics[i].getAddr(compID) + ((y + y1) * correctedPics[i].getStride(compID) + x + x1 + 1));
-                Int refD = *(correctedPics[i].getAddr(compID) + ((y + y1 + 1) * correctedPics[i].getStride(compID) + x + x1));
+            const ptrdiff_t refStride = correctedPics[i].getStride(compID);
+            const Pel *refPel = correctedPics[i].getAddr(compID) + y * refStride + x;
 
-                Int diff  = pix  - ref;
-                Int diffR = pixR - refR;
-                Int diffD = pixD - refD;
+            for (Int y1 = 0; y1 < blkSizeY; y1++)
+            {
+              for (Int x1 = 0; x1 < blkSizeX; x1++)
+              {
+                const Pel pix  = *(srcPel + srcStride * y1 + x1);
+                const Pel ref  = *(refPel + refStride * y1 + x1);
+                const Int diff = pix - ref;
 
                 variance += diff * diff;
-                diffsum  += (diffR - diff) * (diffR - diff);
-                diffsum  += (diffD - diff) * (diffD - diff);
+
+                if (x1 != blkSizeX - 1)
+                {
+                  const Pel pixR  = *(srcPel + srcStride * y1 + x1 + 1);
+                  const Pel refR  = *(refPel + refStride * y1 + x1 + 1);
+                  const Int diffR = pixR - refR;
+                  diffsum += (diffR - diff) * (diffR - diff);
+                }
+                if (y1 != blkSizeY - 1)
+                {
+                  const Pel pixD  = *(srcPel + srcStride * y1 + x1 + srcStride);
+                  const Pel refD  = *(refPel + refStride * y1 + x1 + refStride);
+                  const Int diffD = pixD - refD;
+                  diffsum += (diffD - diff) * (diffD - diff);
+                }
               }
             }
-            srcFrameInfo[i].mvs.get(x / blkSizeX, y / blkSizeY).noise = (int) round((300 * variance + 50) / (10 * diffsum + 50));
+
+            const int cntV = blkSizeX * blkSizeY;
+            const int cntD = 2 * cntV - blkSizeX - blkSizeY;
+            srcFrameInfo[i].mvs.get(x / blkSizeX, y / blkSizeY).noise =
+              (int) round((15.0 * cntD / cntV * variance + 5.0) / (diffsum + 5.0));
           }
         }
 

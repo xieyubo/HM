@@ -419,7 +419,10 @@ protected:
   std::vector<Bool>     m_rwpSEIRwpGuardBandNotUsedForPredFlag;
   std::vector<UChar>    m_rwpSEIRwpGuardBandType;
   Bool                  m_gopBasedTemporalFilterEnabled;               ///< GOP-based Temporal Filter enable/disable
-  Bool                  m_gopBasedTemporalFilterFutureReference;       ///< Enable/disable future frame references in the GOP-based Temporal Filter
+  Int                   m_gopBasedTemporalFilterPastRefs;
+  Int                   m_gopBasedTemporalFilterFutureRefs;
+  Int                   m_firstValidFrame;
+  Int                   m_lastValidFrame;
   std::map<Int, Double> m_gopBasedTemporalFilterStrengths;             ///< Filter strength per frame for the GOP-based Temporal Filter
 
   std::string           m_arSEIFileRoot;
