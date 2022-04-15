@@ -111,6 +111,7 @@ enum UIProfileName // this is used for determining profile strings, where multip
   UI_HIGHTHROUGHPUT_444_16_INTRA  = 22316
 };
 
+constexpr int TF_DEFAULT_REFS = 4;
 
 //! \ingroup TAppEncoder
 //! \{
@@ -1349,7 +1350,10 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
 
   opts.addOptions()
     ("TemporalFilter", m_gopBasedTemporalFilterEnabled, false, "Enable GOP based temporal filter. Disabled per default")
-    ("TemporalFilterFutureReference", m_gopBasedTemporalFilterFutureReference, true, "Enable referencing of future frames in the GOP based temporal filter. This is typically disabled for Low Delay configurations.")
+    ("TemporalFilterPastRefs", m_gopBasedTemporalFilterPastRefs, TF_DEFAULT_REFS, "Number of past references for temporal prefilter")
+    ("TemporalFilterFutureRefs", m_gopBasedTemporalFilterFutureRefs, TF_DEFAULT_REFS, "Number of future references for temporal prefilter")
+    ("FirstValidFrame", m_firstValidFrame, 0, "First valid frame")
+    ("LastValidFrame", m_lastValidFrame, MAX_INT, "Last valid frame")
     ("TemporalFilterStrengthFrame*", m_gopBasedTemporalFilterStrengths, std::map<Int, Double>(), "Strength for every * frame in GOP based temporal filter, where * is an integer."
                                                                                                    " E.g. --TemporalFilterStrengthFrame8 0.95 will enable GOP based temporal filter at every 8th frame with strength 0.95");
 
@@ -1400,6 +1404,15 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
     inputPathPrefix += "/";
   }
   m_inputFileName   = inputPathPrefix + m_inputFileName;
+
+  if (m_firstValidFrame < 0)
+  {
+    m_firstValidFrame = m_FrameSkip;
+  }
+  if (m_lastValidFrame < 0)
+  {
+    m_lastValidFrame = m_firstValidFrame + m_framesToBeEncoded - 1;
+  }
 
   m_framesToBeEncoded = ( m_framesToBeEncoded + m_temporalSubsampleRatio - 1 ) / m_temporalSubsampleRatio;
   m_adIntraLambdaModifier = cfg_adIntraLambdaModifier.values;
@@ -3078,6 +3091,15 @@ Void TAppEncCfg::xCheckParameter()
   if (m_gopBasedTemporalFilterEnabled)
   {
     xConfirmPara(m_temporalSubsampleRatio != 1, "GOP Based Temporal Filter only support Temporal sub-sample ratio 1");
+
+    xConfirmPara(m_gopBasedTemporalFilterPastRefs <= 0 && m_gopBasedTemporalFilterFutureRefs <= 0,
+                 "Either TemporalFilterPastRefs or TemporalFilterFutureRefs must be larger than 0 when TemporalFilter is enabled");
+
+    if ((m_gopBasedTemporalFilterPastRefs != 0 && m_gopBasedTemporalFilterPastRefs != TF_DEFAULT_REFS)
+        || (m_gopBasedTemporalFilterFutureRefs != 0 && m_gopBasedTemporalFilterFutureRefs != TF_DEFAULT_REFS))
+    {
+      printf("Warning: Number of frames used for temporal prefilter is different from default.\n");
+    }
   }
 
 #if EXTENSION_360_VIDEO

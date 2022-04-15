@@ -121,13 +121,15 @@ public:
             const Int qp,
             const Int GOPSize,
             const std::map<Int, Double> &temporalFilterStrengths,
-            const Bool gopBasedTemporalFilterFutureReference);
+            const Int pastRefs,
+            const Int futureRefs,
+            const Int firstValidFrame,
+            const Int lastValidFrame);
 
   Bool filter(TComPicYuv *orgPic, Int frame);
 
 private:
   // Private static member variables
-  static const Int s_range;
   static const Double s_chromaFactor;
   static const Double s_sigmaMultiplier;
   static const Double s_sigmaZeroPoint;
@@ -135,9 +137,9 @@ private:
   static const Int s_padding;
   static const Int s_interpolationFilter[16][8];
 #if JVET_V0056_MCTF
-  static const Double s_refStrengths[3][4];
+  static const Double s_refStrengths[2][4];
 #else
-  static const Double s_refStrengths[3][2];
+  static const Double s_refStrengths[2][2];
 #endif
 
   // Private member variables
@@ -156,7 +158,10 @@ private:
   Int m_framesToBeEncoded;
   Bool m_bClipInputVideoToRec709Range;
   InputColourSpaceConversion m_inputColourSpaceConvert;
-  Bool m_gopBasedTemporalFilterFutureReference;
+  Int m_pastRefs;
+  Int m_futureRefs;
+  Int m_firstValidFrame;
+  Int m_lastValidFrame;
 
   // Private functions
   Void subsampleLuma(const TComPicYuv &input, TComPicYuv &output, const Int factor = 2) const;
