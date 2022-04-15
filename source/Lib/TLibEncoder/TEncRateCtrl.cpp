@@ -50,6 +50,9 @@ TEncRCSeq::TEncRCSeq()
   m_frameRate           = 0;
   m_targetBits          = 0;
   m_GOPSize             = 0;
+#if JVET_Y0105_SW_AND_QDF
+  m_intraPeriod         = 0;
+#endif
   m_picWidth            = 0;
   m_picHeight           = 0;
   m_LCUWidth            = 0;
@@ -74,13 +77,20 @@ TEncRCSeq::~TEncRCSeq()
   destroy();
 }
 
+#if JVET_Y0105_SW_AND_QDF
+Void TEncRCSeq::create( Int totalFrames, Int targetBitrate, Int frameRate, Int GOPSize, Int intraPeriod, Int picWidth, Int picHeight, Int LCUWidth, Int LCUHeight, Int numberOfLevel, Bool useLCUSeparateModel, Int adaptiveBit )
+#else
 Void TEncRCSeq::create( Int totalFrames, Int targetBitrate, Int frameRate, Int GOPSize, Int picWidth, Int picHeight, Int LCUWidth, Int LCUHeight, Int numberOfLevel, Bool useLCUSeparateModel, Int adaptiveBit )
+#endif
 {
   destroy();
   m_totalFrames         = totalFrames;
   m_targetRate          = targetBitrate;
   m_frameRate           = frameRate;
   m_GOPSize             = GOPSize;
+#if JVET_Y0105_SW_AND_QDF
+  m_intraPeriod         = intraPeriod;
+#endif
   m_picWidth            = picWidth;
   m_picHeight           = picHeight;
   m_LCUWidth            = LCUWidth;
@@ -315,12 +325,22 @@ TEncRCGOP::~TEncRCGOP()
   destroy();
 }
 
+#if JVET_Y0105_SW_AND_QDF
+Void TEncRCGOP::create( TEncRCSeq* encRCSeq, Int numPic, Bool useAdaptiveBitsRatio )
+#else
 Void TEncRCGOP::create( TEncRCSeq* encRCSeq, Int numPic )
+#endif
 {
   destroy();
   Int targetBits = xEstGOPTargetBits( encRCSeq, numPic );
 
+
+
+#if JVET_Y0105_SW_AND_QDF
+  if ( useAdaptiveBitsRatio )
+#else
   if ( encRCSeq->getAdaptiveBits() > 0 && encRCSeq->getLastLambda() > 0.1 )
+#endif
   {
     Double targetBpp = (Double)targetBits / encRCSeq->getNumPixel();
     Double basicLambda = 0.0;
@@ -554,7 +574,11 @@ Void TEncRCGOP::updateAfterPicture( Int bitsCost )
 
 Int TEncRCGOP::xEstGOPTargetBits( TEncRCSeq* encRCSeq, Int GOPSize )
 {
+#if JVET_Y0105_SW_AND_QDF
+  Int realInfluencePicture = min( g_RCSmoothWindowSizeAlpha * GOPSize / max(encRCSeq->getIntraPeriod(), 32) + g_RCSmoothWindowSizeBeta, encRCSeq->getFramesLeft() );
+#else
   Int realInfluencePicture = min( g_RCSmoothWindowSize, encRCSeq->getFramesLeft() );
+#endif
   Int averageTargetBitsPerPic = (Int)( encRCSeq->getTargetBits() / encRCSeq->getTotalFrames() );
   Int currentTargetBitsPerPic = (Int)( ( encRCSeq->getBitsLeft() - averageTargetBitsPerPic * (encRCSeq->getFramesLeft() - realInfluencePicture) ) / realInfluencePicture );
   Int targetBits = currentTargetBitsPerPic * GOPSize;
@@ -1509,7 +1533,11 @@ Void TEncRateCtrl::destroy()
   }
 }
 
+#if JVET_Y0105_SW_AND_QDF
+Void TEncRateCtrl::init( Int totalFrames, Int targetBitrate, Int frameRate, Int GOPSize, Int intraPeriod, Int picWidth, Int picHeight, Int LCUWidth, Int LCUHeight, Int keepHierBits, Bool useLCUSeparateModel, GOPEntry  GOPList[MAX_GOP] )
+#else
 Void TEncRateCtrl::init( Int totalFrames, Int targetBitrate, Int frameRate, Int GOPSize, Int picWidth, Int picHeight, Int LCUWidth, Int LCUHeight, Int keepHierBits, Bool useLCUSeparateModel, GOPEntry  GOPList[MAX_GOP] )
+#endif
 {
   destroy();
 
@@ -1822,7 +1850,12 @@ Void TEncRateCtrl::init( Int totalFrames, Int targetBitrate, Int frameRate, Int 
 #endif
 
   m_encRCSeq = new TEncRCSeq;
+#if JVET_Y0105_SW_AND_QDF
+  m_encRCSeq->create( totalFrames, targetBitrate, frameRate, GOPSize, intraPeriod, picWidth, picHeight, LCUWidth, LCUHeight, numberOfLevel, useLCUSeparateModel, adaptiveBit );
+#else
   m_encRCSeq->create( totalFrames, targetBitrate, frameRate, GOPSize, picWidth, picHeight, LCUWidth, LCUHeight, numberOfLevel, useLCUSeparateModel, adaptiveBit );
+#endif
+  
   m_encRCSeq->initBitsRatio( bitsRatio );
   m_encRCSeq->initGOPID2Level( GOPID2Level );
   m_encRCSeq->initPicPara();
@@ -1848,7 +1881,12 @@ Void TEncRateCtrl::initRCPic( Int frameLevel )
 Void TEncRateCtrl::initRCGOP( Int numberOfPictures )
 {
   m_encRCGOP = new TEncRCGOP;
+#if JVET_Y0105_SW_AND_QDF
+  bool useAdaptiveBitsRatio = ( m_encRCSeq->getAdaptiveBits() > 0 ) && ( m_listRCPictures.size() >= m_encRCSeq->getGOPSize() );
+  m_encRCGOP->create( m_encRCSeq, numberOfPictures, useAdaptiveBitsRatio);
+#else
   m_encRCGOP->create( m_encRCSeq, numberOfPictures );
+#endif
 }
 
 Int  TEncRateCtrl::updateCpbState(Int actualBits)
