@@ -50,7 +50,7 @@ struct MotionVector
 {
   Int x, y;
   Int error;
-#if JVET_V0056_MCTF
+#if JVET_V0056_MCTF || JVET_Y0077_BIM
   Int noise;
   MotionVector() : x(0), y(0), error(INT_LEAST32_MAX), noise(0) {}
 #else
@@ -68,6 +68,11 @@ private:
 public:
   Array2D() : m_width(0), m_height(0), v() { }
   Array2D(UInt width, UInt height, const T& value=T()) : m_width(0), m_height(0), v() { allocate(width, height, value); }
+
+#if JVET_Y0077_BIM
+  UInt w() const { return m_width;  }
+  UInt h() const { return m_height; }
+#endif
 
   Void allocate(UInt width, UInt height, const T& value=T())
   {
@@ -124,7 +129,14 @@ public:
             const Int pastRefs,
             const Int futureRefs,
             const Int firstValidFrame,
+#if !JVET_Y0077_BIM
             const Int lastValidFrame);
+#else
+            const Int lastValidFrame,
+            const Bool mctfEnabled,
+            std::map<Int, Int*> *adaptQPmap,
+            const Bool bimEnabled);
+#endif
 
   Bool filter(TComPicYuv *orgPic, Int frame);
 
@@ -140,6 +152,9 @@ private:
   static const Double s_refStrengths[2][4];
 #else
   static const Double s_refStrengths[2][2];
+#endif
+#if JVET_Y0077_BIM
+  static const Int s_cuTreeThresh[4];
 #endif
 
   // Private member variables
@@ -162,10 +177,16 @@ private:
   Int m_futureRefs;
   Int m_firstValidFrame;
   Int m_lastValidFrame;
+#if JVET_Y0077_BIM
+  Bool m_mctfEnabled;
+  Bool m_bimEnabled;
+  Int m_numCTU;
+  std::map<Int, Int*> *m_ctuAdaptQP;
+#endif
 
   // Private functions
   Void subsampleLuma(const TComPicYuv &input, TComPicYuv &output, const Int factor = 2) const;
-  Int motionErrorLuma(const TComPicYuv &orig, const TComPicYuv &buffer, const Int x, const Int y, Int dx, Int dy, const Int bs, const Int besterror) const;
+  Int motionErrorLuma(const TComPicYuv &orig, const TComPicYuv &buffer, const Int x, const Int y, Int dx, Int dy, const Int bs, const Int besterror = 8 * 8 * 1024 * 1024) const;
   Void motionEstimationLuma(Array2D<MotionVector> &mvs, const TComPicYuv &orig, const TComPicYuv &buffer, const Int bs,
       const Array2D<MotionVector> *previous=0, const Int factor = 1, const Bool doubleRes = false) const;
   Void motionEstimation(Array2D<MotionVector> &mvs, const TComPicYuv &orgPic, const TComPicYuv &buffer, const TComPicYuv &origSubsampled2, const TComPicYuv &origSubsampled4) const;

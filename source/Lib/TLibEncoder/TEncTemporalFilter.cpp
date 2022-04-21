@@ -82,6 +82,10 @@ const Double TEncTemporalFilter::s_refStrengths[2][2] =
   {1.20, 1.00},  // w/o future refs
 };
 #endif
+#if JVET_Y0077_BIM
+const Int TEncTemporalFilter::s_cuTreeThresh[4] =
+  { 75, 60, 30, 15 };
+#endif
 
 TEncTemporalFilter::TEncTemporalFilter() :
   m_FrameSkip(0),
@@ -113,7 +117,14 @@ void TEncTemporalFilter::init(const Int frameSkip,
                               const Int pastRefs,
                               const Int futureRefs,
                               const Int firstValidFrame,
+#if !JVET_Y0077_BIM
                               const Int lastValidFrame)
+#else
+                              const Int lastValidFrame,
+                              const Bool mctfEnabled,
+                              std::map<Int, Int*> *adaptQPmap,
+                              const Bool bimEnabled)
+#endif
 {
   m_FrameSkip = frameSkip;
   for (Int i = 0; i < MAX_NUM_CHANNEL_TYPE; i++)
@@ -142,6 +153,12 @@ void TEncTemporalFilter::init(const Int frameSkip,
   m_futureRefs = futureRefs;
   m_firstValidFrame = firstValidFrame;
   m_lastValidFrame = lastValidFrame;
+#if JVET_Y0077_BIM
+  m_mctfEnabled = mctfEnabled;
+  m_bimEnabled = bimEnabled;
+  m_numCTU = ((width + 63) / 64) * ((height + 63) / 64);
+  m_ctuAdaptQP = adaptQPmap;
+#endif
 }
 
 // ====================================================================================================================
@@ -231,11 +248,86 @@ Bool TEncTemporalFilter::filter(TComPicYuv *orgPic, Int receivedPoc)
         overallStrength = strength;
       }
     }
+#if JVET_Y0077_BIM
+    const int numRefs = Int(srcFrameInfo.size());
+    if ( m_bimEnabled && ( numRefs > 0 ) )
+    {
+      const Int bimFirstFrame = std::max(currentFilePoc - 2, firstFrame);
+      const Int bimLastFrame = std::min(currentFilePoc + 2, lastFrame);
+      std::vector<Double> sumError(m_numCTU * 2, 0);
+      std::vector<Int>    blkCount(m_numCTU * 2, 0);
 
+      int frameIndex = bimFirstFrame - firstFrame;
+
+      Int distFactor[2] = {3,3};
+
+      Int* qpMap = new Int[m_numCTU];
+      for (int poc = bimFirstFrame; poc <= bimLastFrame; poc++)
+      {
+        if ((poc < 0) || (poc == currentFilePoc) || (frameIndex >= numRefs))
+        {
+          continue;
+        }
+        Int dist = abs(poc - currentFilePoc) - 1;
+        distFactor[dist]--;
+
+        TemporalFilterSourcePicInfo &srcPic = srcFrameInfo.at(frameIndex);
+        for (Int y = 0; y < srcPic.mvs.h() / 2; y++) // going over in 8x8 block steps
+        {
+          for (Int x = 0; x < srcPic.mvs.w() / 2; x++)
+          {
+            Int blocksPerRow = (srcPic.mvs.w() / 2 + 7) / 8;
+            Int ctuX = x / 8;
+            Int ctuY = y / 8;
+            Int ctuId = ctuY * blocksPerRow + ctuX;
+            sumError[dist * m_numCTU + ctuId] += srcPic.mvs.get(x, y).error;
+            blkCount[dist * m_numCTU + ctuId] += 1;
+          }
+        }
+        frameIndex++;
+      }
+      Double weight = (receivedPoc % 16) ? 0.6 : 1;
+      const Double center = 45.0;
+      for (Int i = 0; i < m_numCTU; i++)
+      {
+        Int avgErrD1 = (Int)((sumError[i] / blkCount[i]) * distFactor[0]);
+        Int avgErrD2 = (Int)((sumError[i + m_numCTU] / blkCount[i + m_numCTU]) * distFactor[1]);
+        Int weightedErr = std::max(avgErrD1, avgErrD2) + abs(avgErrD2 - avgErrD1) * 3;
+        weightedErr = (Int)(weightedErr * weight + (1 - weight) * center);
+        if (weightedErr > s_cuTreeThresh[0])
+        {
+          qpMap[i] = 2;
+        }
+        else if (weightedErr > s_cuTreeThresh[1])
+        {
+          qpMap[i] = 1;
+        }
+        else if (weightedErr < s_cuTreeThresh[3])
+        {
+          qpMap[i] = -2;
+        }
+        else if (weightedErr < s_cuTreeThresh[2])
+        {
+          qpMap[i] = -1;
+        }
+        else
+        {
+          qpMap[i] = 0;
+        }
+      }
+      m_ctuAdaptQP->insert({ receivedPoc, qpMap });
+    }
+
+    if ( m_mctfEnabled && ( numRefs > 0 ) )
+    {
+#endif
     bilateralFilter(origPadded, srcFrameInfo, newOrgPic, overallStrength);
 
     // move filtered to orgPic
     newOrgPic.copyToPic(orgPic);
+#if JVET_Y0077_BIM
+    }
+#endif
 
     yuvFrames.close();
     return true;
@@ -281,7 +373,7 @@ Int TEncTemporalFilter::motionErrorLuma(const TComPicYuv &orig,
                                               Int dx,
                                               Int dy,
                                         const Int bs,
-                                        const Int besterror = 8 * 8 * 1024 * 1024) const
+                                        const Int besterror /* = 8 * 8 * 1024 * 1024*/) const
 {
 
   const Pel* origOrigin = orig.getAddr(COMPONENT_Y);
@@ -369,7 +461,7 @@ Int TEncTemporalFilter::motionErrorLuma(const TComPicYuv &orig,
 Void TEncTemporalFilter::motionEstimationLuma(Array2D<MotionVector> &mvs, const TComPicYuv &orig, const TComPicYuv &buffer, const Int blockSize,
     const Array2D<MotionVector> *previous, const Int factor, const Bool doubleRes) const
 {
-#if JVET_V0056_MCTF
+#if JVET_V0056_MCTF || JVET_Y0077_BIM
   Int range = doubleRes ? 0 : 5;
 #else
   Int range = 5;
@@ -379,7 +471,7 @@ Void TEncTemporalFilter::motionEstimationLuma(Array2D<MotionVector> &mvs, const 
   const Int origWidth  = orig.getWidth(COMPONENT_Y);
   const Int origHeight = orig.getHeight(COMPONENT_Y);
 
-#if JVET_V0056_MCTF
+#if JVET_V0056_MCTF || JVET_Y0077_BIM
   for (Int blockY = 0; blockY + blockSize <= origHeight; blockY += stepSize)
   {
     for (Int blockX = 0; blockX + blockSize <= origWidth; blockX += stepSize)
@@ -397,14 +489,14 @@ Void TEncTemporalFilter::motionEstimationLuma(Array2D<MotionVector> &mvs, const 
       }
       else
       {
-#if JVET_V0056_MCTF
+#if JVET_V0056_MCTF || JVET_Y0077_BIM
         for (Int py = -1; py <= 1; py++)
 #else
         for (Int py = -2; py <= 2; py++)
 #endif
         {
           Int testy = blockY / (2 * blockSize) + py;
-#if JVET_V0056_MCTF
+#if JVET_V0056_MCTF || JVET_Y0077_BIM
           for (Int px = -1; px <= 1; px++)
 #else
           for (Int px = -2; px <= 2; px++)
@@ -422,7 +514,7 @@ Void TEncTemporalFilter::motionEstimationLuma(Array2D<MotionVector> &mvs, const 
             }
           }
         }
-#if JVET_V0056_MCTF
+#if JVET_V0056_MCTF || JVET_Y0077_BIM
         Int error = motionErrorLuma(orig, buffer, blockX, blockY, 0, 0, blockSize, best.error);
         if (error < best.error)
         {
@@ -472,7 +564,7 @@ Void TEncTemporalFilter::motionEstimationLuma(Array2D<MotionVector> &mvs, const 
           }
         }
       }
-#if JVET_V0056_MCTF
+#if JVET_V0056_MCTF || JVET_Y0077_BIM
       if (blockY > 0)
       {
         MotionVector aboveMV = mvs.get(blockX / stepSize, (blockY - stepSize) / stepSize);
@@ -627,7 +719,7 @@ Void TEncTemporalFilter::applyMotion(const Array2D<MotionVector> &mvs, const TCo
 }
 
 Void TEncTemporalFilter::bilateralFilter(const TComPicYuv &orgPic,
-#if JVET_V0056_MCTF
+#if JVET_V0056_MCTF || JVET_Y0077_BIM
                                                std::deque<TemporalFilterSourcePicInfo> &srcFrameInfo,
 #else
                                          const std::deque<TemporalFilterSourcePicInfo> &srcFrameInfo,
@@ -661,7 +753,7 @@ Void TEncTemporalFilter::bilateralFilter(const TComPicYuv &orgPic,
     const Double weightScaling = overallStrength * (isChroma(compID) ? s_chromaFactor : 0.4);
     const Pel maxSampleValue = (1<<m_internalBitDepth[toChannelType(compID)])-1;
     const Double bitDepthDiffWeighting=1024.0 / (maxSampleValue+1);
-#if JVET_V0056_MCTF
+#if JVET_V0056_MCTF || JVET_Y0077_BIM
     static const Int lumaBlockSize=8;    
     const Int csx=getComponentScaleX(compID, m_chromaFormatIDC);
     const Int csy=getComponentScaleY(compID, m_chromaFormatIDC);
@@ -678,7 +770,7 @@ Void TEncTemporalFilter::bilateralFilter(const TComPicYuv &orgPic,
         const Int orgVal = (Int) *srcPel;
         Double temporalWeightSum = 1.0;
         Double newVal = (Double) orgVal;
-#if JVET_V0056_MCTF
+#if JVET_V0056_MCTF || JVET_Y0077_BIM
         if ((y % blkSizeY == 0) && (x % blkSizeX == 0))
         {
           for (Int i = 0; i < numRefs; i++)
@@ -729,7 +821,7 @@ Void TEncTemporalFilter::bilateralFilter(const TComPicYuv &orgPic,
 #endif
         for (Int i = 0; i < numRefs; i++)
         {
-#if JVET_V0056_MCTF
+#if JVET_V0056_MCTF || JVET_Y0077_BIM
           const Int error = srcFrameInfo[i].mvs.get(x / blkSizeX, y / blkSizeY).error;
           const Int noise = srcFrameInfo[i].mvs.get(x / blkSizeX, y / blkSizeY).noise;
 #endif
@@ -738,7 +830,7 @@ Void TEncTemporalFilter::bilateralFilter(const TComPicYuv &orgPic,
           Double diff = (Double)(refVal - orgVal);
           diff *= bitDepthDiffWeighting;
           Double diffSq = diff * diff;
-#if JVET_V0056_MCTF
+#if JVET_V0056_MCTF || JVET_Y0077_BIM
           const Int index = std::min(3, std::abs(srcFrameInfo[i].origOffset) - 1);
           Double ww = 1, sw = 1;
           ww *= (noise < 25) ? 1 : 1.2;

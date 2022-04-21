@@ -424,6 +424,9 @@ protected:
   Int                   m_firstValidFrame;
   Int                   m_lastValidFrame;
   std::map<Int, Double> m_gopBasedTemporalFilterStrengths;             ///< Filter strength per frame for the GOP-based Temporal Filter
+#if JVET_Y0077_BIM
+  Bool                  m_bimEnabled;
+#endif
 
   std::string           m_arSEIFileRoot;
   Bool                    m_fisheyeVIdeoInfoSEIEnabled;

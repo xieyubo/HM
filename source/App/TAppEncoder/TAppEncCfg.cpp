@@ -949,7 +949,9 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("SmoothQPReductionLimit",                          m_iSmoothQPReductionLimit,                          -16, "Threshold parameter for controlling maximum amount of QP reduction by the QP reduction model")
   ("SmoothQPReductionPeriodicity",                    m_iSmoothQPReductionPeriodicity,                      1, "Periodicity parameter of the QP reduction model, 1: all frames, 0: only intra pictures, 2: every second frame, etc")
 #endif
-
+#if JVET_Y0077_BIM
+  ("BIM",                                             m_bimEnabled,                                     false, "Block Importance Mapping QP adaptation depending on estimated propagation of reference samples.")
+#endif
   ("AdaptiveQP,-aq",                                  m_bUseAdaptiveQP,                                 false, "QP adaptation based on a psycho-visual model")
   ("MaxQPAdaptationRange,-aqr",                       m_iQPAdaptationRange,                                 6, "QP adaptation range")
   ("dQPFile,m",                                       m_dQPFileName,                               string(""), "dQP file name")
@@ -3101,6 +3103,12 @@ Void TAppEncCfg::xCheckParameter()
       printf("Warning: Number of frames used for temporal prefilter is different from default.\n");
     }
   }
+#if JVET_Y0077_BIM
+  if (m_bimEnabled)
+  {
+    xConfirmPara(m_temporalSubsampleRatio != 1, "Block Importance Mapping only support Temporal sub-sample ratio 1");
+  }
+#endif
 
 #if EXTENSION_360_VIDEO
   check_failed |= m_ext360.verifyParameters();

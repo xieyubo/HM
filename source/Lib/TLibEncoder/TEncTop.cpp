@@ -955,7 +955,13 @@ Void TEncTop::xInitPPS(TComPPS &pps, const TComSPS &sps)
 #if JVET_V0078
   if (getSmoothQPReductionEnable())
   {
-	  bUseDQP = true;
+    bUseDQP = true;
+  }
+#endif
+#if JVET_Y0077_BIM
+  if (m_bimEnabled)
+  {
+    bUseDQP = true;
   }
 #endif
 
@@ -1452,10 +1458,14 @@ Int TEncCfg::getQPForPicture(const UInt gopIndex, const TComSlice *pSlice) const
     else
     {
       // Only adjust QP when not lossless
+#if JVET_Y0077_BIM
+      if (!((getMaxDeltaQP() == 0) && (!getLumaLevelToDeltaQPMapping().isEnabled()) && (!getSmoothQPReductionEnable()) && (!getBIM()) && (qp == -lumaQpBDOffset) && (pSlice->getPPS()->getTransquantBypassEnabledFlag())))
+#else
 #if JVET_V0078
       if (!((getMaxDeltaQP() == 0) && (!getLumaLevelToDeltaQPMapping().isEnabled()) && (!getSmoothQPReductionEnable()) && (qp == -lumaQpBDOffset) && (pSlice->getPPS()->getTransquantBypassEnabledFlag())))
 #else
       if (!(( getMaxDeltaQP() == 0 ) && (!getLumaLevelToDeltaQPMapping().isEnabled()) && (qp == -lumaQpBDOffset ) && (pSlice->getPPS()->getTransquantBypassEnabledFlag())))
+#endif
 #endif
       {
         const GOPEntry &gopEntry=getGOPEntry(gopIndex);

@@ -89,6 +89,9 @@ private:
 #if JVET_V0078
   Int                     m_smoothQPoffset;
 #endif
+#if JVET_Y0077_BIM
+  Int                     m_BimQPoffset;
+#endif
 
   //  Access channel
   TEncCfg*                m_pcEncCfg;
