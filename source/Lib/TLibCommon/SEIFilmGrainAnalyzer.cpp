@@ -459,12 +459,12 @@ void FGAnalyser::init(const int width, const int height, const int sourcePadding
     m_compModel[i].bPresentFlag          = true;
     m_compModel[i].numModelValues        = 1;
     m_compModel[i].numIntensityIntervals = 1;
-    m_compModel[i].intensityValues.resize(MAX_NUM_INTENSITIES);
-    for (int j = 0; j < MAX_NUM_INTENSITIES; j++)
+    m_compModel[i].intensityValues.resize(FG_MAX_NUM_INTENSITIES);
+    for (int j = 0; j < FG_MAX_NUM_INTENSITIES; j++)
     {
       m_compModel[i].intensityValues[j].intensityIntervalLowerBound = 10;
       m_compModel[i].intensityValues[j].intensityIntervalUpperBound = 250;
-      m_compModel[i].intensityValues[j].compModelValue.resize(MAX_ALLOWED_MODEL_VALUES);
+      m_compModel[i].intensityValues[j].compModelValue.resize(FG_MAX_ALLOWED_MODEL_VALUES);
       for (int k = 0; k < m_compModel[i].numModelValues; k++)
       {
         m_compModel[i].intensityValues[j].compModelValue[k] = 26 - 13 * (toChannelType((ComponentID) i));   // half intensity for chroma. Provided value is default value, manually tuned.
@@ -1634,7 +1634,7 @@ bool FGAnalyser::lloyd_max(std::vector<double> &scalingVec, std::vector<int> &qu
   // fill the final quantized vector
   quantizedVec.resize((int) (1 << bitDepth), 0);
   for (int i = 0; i < tmpVec.size(); i++)
-    quantizedVec[i + xmin] = Clip3(0, MAX_STANDARD_DEVIATION << (bitDepth - FG_BIT_DEPTH_8), (int) (tmpVec[i] + .5));
+    quantizedVec[i + xmin] = Clip3(0, FG_MAX_STANDARD_DEVIATION << (bitDepth - FG_BIT_DEPTH_8), (int) (tmpVec[i] + .5));
 
   return true;
 }

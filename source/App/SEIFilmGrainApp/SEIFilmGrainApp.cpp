@@ -197,9 +197,6 @@ UInt SEIFilmGrainApp::process()
       NALUcount++;
       SEIMessages SEIs;
 
-      //int iNumZeros = stats.m_numLeadingZero8BitsBytes + stats.m_numZeroByteBytes + stats.m_numStartCodePrefixBytes - 1;
-      //printf("nalUnitType=%d, nuhLayerId=%d, temporalId=%d, iNumZeros=%d\n", nalu.m_nalUnitType, nalu.m_nuhLayerId, nalu.m_temporalId, iNumZeros);
-
       if (nalu.m_nalUnitType == NAL_UNIT_PPS && m_seiFilmGrainOption == 2)
       {
         bInsertSEI = true;
