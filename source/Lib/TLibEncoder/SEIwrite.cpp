@@ -552,11 +552,7 @@ Void SEIWriter::xWriteSEIFilmGrainCharacteristics(const SEIFilmGrainCharacterist
       if (cm.bPresentFlag && numIntensityIntervals>0 && numModelValues>0)
       {
         assert(numIntensityIntervals<=256);
-//#if JVET_X0048_X0103_FILM_GRAIN
-//        assert(numModelValues <= 256);
-//#else
         assert(numModelValues<=8);
-//#endif
         WRITE_CODE( numIntensityIntervals-1, 8, "num_intensity_intervals_minus1[c]");
         WRITE_CODE( numModelValues-1,        3, "num_model_values_minus1[c]");
         for(UInt interval=0; interval<numIntensityIntervals; interval++)

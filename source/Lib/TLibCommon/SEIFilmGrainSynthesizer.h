@@ -143,7 +143,7 @@ typedef enum
 typedef struct GrainSynthesisStruct_t
 {
   int8_t  dataBase[NUM_CUT_OFF_FREQ][NUM_CUT_OFF_FREQ][FG_DATA_BASE_SIZE][FG_DATA_BASE_SIZE];
-  int16_t intensityInterval[MAX_NUM_COMPONENT][MAX_NUM_INTENSITIES];
+  int16_t intensityInterval[MAX_NUM_COMPONENT][FG_MAX_NUM_INTENSITIES];
 }GrainSynthesisStruct;
 
 typedef struct fgsProcessArgs

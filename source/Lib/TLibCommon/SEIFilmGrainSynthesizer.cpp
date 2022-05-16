@@ -415,7 +415,7 @@ void SEIFilmGrainSynthesizer::grainSynthesizeAndBlend(TComPicYuv* pGrainBuf, Boo
 uint8_t SEIFilmGrainSynthesizer::grainValidateParams()
 {
   uint8_t   numComp = MAX_NUM_COMPONENT; /* number of color components */
-  uint8_t   compCtr, intensityCtr, multiGrainCheck[MAX_NUM_COMPONENT][MAX_NUM_INTENSITIES] = { 0 };
+  uint8_t   compCtr, intensityCtr, multiGrainCheck[MAX_NUM_COMPONENT][FG_MAX_NUM_INTENSITIES] = { 0 };
   uint16_t  multiGrainCtr;
   uint8_t   limitCompModelVal1[10] = { 0 }, limitCompModelVal2[10] = { 0 };
   uint8_t   num_comp_model_pairs = 0, limitCompModelCtr, compPairMatch;
@@ -482,7 +482,7 @@ uint8_t SEIFilmGrainSynthesizer::grainValidateParams()
       return FGS_INVALID_COMP_MODEL_PRESENT_FLAG; /* Not supported  */
     }
     if (m_fgcParameters->m_compModel[compCtr].bPresentFlag &&
-       (m_fgcParameters->m_compModel[compCtr].numModelValues > MAX_ALLOWED_MODEL_VALUES))
+       (m_fgcParameters->m_compModel[compCtr].numModelValues > FG_MAX_ALLOWED_MODEL_VALUES))
     {
       return FGS_INVALID_NUM_MODEL_VALUES; /* Not supported  */
     }
@@ -516,7 +516,7 @@ uint8_t SEIFilmGrainSynthesizer::grainValidateParams()
           }
         }
 
-        m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue.resize(MAX_NUM_MODEL_VALUES);
+        m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue.resize(FG_MAX_NUM_MODEL_VALUES);
         /* default initialization for cut off frequencies */
         if (1 == m_fgcParameters->m_compModel[compCtr].numModelValues)
         {
@@ -529,7 +529,7 @@ uint8_t SEIFilmGrainSynthesizer::grainValidateParams()
         }
 
         /* Error check on model component value */
-        if (m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[0] > (MAX_STANDARD_DEVIATION << (m_bitDepth - FG_BIT_DEPTH_8)))
+        if (m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[0] > (FG_MAX_STANDARD_DEVIATION << (m_bitDepth - FG_BIT_DEPTH_8)))
         {
           return FGS_INVALID_STANDARD_DEVIATION; /* Not supported  */
         }
@@ -585,7 +585,7 @@ uint8_t SEIFilmGrainSynthesizer::grainValidateParams()
         {
           num_comp_model_pairs++;
           /* max allowed pairs are 10 as per SMPTE -RDD5*/
-          if (num_comp_model_pairs > MAX_ALLOWED_COMP_MODEL_PAIRS)
+          if (num_comp_model_pairs > FG_MAX_ALLOWED_COMP_MODEL_PAIRS)
           {
             return FGS_INVALID_NUM_CUT_OFF_FREQ_PAIRS; /* Not supported  */
           }
