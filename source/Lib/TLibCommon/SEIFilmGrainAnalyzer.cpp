@@ -200,8 +200,6 @@ void Canny::suppressNonMax(TComPicYuv* buff1, TComPicYuv* buff2, unsigned int wi
       }
     }
   }
-  const Int strideSrc  = buff2->getStride(compID, false);
-  const Int strideDest = buff1->getStride(compID, false);
   buff2->copyTo(buff1, ComponentID(0), compID, false, false);
 }
 
