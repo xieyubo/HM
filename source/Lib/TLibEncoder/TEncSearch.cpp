@@ -2318,6 +2318,7 @@ TEncSearch::estIntraPredLumaQT(TComDataCU* pcCU,
 
         CandNum += xUpdateCandList( uiMode, cost, numModesForFullRD, uiRdModeList, CandCostList );
       }
+      (Void)CandNum; // Avoid compiler warning: CandNum is never used
 
       if (m_pcEncCfg->getFastUDIUseMPMEnabled())
       {
