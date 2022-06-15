@@ -1118,11 +1118,11 @@ Void SEIWriter::xWriteSEIContentColourVolume(const SEIContentColourVolume &sei)
     {
       WRITE_CODE( (UInt)sei.m_ccvMinLuminanceValue, 32,  "ccv_min_luminance_value" );
     }
-    if (sei.m_ccvMinLuminanceValuePresentFlag == true) 
+    if (sei.m_ccvMaxLuminanceValuePresentFlag == true) 
     {
       WRITE_CODE( (UInt)sei.m_ccvMaxLuminanceValue, 32,  "ccv_max_luminance_value" );
     }
-    if (sei.m_ccvMinLuminanceValuePresentFlag == true) 
+    if (sei.m_ccvAvgLuminanceValuePresentFlag == true) 
     {
       WRITE_CODE( (UInt)sei.m_ccvAvgLuminanceValue, 32,  "ccv_avg_luminance_value" );
     }
