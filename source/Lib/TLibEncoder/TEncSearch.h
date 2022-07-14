@@ -149,8 +149,8 @@ protected:
   {
     const Pel*  piRefY;
     Int         iYStride;
-    Int         iBestX;
-    Int         iBestY;
+    Int         iBestX = 0;
+    Int         iBestY = 0;
     UInt        uiBestRound;
     UInt        uiBestDistance;
     Distortion  uiBestSad;
