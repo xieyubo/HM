@@ -4088,6 +4088,8 @@ Void TEncSearch::xTZSearch( const TComDataCU* const pcCU,
 #endif
   // init TZSearchStruct
   IntTZSearchStruct cStruct;
+  cStruct.iBestX      = 0;
+  cStruct.iBestY      = 0;
   cStruct.iYStride    = iRefStride;
   cStruct.piRefY      = piRefY;
   cStruct.uiBestSad   = MAX_UINT;
