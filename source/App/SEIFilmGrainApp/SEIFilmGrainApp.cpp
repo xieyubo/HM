@@ -197,10 +197,7 @@ UInt SEIFilmGrainApp::process()
       NALUcount++;
       SEIMessages SEIs;
 
-      int iNumZeros = stats.m_numLeadingZero8BitsBytes + stats.m_numZeroByteBytes + stats.m_numStartCodePrefixBytes - 1;
-      printf("nalUnitType=%d, nuhLayerId=%d, temporalId=%d, iNumZeros=%d\n", nalu.m_nalUnitType, nalu.m_nuhLayerId, nalu.m_temporalId, iNumZeros);
-
-      if (nalu.m_nalUnitType < NAL_UNIT_VPS && m_seiFilmGrainOption > 1)
+      if ((nalu.m_nalUnitType < NAL_UNIT_VPS && m_seiFilmGrainOption > 1) || (nalu.m_nalUnitType == NAL_UNIT_PPS && m_seiFilmGrainOption == 2))
       {
         bInsertSEI = true;
         SEIFilmGrainCharacteristics *sei = new SEIFilmGrainCharacteristics;
@@ -212,7 +209,7 @@ UInt SEIFilmGrainApp::process()
         SEIs.push_back(sei);
       } // end Coded Slice UnitType
 
-      if (nalu.m_nalUnitType == NAL_UNIT_PREFIX_SEI && m_seiFilmGrainOption && m_parameterSetManager.getActiveSPS())
+      if (nalu.m_nalUnitType == NAL_UNIT_PREFIX_SEI && m_seiFilmGrainOption)
       {
         // parse FGC SEI
         m_seiReader.parseSEImessage(&(nalu.getBitstream()), SEIs, nalu.m_nalUnitType, m_parameterSetManager.getActiveSPS(), &std::cout);
@@ -234,28 +231,18 @@ UInt SEIFilmGrainApp::process()
               {
                 printSEIFilmGrainCharacteristics(fgcParameters);
               }
-              //bInsertSEI = true;
+              bInsertSEI = true;
             }
           } // end FGC SEI
         }
       } // end SEI UnitType
 
+      int iNumZeros = stats.m_numLeadingZero8BitsBytes + stats.m_numZeroByteBytes + stats.m_numStartCodePrefixBytes - 1;
+      printf("nalUnitType=%d, nuhLayerId=%d, temporalId=%d, iNumZeros=%d  => bRemoveSEI=%d, bInsertSEI=%d\n", nalu.m_nalUnitType, nalu.m_nuhLayerId, nalu.m_temporalId, iNumZeros, bRemoveSEI, bInsertSEI);
+
+      // write regular NalUnit
       if (bWrite && !bRemoveSEI && bitstreamFileOut)
       {
-        if (bInsertSEI)
-        {
-          // write FGC SEI NalUnit
-          Bool useLongStartCode = (nalu.m_nalUnitType == NAL_UNIT_VPS || nalu.m_nalUnitType == NAL_UNIT_SPS || nalu.m_nalUnitType == NAL_UNIT_PPS || nalu.m_nalUnitType < 16);
-          SEIMessages currentMessages = extractSeisByType(SEIs, SEI::FILM_GRAIN_CHARACTERISTICS);
-          OutputNALUnit outNalu(NAL_UNIT_PREFIX_SEI, nalu.m_temporalId);
-          m_seiWriter.writeSEImessages(outNalu.m_Bitstream, currentMessages, m_parameterSetManager.getActiveSPS(), false);
-          NALUnitEBSP naluWithHeader(outNalu);
-          static const UChar startCodePrefix[] = { 0,0,0,1 };
-          if (useLongStartCode) { bitstreamFileOut.write(reinterpret_cast<const char*>(startCodePrefix), 4); }
-          else { bitstreamFileOut.write(reinterpret_cast<const char*>(startCodePrefix + 1), 3); }
-          bitstreamFileOut << naluWithHeader.m_nalUnitData.str();
-        }
-        // write regular NalUnit
         if (nalu.m_nalUnitType < 16 && m_seiFilmGrainOption == 1) { stats.m_numZeroByteBytes++; }
         if (nalu.m_nalUnitType < 16 && m_seiFilmGrainOption == 2) { stats.m_numZeroByteBytes--; }
         int iNumZeros = stats.m_numLeadingZero8BitsBytes + stats.m_numZeroByteBytes + stats.m_numStartCodePrefixBytes - 1;
@@ -263,6 +250,21 @@ UInt SEIFilmGrainApp::process()
         for (int i = 0; i < iNumZeros; i++) { bitstreamFileOut.write(&ch, 1); }
         ch = 1; bitstreamFileOut.write(&ch, 1);
         bitstreamFileOut.write((const char*)nalu.getBitstream().getFifo().data(), nalu.getBitstream().getFifo().size());
+      }
+
+      // write FGC SEI NalUnit
+      if (bWrite && bInsertSEI && bitstreamFileOut)
+      {
+        Bool useLongStartCode = (nalu.m_nalUnitType == NAL_UNIT_VPS || nalu.m_nalUnitType == NAL_UNIT_SPS || nalu.m_nalUnitType == NAL_UNIT_PPS);
+        //Bool useLongStartCode = (nalu.m_nalUnitType == NAL_UNIT_VPS || nalu.m_nalUnitType == NAL_UNIT_SPS || nalu.m_nalUnitType == NAL_UNIT_PPS || nalu.m_nalUnitType < 16);
+        SEIMessages currentMessages = extractSeisByType(SEIs, SEI::FILM_GRAIN_CHARACTERISTICS);
+        OutputNALUnit outNalu(NAL_UNIT_PREFIX_SEI, nalu.m_temporalId);
+        m_seiWriter.writeSEImessages(outNalu.m_Bitstream, currentMessages, m_parameterSetManager.getActiveSPS(), false);
+        NALUnitEBSP naluWithHeader(outNalu);
+        static const UChar startCodePrefix[] = { 0,0,0,1 };
+        if (useLongStartCode) { bitstreamFileOut.write(reinterpret_cast<const char*>(startCodePrefix), 4); }
+        else { bitstreamFileOut.write(reinterpret_cast<const char*>(startCodePrefix + 1), 3); }
+        bitstreamFileOut << naluWithHeader.m_nalUnitData.str();
       }
     }
 
