@@ -197,7 +197,10 @@ UInt SEIFilmGrainApp::process()
       NALUcount++;
       SEIMessages SEIs;
 
-      if ((nalu.m_nalUnitType < NAL_UNIT_VPS && m_seiFilmGrainOption > 1) || (nalu.m_nalUnitType == NAL_UNIT_PPS && m_seiFilmGrainOption == 2))
+      //int iNumZeros = stats.m_numLeadingZero8BitsBytes + stats.m_numZeroByteBytes + stats.m_numStartCodePrefixBytes - 1;
+      //printf("nalUnitType=%d, nuhLayerId=%d, temporalId=%d, iNumZeros=%d\n", nalu.m_nalUnitType, nalu.m_nuhLayerId, nalu.m_temporalId, iNumZeros);
+
+      if (nalu.m_nalUnitType == NAL_UNIT_PPS && m_seiFilmGrainOption == 2)
       {
         bInsertSEI = true;
         SEIFilmGrainCharacteristics *sei = new SEIFilmGrainCharacteristics;
@@ -237,9 +240,6 @@ UInt SEIFilmGrainApp::process()
         }
       } // end SEI UnitType
 
-      int iNumZeros = stats.m_numLeadingZero8BitsBytes + stats.m_numZeroByteBytes + stats.m_numStartCodePrefixBytes - 1;
-      printf("nalUnitType=%d, nuhLayerId=%d, temporalId=%d, iNumZeros=%d  => bRemoveSEI=%d, bInsertSEI=%d\n", nalu.m_nalUnitType, nalu.m_nuhLayerId, nalu.m_temporalId, iNumZeros, bRemoveSEI, bInsertSEI);
-
       // write regular NalUnit
       if (bWrite && !bRemoveSEI && bitstreamFileOut)
       {
@@ -256,7 +256,6 @@ UInt SEIFilmGrainApp::process()
       if (bWrite && bInsertSEI && bitstreamFileOut)
       {
         Bool useLongStartCode = (nalu.m_nalUnitType == NAL_UNIT_VPS || nalu.m_nalUnitType == NAL_UNIT_SPS || nalu.m_nalUnitType == NAL_UNIT_PPS);
-        //Bool useLongStartCode = (nalu.m_nalUnitType == NAL_UNIT_VPS || nalu.m_nalUnitType == NAL_UNIT_SPS || nalu.m_nalUnitType == NAL_UNIT_PPS || nalu.m_nalUnitType < 16);
         SEIMessages currentMessages = extractSeisByType(SEIs, SEI::FILM_GRAIN_CHARACTERISTICS);
         OutputNALUnit outNalu(NAL_UNIT_PREFIX_SEI, nalu.m_temporalId);
         m_seiWriter.writeSEImessages(outNalu.m_Bitstream, currentMessages, m_parameterSetManager.getActiveSPS(), false);
