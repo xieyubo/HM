@@ -567,7 +567,10 @@ void SEIFilmGrainSynthesizer::create(uint32_t width, uint32_t height, ChromaForm
 
 SEIFilmGrainSynthesizer::~SEIFilmGrainSynthesizer()
 {
-
+  if (m_pGrainSynt)
+  {
+    fgsDeinit();
+  }
 }
 
 void SEIFilmGrainSynthesizer::fgsInit()
