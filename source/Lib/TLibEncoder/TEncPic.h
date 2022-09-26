@@ -103,17 +103,23 @@ public:
   virtual ~TEncPic();
 
 #if REDUCED_ENCODER_MEMORY
+  Void          create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-  Void          create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, const Bool bCreateForProcessedReconstruction );
-#else
-  Void          create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth );
+                      , const Bool bCreateForProcessedReconstruction
 #endif
+#if JVET_X0048_X0103_FILM_GRAIN
+                      , const Bool bCreateFilteredSourcePicYuv
+#endif
+                      );
 #else
+  Void          create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual /* = false*/
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-  Void          create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual /* = false*/, const Bool bCreateForProcessedReconstruction );
-#else
-  Void          create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual /* = false*/ );
+                      , const Bool bCreateForProcessedReconstruction
 #endif
+#if JVET_X0048_X0103_FILM_GRAIN
+                      , const Bool bCreateFilteredSourcePicYuv
+#endif
+                      );
 #endif
   virtual Void  destroy();
 

@@ -46,6 +46,7 @@
 //! \ingroup TLibDecoder
 //! \{
 
+#include "SyntaxElementParser.h"
 #include "TLibCommon/SEI.h"
 class TComInputBitstream;
 

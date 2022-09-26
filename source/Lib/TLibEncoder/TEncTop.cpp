@@ -332,7 +332,11 @@ Void TEncTop::deletePicBuffer()
  \retval  accessUnitsOut      list of output access units
  \retval  iNumEncoded         number of encoded pictures
  */
+#if JVET_X0048_X0103_FILM_GRAIN
+Void TEncTop::encode(Bool flush, TComPicYuv* pcPicYuvOrg, TComPicYuv* pcPicYuvTrueOrg, TComPicYuv* pcfilteredOrgPicForFG, const InputColourSpaceConversion ipCSC, const InputColourSpaceConversion snrCSC, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded)
+#else
 Void TEncTop::encode( Bool flush, TComPicYuv* pcPicYuvOrg, TComPicYuv* pcPicYuvTrueOrg, const InputColourSpaceConversion ipCSC, const InputColourSpaceConversion snrCSC, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded )
+#endif
 {
   if (pcPicYuvOrg != NULL)
   {
@@ -347,6 +351,12 @@ Void TEncTop::encode( Bool flush, TComPicYuv* pcPicYuvOrg, TComPicYuv* pcPicYuvT
     xGetNewPicBuffer( pcPicCurr, ppsID );
     pcPicYuvOrg->copyToPic( pcPicCurr->getPicYuvOrg() );
     pcPicYuvTrueOrg->copyToPic( pcPicCurr->getPicYuvTrueOrg() );
+#if JVET_X0048_X0103_FILM_GRAIN
+    if (m_fgcSEIAnalysisEnabled && m_fgcSEIExternalDenoised.empty())
+    {
+      pcfilteredOrgPicForFG->copyToPic(pcPicCurr->getPicFilteredFG());
+    }
+#endif
 
 #if SHUTTER_INTERVAL_SEI_PROCESSING
     if ( getShutterFilterFlag() )
@@ -534,7 +544,11 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic, Int ppsId )
     {
 #if REDUCED_ENCODER_MEMORY
       rpcPic->releaseAllReconstructionData();
+#if JVET_X0048_X0103_FILM_GRAIN
+      rpcPic->prepareForEncoderSourcePicYuv( getFilmGrainAnalysisEnabled() );
+#else
       rpcPic->prepareForEncoderSourcePicYuv();
+#endif
 #endif
     }
     else
@@ -552,17 +566,23 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic, Int ppsId )
     {
       TEncPic* pcEPic = new TEncPic;
 #if REDUCED_ENCODER_MEMORY
+      pcEPic->create(sps, pps, pps.getMaxCuDQPDepth() + 1
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-      pcEPic->create( sps, pps, pps.getMaxCuDQPDepth() + 1, getShutterFilterFlag() );
-#else
-      pcEPic->create( sps, pps, pps.getMaxCuDQPDepth()+1);
+                    , getShutterFilterFlag()
 #endif
+#if JVET_X0048_X0103_FILM_GRAIN
+                    , getFilmGrainAnalysisEnabled()
+#endif
+                    );
 #else
+      pcEPic->create( sps, pps, pps.getMaxCuDQPDepth() + 1, false
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-      pcEPic->create(sps, pps, pps.getMaxCuDQPDepth() + 1, false, getShutterFilterFlag() );
-#else
-      pcEPic->create( sps, pps, pps.getMaxCuDQPDepth()+1, false);
+                    , getShutterFilterFlag()
 #endif
+#if JVET_X0048_X0103_FILM_GRAIN
+                    , getFilmGrainAnalysisEnabled()
+#endif
+                    );
 #endif
       rpcPic = pcEPic;
     }
@@ -570,17 +590,23 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic, Int ppsId )
     {
       rpcPic = new TComPic;
 #if REDUCED_ENCODER_MEMORY
+      rpcPic->create( sps, pps, true, false
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-      rpcPic->create( sps, pps, true, false, getShutterFilterFlag() );
-#else
-      rpcPic->create( sps, pps, true, false );
+                    , getShutterFilterFlag()
 #endif
+#if JVET_X0048_X0103_FILM_GRAIN
+                    , getFilmGrainAnalysisEnabled()
+#endif
+                    );
 #else
+      rpcPic->create( sps, pps, false
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-      rpcPic->create( sps, pps, false, getShutterFilterFlag() );
-#else
-      rpcPic->create( sps, pps, false );
+                    , getShutterFilterFlag()
 #endif
+#if JVET_X0048_X0103_FILM_GRAIN
+                    , getFilmGrainAnalysisEnabled()
+#endif
+                    );
 #endif
     }
 

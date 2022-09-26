@@ -60,9 +60,10 @@ TComPic::TComPic()
   {
     m_apcPicYuv[i]      = NULL;
   }
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
+  m_isMctfFiltered      = false;
   m_grainCharacteristic = NULL;
-  m_grainBuf = NULL;
+  m_grainBuf            = NULL;
 #endif
 }
 
@@ -72,17 +73,23 @@ TComPic::~TComPic()
 }
 
 #if REDUCED_ENCODER_MEMORY
+Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bCreateEncoderSourcePicYuv, const Bool bCreateForImmediateReconstruction
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bCreateEncoderSourcePicYuv, const Bool bCreateForImmediateReconstruction, const Bool bCreateForProcessedReconstruction )
-#else
-Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bCreateEncoderSourcePicYuv, const Bool bCreateForImmediateReconstruction )
+  , const Bool bCreateForProcessedReconstruction
 #endif
+#if JVET_X0048_X0103_FILM_GRAIN
+  , const Bool bCreateFilteredSourcePicYuv
+#endif
+)
 #else
+Void TComPic::create(const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual, const Bool bCreateForProcessedReconstruction )
-#else
-Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual )
+  , const Bool bCreateForProcessedReconstruction
 #endif
+#if JVET_X0048_X0103_FILM_GRAIN
+  , const Bool bCreateFilteredSourcePicYuv
+#endif
+)
 #endif
 {
   destroy();
@@ -120,6 +127,13 @@ Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirt
   }
 #endif
 
+#if JVET_X0048_X0103_FILM_GRAIN
+  if (bCreateFilteredSourcePicYuv)
+  {
+    m_apcPicYuv[PIC_FILTERED_ORIGINAL_FG] = new TComPicYuv;  m_apcPicYuv[PIC_FILTERED_ORIGINAL_FG]->create(iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true);
+  }
+#endif
+
   // there are no SEI messages associated with this picture initially
   if (m_SEIs.size() > 0)
   {
@@ -129,7 +143,11 @@ Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirt
 }
 
 #if REDUCED_ENCODER_MEMORY
+#if JVET_X0048_X0103_FILM_GRAIN
+Void TComPic::prepareForEncoderSourcePicYuv( const Bool bCreateFilteredSourcePicYuv )
+#else
 Void TComPic::prepareForEncoderSourcePicYuv()
+#endif
 {
   const TComSPS &sps=m_picSym.getSPS();
 
@@ -148,6 +166,12 @@ Void TComPic::prepareForEncoderSourcePicYuv()
   {
     m_apcPicYuv[PIC_YUV_TRUE_ORG]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_TRUE_ORG]->create( iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true );
   }
+#if JVET_X0048_X0103_FILM_GRAIN
+  if (m_apcPicYuv[PIC_FILTERED_ORIGINAL_FG] == NULL && bCreateFilteredSourcePicYuv)
+  {
+    m_apcPicYuv[PIC_FILTERED_ORIGINAL_FG] = new TComPicYuv; m_apcPicYuv[PIC_FILTERED_ORIGINAL_FG]->create(iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true);
+  }
+#endif
 }
 
 #if SHUTTER_INTERVAL_SEI_PROCESSING
@@ -215,6 +239,14 @@ Void TComPic::releaseEncoderSourceImageData()
     delete m_apcPicYuv[PIC_YUV_TRUE_ORG];
     m_apcPicYuv[PIC_YUV_TRUE_ORG] = NULL;
   }
+#if JVET_X0048_X0103_FILM_GRAIN
+  if (m_apcPicYuv[PIC_FILTERED_ORIGINAL_FG])
+  {
+    m_apcPicYuv[PIC_FILTERED_ORIGINAL_FG]->destroy();
+    delete m_apcPicYuv[PIC_FILTERED_ORIGINAL_FG];
+    m_apcPicYuv[PIC_FILTERED_ORIGINAL_FG] = NULL;
+  }
+#endif
 }
 
 Void TComPic::releaseAllReconstructionData()
@@ -252,7 +284,7 @@ Void TComPic::destroy()
   }
 
   deleteSEIs(m_SEIs);
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
   m_grainBuf = NULL;
 #endif
 }
@@ -311,22 +343,30 @@ UInt TComPic::getSubstreamForCtuAddr(const UInt ctuAddr, const Bool bAddressInRa
   return subStrm;
 }
 
-#if FGS_RDD5_ENABLE
-// initialization of RDD5 based film grain syntheis buffers and parameters
+#if JVET_X0048_X0103_FILM_GRAIN
+// initialization of frequency based film grain syntheis buffers and parameters
 void TComPic::createGrainSynthesizer(Bool bFirstPictureInSequence, SEIFilmGrainSynthesizer* pGrainCharacteristics, TComPicYuv* pGrainBuf, const TComSPS* sps)
 {
     m_grainCharacteristic = pGrainCharacteristics;
     m_grainBuf = pGrainBuf;
 
+    Int width         = sps->getPicWidthInLumaSamples();
+    Int height        = sps->getPicHeightInLumaSamples();
+    ChromaFormat fmt  = sps->getChromaFormatIdc();
+    Int bitDepth      = sps->getBitDepth(CHANNEL_TYPE_LUMA);
+
+    // Padding to make wd and ht multiple of max fgs window size(64)
+    int paddedWdFGS = ((width - 1) | 0x3F) + 1 - width;
+    int paddedHtFGS = ((height - 1) | 0x3F) + 1 - height;
+    m_padValue = (paddedWdFGS > paddedHtFGS) ? paddedWdFGS : paddedHtFGS;
+
     if (bFirstPictureInSequence)
     {
       // Create and initialize the Film Grain Synthesizer
-      m_grainCharacteristic->create(sps->getPicWidthInLumaSamples(), sps->getPicHeightInLumaSamples(),
-            sps->getChromaFormatIdc(), sps->getBitDepth(CHANNEL_TYPE_LUMA), 0, 1);
-      
+      m_grainCharacteristic->create(width, height, fmt, bitDepth, 1);
+
       //Frame level TComPicYuv buffer created to blend Film Grain Noise into it
-      m_grainBuf->createWithoutCUInfo(sps->getPicWidthInLumaSamples(), sps->getPicHeightInLumaSamples(),
-        sps->getChromaFormatIdc(), false, 0, 0);
+      m_grainBuf->createWithPadding(width, height, fmt, true, true, m_padValue, m_padValue);
 
       m_grainCharacteristic->fgsInit();
     }
@@ -337,22 +377,24 @@ TComPicYuv* TComPic::getPicYuvDisp()
     Int payloadType = 0;
     std::list<SEI*>::iterator message;
 
-    m_grainCharacteristic->m_errorCode = -1;
     for (message = m_SEIs.begin(); message != m_SEIs.end(); ++message)
     {
         payloadType = (*message)->payloadType();
         if (payloadType == SEI::FILM_GRAIN_CHARACTERISTICS)
         {
-            m_grainCharacteristic->m_pFgcParameters = static_cast<SEIFilmGrainCharacteristics*>(*message);
-            /* Validation of Film grain characteristic parameters for the constrains of SMPTE-RDD5*/
-            m_grainCharacteristic->m_errorCode = m_grainCharacteristic->grainValidateParams();
-            break;
+          m_grainCharacteristic->m_errorCode = -1;
+          *m_grainCharacteristic->m_fgcParameters = *static_cast<SEIFilmGrainCharacteristics*>(*message);
+          /* Validation of Film grain characteristic parameters for the constrains of SMPTE-RDD5*/
+          m_grainCharacteristic->m_errorCode = m_grainCharacteristic->grainValidateParams();
+          break;
         }
     }
 
     if (FGS_SUCCESS == m_grainCharacteristic->m_errorCode)
     {
       m_apcPicYuv[PIC_YUV_REC]->copyToPic(m_grainBuf);
+      m_grainBuf->extendPicBorder();  // Padding to make wd and ht multiple of max fgs window size(64)
+
       m_grainCharacteristic->m_poc = getPOC();
       m_grainCharacteristic->grainSynthesizeAndBlend(m_grainBuf, getSlice(0)->getIdrPicFlag());
       return m_grainBuf;
@@ -365,9 +407,7 @@ TComPicYuv* TComPic::getPicYuvDisp()
       }
       return  m_apcPicYuv[PIC_YUV_REC];
     }
-
 }
-
 #endif
 
 

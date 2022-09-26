@@ -590,12 +590,13 @@ Void SEIEncoder::initSEIFilmGrainCharacteristics(SEIFilmGrainCharacteristics *se
   for (int i = 0; i < MAX_NUM_COMPONENT; i++)
   {
     seiFilmGrain->m_compModel[i].bPresentFlag = m_pcCfg->getFGCSEICompModelPresent(i);
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
     if (seiFilmGrain->m_compModel[i].bPresentFlag)
     {
       seiFilmGrain->m_compModel[i].numModelValues = 1 + m_pcCfg->getFGCSEINumModelValuesMinus1(i);
-      seiFilmGrain->m_compModel[i].intensityValues.resize(1 + m_pcCfg->getFGCSEINumIntensityIntervalMinus1(i));
-      for (UInt j = 0; j <= m_pcCfg->getFGCSEINumIntensityIntervalMinus1(i); j++)
+      seiFilmGrain->m_compModel[i].numIntensityIntervals = 1 + m_pcCfg->getFGCSEINumIntensityIntervalMinus1(i);
+      seiFilmGrain->m_compModel[i].intensityValues.resize(seiFilmGrain->m_compModel[i].numIntensityIntervals);
+      for (UInt j = 0; j < seiFilmGrain->m_compModel[i].numIntensityIntervals; j++)
       {
         seiFilmGrain->m_compModel[i].intensityValues[j].intensityIntervalLowerBound = m_pcCfg->getFGCSEIIntensityIntervalLowerBound(i, j);
         seiFilmGrain->m_compModel[i].intensityValues[j].intensityIntervalUpperBound = m_pcCfg->getFGCSEIIntensityIntervalUpperBound(i, j);

@@ -252,6 +252,9 @@ protected:
 
   //====== Tool list ========
   Int       m_bitDepth[MAX_NUM_CHANNEL_TYPE];
+#if JVET_X0048_X0103_FILM_GRAIN
+  Int       m_bitDepthInput[MAX_NUM_CHANNEL_TYPE];
+#endif
   Bool      m_bUseASR;
   Bool      m_bUseHADME;
   Bool      m_useRDOQ;
@@ -469,7 +472,11 @@ protected:
   UChar     m_fgcSEIBlendingModeID;
   UChar     m_fgcSEILog2ScaleFactor;
   Bool      m_fgcSEICompModelPresent[MAX_NUM_COMPONENT];
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
+  Bool      m_fgcSEIAnalysisEnabled;
+  std::string m_fgcSEIExternalMask;
+  std::string m_fgcSEIExternalDenoised;
+  Bool      m_fgcSEIPerPictureSEI;
   UChar     m_fgcSEINumIntensityIntervalMinus1[MAX_NUM_COMPONENT];
   UChar     m_fgcSEINumModelValuesMinus1[MAX_NUM_COMPONENT];
   UChar     m_fgcSEIIntensityIntervalLowerBound[MAX_NUM_COMPONENT][MAX_NUM_INTENSITIES];
@@ -781,6 +788,13 @@ public:
   Int       getMaxCuDQPDepth                () const { return  m_iMaxCuDQPDepth; }
   Bool      getUseAdaptiveQP                () const { return  m_bUseAdaptiveQP; }
   Int       getQPAdaptationRange            () const { return  m_iQPAdaptationRange; }
+#if JVET_X0048_X0103_FILM_GRAIN
+  int       getBitDepth(const ChannelType chType) const { return m_bitDepth[chType]; }
+  int*      getBitDepth() { return m_bitDepth; }
+  int       getBitDepthInput(const ChannelType chType) const { return m_bitDepthInput[chType]; }
+  int*      getBitDepthInput() { return m_bitDepthInput; }
+  Void      setBitDepthInput(const ChannelType chType, Int internalBitDepthForChannel) { m_bitDepthInput[chType] = internalBitDepthForChannel; }
+#endif
 
   //==== Tool list ========
   Void      setBitDepth( const ChannelType chType, Int internalBitDepthForChannel ) { m_bitDepth[chType] = internalBitDepthForChannel; }
@@ -1073,7 +1087,16 @@ public:
   UChar getFilmGrainCharactersticsSEILog2ScaleFactor()               { return m_fgcSEILog2ScaleFactor; }
   Void  setFGCSEICompModelPresent(Bool b, Int index)                 { m_fgcSEICompModelPresent[index] = b; }
   Bool  getFGCSEICompModelPresent(Int index)                         { return m_fgcSEICompModelPresent[index]; }
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
+  bool*   getFGCSEICompModelPresent                 ()               { return m_fgcSEICompModelPresent; }
+  void    setFilmGrainAnalysisEnabled               (bool b)         { m_fgcSEIAnalysisEnabled = b; }
+  bool    getFilmGrainAnalysisEnabled               ()               { return m_fgcSEIAnalysisEnabled; }
+  void    setFilmGrainExternalMask(std::string s) { m_fgcSEIExternalMask = s; }
+  void    setFilmGrainExternalDenoised(std::string s) { m_fgcSEIExternalDenoised = s; }
+  std::string getFilmGrainExternalMask() { return m_fgcSEIExternalMask; }
+  std::string getFilmGrainExternalDenoised() { return m_fgcSEIExternalDenoised; }
+  void    setFilmGrainCharactersticsSEIPerPictureSEI(bool b)         { m_fgcSEIPerPictureSEI = b; }
+  bool    getFilmGrainCharactersticsSEIPerPictureSEI()               { return m_fgcSEIPerPictureSEI; }
   Void    setFGCSEINumIntensityIntervalMinus1(UChar v, Int index) { m_fgcSEINumIntensityIntervalMinus1[index] = v; }
   UChar   getFGCSEINumIntensityIntervalMinus1(Int index) { return m_fgcSEINumIntensityIntervalMinus1[index]; }
   Void    setFGCSEINumModelValuesMinus1(UChar v, Int index) { m_fgcSEINumModelValuesMinus1[index] = v; }

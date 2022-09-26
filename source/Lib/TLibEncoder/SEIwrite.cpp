@@ -532,19 +532,31 @@ Void SEIWriter::xWriteSEIFilmGrainCharacteristics(const SEIFilmGrainCharacterist
     for(Int c=0; c<3; c++)
     {
       const SEIFilmGrainCharacteristics::CompModel &cm=sei.m_compModel[c];
+#if JVET_X0048_X0103_FILM_GRAIN
+      const UInt numIntensityIntervals = (UInt) cm.numIntensityIntervals;
+#else
       const UInt numIntensityIntervals = (UInt) cm.intensityValues.size();
+#endif
       const UInt numModelValues        = cm.numModelValues;
       WRITE_FLAG( sei.m_compModel[c].bPresentFlag && numIntensityIntervals>0 && numModelValues>0, "comp_model_present_flag[c]" );
     }
     for(Int c=0; c<3; c++)
     {
       const SEIFilmGrainCharacteristics::CompModel &cm=sei.m_compModel[c];
+#if JVET_X0048_X0103_FILM_GRAIN
+      const UInt numIntensityIntervals = (UInt) cm.numIntensityIntervals;
+#else
       const UInt numIntensityIntervals = (UInt) cm.intensityValues.size();
+#endif
       const UInt numModelValues        = cm.numModelValues;
       if (cm.bPresentFlag && numIntensityIntervals>0 && numModelValues>0)
       {
         assert(numIntensityIntervals<=256);
+//#if JVET_X0048_X0103_FILM_GRAIN
+//        assert(numModelValues <= 256);
+//#else
         assert(numModelValues<=8);
+//#endif
         WRITE_CODE( numIntensityIntervals-1, 8, "num_intensity_intervals_minus1[c]");
         WRITE_CODE( numModelValues-1,        3, "num_model_values_minus1[c]");
         for(UInt interval=0; interval<numIntensityIntervals; interval++)
@@ -552,7 +564,9 @@ Void SEIWriter::xWriteSEIFilmGrainCharacteristics(const SEIFilmGrainCharacterist
           const SEIFilmGrainCharacteristics::CompModelIntensityValues &cmiv=cm.intensityValues[interval];
           WRITE_CODE( cmiv.intensityIntervalLowerBound, 8, "intensity_interval_lower_bound[c][i]" );
           WRITE_CODE( cmiv.intensityIntervalUpperBound, 8, "intensity_interval_upper_bound[c][i]" );
+#if !JVET_X0048_X0103_FILM_GRAIN
           assert(cmiv.compModelValue.size() == numModelValues);
+#endif
           for(UInt j=0; j<cm.numModelValues; j++)
           {
             WRITE_SVLC(cmiv.compModelValue[j], "comp_model_value[c][i]" );

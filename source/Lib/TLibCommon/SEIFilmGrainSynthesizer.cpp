@@ -38,8 +38,9 @@
 #include "SEIFilmGrainSynthesizer.h"
 
 #include <stdio.h>
+#include <cmath>
 
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
 
 /* static look up table definitions */
 static const int8_t gaussianLUT[2048] =
@@ -208,556 +209,433 @@ static const uint32_t seedLUT[256] = {
 1090519041, 136122424, 215038417, 1563027841, 2026918145, 1688778833, 701530369, 1372639488,
 1342242817, 2036945104, 953274369, 1750192384, 16842753, 964808960, 1359020032, 1358954497
 };
-static const int8_t R64_IDCT[64][64] =
-{
-{ /* Row 0 */
-32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
-32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
-32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
-32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32},
-{ /* Row 1 */
-45, 45, 45, 45, 44, 44, 43, 42, 41, 40, 39, 38, 37, 36, 34, 33,
-31, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 3, 1,
--1, -3, -6, -8, -10, -12, -14, -16, -18, -20, -22, -24, -26, -28, -30, -31,
--33, -34, -36, -37, -38, -39, -40, -41, -42, -43, -44, -44, -45, -45, -45, -45},
-{ /* Row 2 */
-45, 45, 44, 43, 41, 39, 36, 34, 30, 27, 23, 19, 15, 11, 7, 2,
--2, -7, -11, -15, -19, -23, -27, -30, -34, -36, -39, -41, -43, -44, -45, -45,
--45, -45, -44, -43, -41, -39, -36, -34, -30, -27, -23, -19, -15, -11, -7, -2,
-2, 7, 11, 15, 19, 23, 27, 30, 34, 36, 39, 41, 43, 44, 45, 45},
-{ /* Row 3 */
-45, 44, 42, 39, 36, 31, 26, 20, 14, 8, 1, -6, -12, -18, -24, -30,
--34, -38, -41, -44, -45, -45, -45, -43, -40, -37, -33, -28, -22, -16, -10, -3,
-3, 10, 16, 22, 28, 33, 37, 40, 43, 45, 45, 45, 44, 41, 38, 34,
-30, 24, 18, 12, 6, -1, -8, -14, -20, -26, -31, -36, -39, -42, -44, -45},
-{ /* Row 4 */
-45, 43, 40, 35, 29, 21, 13, 4, -4, -13, -21, -29, -35, -40, -43, -45,
--45, -43, -40, -35, -29, -21, -13, -4, 4, 13, 21, 29, 35, 40, 43, 45,
-45, 43, 40, 35, 29, 21, 13, 4, -4, -13, -21, -29, -35, -40, -43, -45,
--45, -43, -40, -35, -29, -21, -13, -4, 4, 13, 21, 29, 35, 40, 43, 45},
-{ /* Row 5 */
-45, 42, 37, 30, 20, 10, -1, -12, -22, -31, -38, -43, -45, -45, -41, -36,
--28, -18, -8, 3, 14, 24, 33, 39, 44, 45, 44, 40, 34, 26, 16, 6,
--6, -16, -26, -34, -40, -44, -45, -44, -39, -33, -24, -14, -3, 8, 18, 28,
-36, 41, 45, 45, 43, 38, 31, 22, 12, 1, -10, -20, -30, -37, -42, -45},
-{ /* Row 6 */
-45, 41, 34, 23, 11, -2, -15, -27, -36, -43, -45, -44, -39, -30, -19, -7,
-7, 19, 30, 39, 44, 45, 43, 36, 27, 15, 2, -11, -23, -34, -41, -45,
--45, -41, -34, -23, -11, 2, 15, 27, 36, 43, 45, 44, 39, 30, 19, 7,
--7, -19, -30, -39, -44, -45, -43, -36, -27, -15, -2, 11, 23, 34, 41, 45},
-{ /* Row 7 */
-45, 39, 30, 16, 1, -14, -28, -38, -44, -45, -40, -31, -18, -3, 12, 26,
-37, 44, 45, 41, 33, 20, 6, -10, -24, -36, -43, -45, -42, -34, -22, -8,
-8, 22, 34, 42, 45, 43, 36, 24, 10, -6, -20, -33, -41, -45, -44, -37,
--26, -12, 3, 18, 31, 40, 45, 44, 38, 28, 14, -1, -16, -30, -39, -45},
-{ /* Row 8 */
-44, 38, 25, 9, -9, -25, -38, -44, -44, -38, -25, -9, 9, 25, 38, 44,
-44, 38, 25, 9, -9, -25, -38, -44, -44, -38, -25, -9, 9, 25, 38, 44,
-44, 38, 25, 9, -9, -25, -38, -44, -44, -38, -25, -9, 9, 25, 38, 44,
-44, 38, 25, 9, -9, -25, -38, -44, -44, -38, -25, -9, 9, 25, 38, 44},
-{ /* Row 9 */
-44, 36, 20, 1, -18, -34, -44, -45, -37, -22, -3, 16, 33, 43, 45, 38,
-24, 6, -14, -31, -42, -45, -39, -26, -8, 12, 30, 41, 45, 40, 28, 10,
--10, -28, -40, -45, -41, -30, -12, 8, 26, 39, 45, 42, 31, 14, -6, -24,
--38, -45, -43, -33, -16, 3, 22, 37, 45, 44, 34, 18, -1, -20, -36, -44},
-{ /* Row 10 */
-44, 34, 15, -7, -27, -41, -45, -39, -23, -2, 19, 36, 45, 43, 30, 11,
--11, -30, -43, -45, -36, -19, 2, 23, 39, 45, 41, 27, 7, -15, -34, -44,
--44, -34, -15, 7, 27, 41, 45, 39, 23, 2, -19, -36, -45, -43, -30, -11,
-11, 30, 43, 45, 36, 19, -2, -23, -39, -45, -41, -27, -7, 15, 34, 44},
-{ /* Row 11 */
-44, 31, 10, -14, -34, -45, -42, -28, -6, 18, 37, 45, 40, 24, 1, -22,
--39, -45, -38, -20, 3, 26, 41, 45, 36, 16, -8, -30, -43, -44, -33, -12,
-12, 33, 44, 43, 30, 8, -16, -36, -45, -41, -26, -3, 20, 38, 45, 39,
-22, -1, -24, -40, -45, -37, -18, 6, 28, 42, 45, 34, 14, -10, -31, -44},
-{ /* Row 12 */
-43, 29, 4, -21, -40, -45, -35, -13, 13, 35, 45, 40, 21, -4, -29, -43,
--43, -29, -4, 21, 40, 45, 35, 13, -13, -35, -45, -40, -21, 4, 29, 43,
-43, 29, 4, -21, -40, -45, -35, -13, 13, 35, 45, 40, 21, -4, -29, -43,
--43, -29, -4, 21, 40, 45, 35, 13, -13, -35, -45, -40, -21, 4, 29, 43},
-{ /* Row 13 */
-43, 26, -1, -28, -44, -42, -24, 3, 30, 44, 41, 22, -6, -31, -45, -40,
--20, 8, 33, 45, 39, 18, -10, -34, -45, -38, -16, 12, 36, 45, 37, 14,
--14, -37, -45, -36, -12, 16, 38, 45, 34, 10, -18, -39, -45, -33, -8, 20,
-40, 45, 31, 6, -22, -41, -44, -30, -3, 24, 42, 44, 28, 1, -26, -43},
-{ /* Row 14 */
-43, 23, -7, -34, -45, -36, -11, 19, 41, 44, 27, -2, -30, -45, -39, -15,
-15, 39, 45, 30, 2, -27, -44, -41, -19, 11, 36, 45, 34, 7, -23, -43,
--43, -23, 7, 34, 45, 36, 11, -19, -41, -44, -27, 2, 30, 45, 39, 15,
--15, -39, -45, -30, -2, 27, 44, 41, 19, -11, -36, -45, -34, -7, 23, 43},
-{ /* Row 15 */
-42, 20, -12, -38, -45, -28, 3, 33, 45, 34, 6, -26, -44, -39, -14, 18,
-41, 43, 22, -10, -37, -45, -30, 1, 31, 45, 36, 8, -24, -44, -40, -16,
-16, 40, 44, 24, -8, -36, -45, -31, -1, 30, 45, 37, 10, -22, -43, -41,
--18, 14, 39, 44, 26, -6, -34, -45, -33, -3, 28, 45, 38, 12, -20, -42},
-{ /* Row 16 */
-42, 17, -17, -42, -42, -17, 17, 42, 42, 17, -17, -42, -42, -17, 17, 42,
-42, 17, -17, -42, -42, -17, 17, 42, 42, 17, -17, -42, -42, -17, 17, 42,
-42, 17, -17, -42, -42, -17, 17, 42, 42, 17, -17, -42, -42, -17, 17, 42,
-42, 17, -17, -42, -42, -17, 17, 42, 42, 17, -17, -42, -42, -17, 17, 42},
-{ /* Row 17 */
-41, 14, -22, -44, -37, -6, 30, 45, 31, -3, -36, -45, -24, 12, 40, 42,
-16, -20, -44, -38, -8, 28, 45, 33, -1, -34, -45, -26, 10, 39, 43, 18,
--18, -43, -39, -10, 26, 45, 34, 1, -33, -45, -28, 8, 38, 44, 20, -16,
--42, -40, -12, 24, 45, 36, 3, -31, -45, -30, 6, 37, 44, 22, -14, -41},
-{ /* Row 18 */
-41, 11, -27, -45, -30, 7, 39, 43, 15, -23, -45, -34, 2, 36, 44, 19,
--19, -44, -36, -2, 34, 45, 23, -15, -43, -39, -7, 30, 45, 27, -11, -41,
--41, -11, 27, 45, 30, -7, -39, -43, -15, 23, 45, 34, -2, -36, -44, -19,
-19, 44, 36, 2, -34, -45, -23, 15, 43, 39, 7, -30, -45, -27, 11, 41},
-{ /* Row 19 */
-40, 8, -31, -45, -22, 18, 44, 34, -3, -38, -42, -12, 28, 45, 26, -14,
--43, -37, -1, 36, 44, 16, -24, -45, -30, 10, 41, 39, 6, -33, -45, -20,
-20, 45, 33, -6, -39, -41, -10, 30, 45, 24, -16, -44, -36, 1, 37, 43,
-14, -26, -45, -28, 12, 42, 38, 3, -34, -44, -18, 22, 45, 31, -8, -40},
-{ /* Row 20 */
-40, 4, -35, -43, -13, 29, 45, 21, -21, -45, -29, 13, 43, 35, -4, -40,
--40, -4, 35, 43, 13, -29, -45, -21, 21, 45, 29, -13, -43, -35, 4, 40,
-40, 4, -35, -43, -13, 29, 45, 21, -21, -45, -29, 13, 43, 35, -4, -40,
--40, -4, 35, 43, 13, -29, -45, -21, 21, 45, 29, -13, -43, -35, 4, 40},
-{ /* Row 21 */
-39, 1, -38, -40, -3, 37, 41, 6, -36, -42, -8, 34, 43, 10, -33, -44,
--12, 31, 44, 14, -30, -45, -16, 28, 45, 18, -26, -45, -20, 24, 45, 22,
--22, -45, -24, 20, 45, 26, -18, -45, -28, 16, 45, 30, -14, -44, -31, 12,
-44, 33, -10, -43, -34, 8, 42, 36, -6, -41, -37, 3, 40, 38, -1, -39},
-{ /* Row 22 */
-39, -2, -41, -36, 7, 43, 34, -11, -44, -30, 15, 45, 27, -19, -45, -23,
-23, 45, 19, -27, -45, -15, 30, 44, 11, -34, -43, -7, 36, 41, 2, -39,
--39, 2, 41, 36, -7, -43, -34, 11, 44, 30, -15, -45, -27, 19, 45, 23,
--23, -45, -19, 27, 45, 15, -30, -44, -11, 34, 43, 7, -36, -41, -2, 39},
-{ /* Row 23 */
-38, -6, -43, -31, 16, 45, 22, -26, -45, -12, 34, 41, 1, -40, -36, 10,
-44, 28, -20, -45, -18, 30, 44, 8, -37, -39, 3, 42, 33, -14, -45, -24,
-24, 45, 14, -33, -42, -3, 39, 37, -8, -44, -30, 18, 45, 20, -28, -44,
--10, 36, 40, -1, -41, -34, 12, 45, 26, -22, -45, -16, 31, 43, 6, -38},
-{ /* Row 24 */
-38, -9, -44, -25, 25, 44, 9, -38, -38, 9, 44, 25, -25, -44, -9, 38,
-38, -9, -44, -25, 25, 44, 9, -38, -38, 9, 44, 25, -25, -44, -9, 38,
-38, -9, -44, -25, 25, 44, 9, -38, -38, 9, 44, 25, -25, -44, -9, 38,
-38, -9, -44, -25, 25, 44, 9, -38, -38, 9, 44, 25, -25, -44, -9, 38},
-{ /* Row 25 */
-37, -12, -45, -18, 33, 40, -6, -44, -24, 28, 43, 1, -42, -30, 22, 45,
-8, -39, -34, 16, 45, 14, -36, -38, 10, 45, 20, -31, -41, 3, 44, 26,
--26, -44, -3, 41, 31, -20, -45, -10, 38, 36, -14, -45, -16, 34, 39, -8,
--45, -22, 30, 42, -1, -43, -28, 24, 44, 6, -40, -33, 18, 45, 12, -37},
-{ /* Row 26 */
-36, -15, -45, -11, 39, 34, -19, -45, -7, 41, 30, -23, -44, -2, 43, 27,
--27, -43, 2, 44, 23, -30, -41, 7, 45, 19, -34, -39, 11, 45, 15, -36,
--36, 15, 45, 11, -39, -34, 19, 45, 7, -41, -30, 23, 44, 2, -43, -27,
-27, 43, -2, -44, -23, 30, 41, -7, -45, -19, 34, 39, -11, -45, -15, 36},
-{ /* Row 27 */
-36, -18, -45, -3, 43, 24, -31, -39, 12, 45, 10, -40, -30, 26, 42, -6,
--45, -16, 37, 34, -20, -44, -1, 44, 22, -33, -38, 14, 45, 8, -41, -28,
-28, 41, -8, -45, -14, 38, 33, -22, -44, 1, 44, 20, -34, -37, 16, 45,
-6, -42, -26, 30, 40, -10, -45, -12, 39, 31, -24, -43, 3, 45, 18, -36},
-{ /* Row 28 */
-35, -21, -43, 4, 45, 13, -40, -29, 29, 40, -13, -45, -4, 43, 21, -35,
--35, 21, 43, -4, -45, -13, 40, 29, -29, -40, 13, 45, 4, -43, -21, 35,
-35, -21, -43, 4, 45, 13, -40, -29, 29, 40, -13, -45, -4, 43, 21, -35,
--35, 21, 43, -4, -45, -13, 40, 29, -29, -40, 13, 45, 4, -43, -21, 35},
-{ /* Row 29 */
-34, -24, -41, 12, 45, 1, -45, -14, 40, 26, -33, -36, 22, 42, -10, -45,
--3, 44, 16, -39, -28, 31, 37, -20, -43, 8, 45, 6, -44, -18, 38, 30,
--30, -38, 18, 44, -6, -45, -8, 43, 20, -37, -31, 28, 39, -16, -44, 3,
-45, 10, -42, -22, 36, 33, -26, -40, 14, 45, -1, -45, -12, 41, 24, -34},
-{ /* Row 30 */
-34, -27, -39, 19, 43, -11, -45, 2, 45, 7, -44, -15, 41, 23, -36, -30,
-30, 36, -23, -41, 15, 44, -7, -45, -2, 45, 11, -43, -19, 39, 27, -34,
--34, 27, 39, -19, -43, 11, 45, -2, -45, -7, 44, 15, -41, -23, 36, 30,
--30, -36, 23, 41, -15, -44, 7, 45, 2, -45, -11, 43, 19, -39, -27, 34},
-{ /* Row 31 */
-33, -30, -36, 26, 38, -22, -40, 18, 42, -14, -44, 10, 45, -6, -45, 1,
-45, 3, -45, -8, 44, 12, -43, -16, 41, 20, -39, -24, 37, 28, -34, -31,
-31, 34, -28, -37, 24, 39, -20, -41, 16, 43, -12, -44, 8, 45, -3, -45,
--1, 45, 6, -45, -10, 44, 14, -42, -18, 40, 22, -38, -26, 36, 30, -33},
-{ /* Row 32 */
-32, -32, -32, 32, 32, -32, -32, 32, 32, -32, -32, 32, 32, -32, -32, 32,
-32, -32, -32, 32, 32, -32, -32, 32, 32, -32, -32, 32, 32, -32, -32, 32,
-32, -32, -32, 32, 32, -32, -32, 32, 32, -32, -32, 32, 32, -32, -32, 32,
-32, -32, -32, 32, 32, -32, -32, 32, 32, -32, -32, 32, 32, -32, -32, 32},
-{ /* Row 33 */
-31, -34, -28, 37, 24, -39, -20, 41, 16, -43, -12, 44, 8, -45, -3, 45,
--1, -45, 6, 45, -10, -44, 14, 42, -18, -40, 22, 38, -26, -36, 30, 33,
--33, -30, 36, 26, -38, -22, 40, 18, -42, -14, 44, 10, -45, -6, 45, 1,
--45, 3, 45, -8, -44, 12, 43, -16, -41, 20, 39, -24, -37, 28, 34, -31},
-{ /* Row 34 */
-30, -36, -23, 41, 15, -44, -7, 45, -2, -45, 11, 43, -19, -39, 27, 34,
--34, -27, 39, 19, -43, -11, 45, 2, -45, 7, 44, -15, -41, 23, 36, -30,
--30, 36, 23, -41, -15, 44, 7, -45, 2, 45, -11, -43, 19, 39, -27, -34,
-34, 27, -39, -19, 43, 11, -45, -2, 45, -7, -44, 15, 41, -23, -36, 30},
-{ /* Row 35 */
-30, -38, -18, 44, 6, -45, 8, 43, -20, -37, 31, 28, -39, -16, 44, 3,
--45, 10, 42, -22, -36, 33, 26, -40, -14, 45, 1, -45, 12, 41, -24, -34,
-34, 24, -41, -12, 45, -1, -45, 14, 40, -26, -33, 36, 22, -42, -10, 45,
--3, -44, 16, 39, -28, -31, 37, 20, -43, -8, 45, -6, -44, 18, 38, -30},
-{ /* Row 36 */
-29, -40, -13, 45, -4, -43, 21, 35, -35, -21, 43, 4, -45, 13, 40, -29,
--29, 40, 13, -45, 4, 43, -21, -35, 35, 21, -43, -4, 45, -13, -40, 29,
-29, -40, -13, 45, -4, -43, 21, 35, -35, -21, 43, 4, -45, 13, 40, -29,
--29, 40, 13, -45, 4, 43, -21, -35, 35, 21, -43, -4, 45, -13, -40, 29},
-{ /* Row 37 */
-28, -41, -8, 45, -14, -38, 33, 22, -44, -1, 44, -20, -34, 37, 16, -45,
-6, 42, -26, -30, 40, 10, -45, 12, 39, -31, -24, 43, 3, -45, 18, 36,
--36, -18, 45, -3, -43, 24, 31, -39, -12, 45, -10, -40, 30, 26, -42, -6,
-45, -16, -37, 34, 20, -44, 1, 44, -22, -33, 38, 14, -45, 8, 41, -28},
-{ /* Row 38 */
-27, -43, -2, 44, -23, -30, 41, 7, -45, 19, 34, -39, -11, 45, -15, -36,
-36, 15, -45, 11, 39, -34, -19, 45, -7, -41, 30, 23, -44, 2, 43, -27,
--27, 43, 2, -44, 23, 30, -41, -7, 45, -19, -34, 39, 11, -45, 15, 36,
--36, -15, 45, -11, -39, 34, 19, -45, 7, 41, -30, -23, 44, -2, -43, 27},
-{ /* Row 39 */
-26, -44, 3, 41, -31, -20, 45, -10, -38, 36, 14, -45, 16, 34, -39, -8,
-45, -22, -30, 42, 1, -43, 28, 24, -44, 6, 40, -33, -18, 45, -12, -37,
-37, 12, -45, 18, 33, -40, -6, 44, -24, -28, 43, -1, -42, 30, 22, -45,
-8, 39, -34, -16, 45, -14, -36, 38, 10, -45, 20, 31, -41, -3, 44, -26},
-{ /* Row 40 */
-25, -44, 9, 38, -38, -9, 44, -25, -25, 44, -9, -38, 38, 9, -44, 25,
-25, -44, 9, 38, -38, -9, 44, -25, -25, 44, -9, -38, 38, 9, -44, 25,
-25, -44, 9, 38, -38, -9, 44, -25, -25, 44, -9, -38, 38, 9, -44, 25,
-25, -44, 9, 38, -38, -9, 44, -25, -25, 44, -9, -38, 38, 9, -44, 25},
-{ /* Row 41 */
-24, -45, 14, 33, -42, 3, 39, -37, -8, 44, -30, -18, 45, -20, -28, 44,
--10, -36, 40, 1, -41, 34, 12, -45, 26, 22, -45, 16, 31, -43, 6, 38,
--38, -6, 43, -31, -16, 45, -22, -26, 45, -12, -34, 41, -1, -40, 36, 10,
--44, 28, 20, -45, 18, 30, -44, 8, 37, -39, -3, 42, -33, -14, 45, -24},
-{ /* Row 42 */
-23, -45, 19, 27, -45, 15, 30, -44, 11, 34, -43, 7, 36, -41, 2, 39,
--39, -2, 41, -36, -7, 43, -34, -11, 44, -30, -15, 45, -27, -19, 45, -23,
--23, 45, -19, -27, 45, -15, -30, 44, -11, -34, 43, -7, -36, 41, -2, -39,
-39, 2, -41, 36, 7, -43, 34, 11, -44, 30, 15, -45, 27, 19, -45, 23},
-{ /* Row 43 */
-22, -45, 24, 20, -45, 26, 18, -45, 28, 16, -45, 30, 14, -44, 31, 12,
--44, 33, 10, -43, 34, 8, -42, 36, 6, -41, 37, 3, -40, 38, 1, -39,
-39, -1, -38, 40, -3, -37, 41, -6, -36, 42, -8, -34, 43, -10, -33, 44,
--12, -31, 44, -14, -30, 45, -16, -28, 45, -18, -26, 45, -20, -24, 45, -22},
-{ /* Row 44 */
-21, -45, 29, 13, -43, 35, 4, -40, 40, -4, -35, 43, -13, -29, 45, -21,
--21, 45, -29, -13, 43, -35, -4, 40, -40, 4, 35, -43, 13, 29, -45, 21,
-21, -45, 29, 13, -43, 35, 4, -40, 40, -4, -35, 43, -13, -29, 45, -21,
--21, 45, -29, -13, 43, -35, -4, 40, -40, 4, 35, -43, 13, 29, -45, 21},
-{ /* Row 45 */
-20, -45, 33, 6, -39, 41, -10, -30, 45, -24, -16, 44, -36, -1, 37, -43,
-14, 26, -45, 28, 12, -42, 38, -3, -34, 44, -18, -22, 45, -31, -8, 40,
--40, 8, 31, -45, 22, 18, -44, 34, 3, -38, 42, -12, -28, 45, -26, -14,
-43, -37, 1, 36, -44, 16, 24, -45, 30, 10, -41, 39, -6, -33, 45, -20},
-{ /* Row 46 */
-19, -44, 36, -2, -34, 45, -23, -15, 43, -39, 7, 30, -45, 27, 11, -41,
-41, -11, -27, 45, -30, -7, 39, -43, 15, 23, -45, 34, 2, -36, 44, -19,
--19, 44, -36, 2, 34, -45, 23, 15, -43, 39, -7, -30, 45, -27, -11, 41,
--41, 11, 27, -45, 30, 7, -39, 43, -15, -23, 45, -34, -2, 36, -44, 19},
-{ /* Row 47 */
-18, -43, 39, -10, -26, 45, -34, 1, 33, -45, 28, 8, -38, 44, -20, -16,
-42, -40, 12, 24, -45, 36, -3, -31, 45, -30, -6, 37, -44, 22, 14, -41,
-41, -14, -22, 44, -37, 6, 30, -45, 31, 3, -36, 45, -24, -12, 40, -42,
-16, 20, -44, 38, -8, -28, 45, -33, -1, 34, -45, 26, 10, -39, 43, -18},
-{ /* Row 48 */
-17, -42, 42, -17, -17, 42, -42, 17, 17, -42, 42, -17, -17, 42, -42, 17,
-17, -42, 42, -17, -17, 42, -42, 17, 17, -42, 42, -17, -17, 42, -42, 17,
-17, -42, 42, -17, -17, 42, -42, 17, 17, -42, 42, -17, -17, 42, -42, 17,
-17, -42, 42, -17, -17, 42, -42, 17, 17, -42, 42, -17, -17, 42, -42, 17},
-{ /* Row 49 */
-16, -40, 44, -24, -8, 36, -45, 31, -1, -30, 45, -37, 10, 22, -43, 41,
--18, -14, 39, -44, 26, 6, -34, 45, -33, 3, 28, -45, 38, -12, -20, 42,
--42, 20, 12, -38, 45, -28, -3, 33, -45, 34, -6, -26, 44, -39, 14, 18,
--41, 43, -22, -10, 37, -45, 30, 1, -31, 45, -36, 8, 24, -44, 40, -16},
-{ /* Row 50 */
-15, -39, 45, -30, 2, 27, -44, 41, -19, -11, 36, -45, 34, -7, -23, 43,
--43, 23, 7, -34, 45, -36, 11, 19, -41, 44, -27, -2, 30, -45, 39, -15,
--15, 39, -45, 30, -2, -27, 44, -41, 19, 11, -36, 45, -34, 7, 23, -43,
-43, -23, -7, 34, -45, 36, -11, -19, 41, -44, 27, 2, -30, 45, -39, 15},
-{ /* Row 51 */
-14, -37, 45, -36, 12, 16, -38, 45, -34, 10, 18, -39, 45, -33, 8, 20,
--40, 45, -31, 6, 22, -41, 44, -30, 3, 24, -42, 44, -28, 1, 26, -43,
-43, -26, -1, 28, -44, 42, -24, -3, 30, -44, 41, -22, -6, 31, -45, 40,
--20, -8, 33, -45, 39, -18, -10, 34, -45, 38, -16, -12, 36, -45, 37, -14},
-{ /* Row 52 */
-13, -35, 45, -40, 21, 4, -29, 43, -43, 29, -4, -21, 40, -45, 35, -13,
--13, 35, -45, 40, -21, -4, 29, -43, 43, -29, 4, 21, -40, 45, -35, 13,
-13, -35, 45, -40, 21, 4, -29, 43, -43, 29, -4, -21, 40, -45, 35, -13,
--13, 35, -45, 40, -21, -4, 29, -43, 43, -29, 4, 21, -40, 45, -35, 13},
-{ /* Row 53 */
-12, -33, 44, -43, 30, -8, -16, 36, -45, 41, -26, 3, 20, -38, 45, -39,
-22, 1, -24, 40, -45, 37, -18, -6, 28, -42, 45, -34, 14, 10, -31, 44,
--44, 31, -10, -14, 34, -45, 42, -28, 6, 18, -37, 45, -40, 24, -1, -22,
-39, -45, 38, -20, -3, 26, -41, 45, -36, 16, 8, -30, 43, -44, 33, -12},
-{ /* Row 54 */
-11, -30, 43, -45, 36, -19, -2, 23, -39, 45, -41, 27, -7, -15, 34, -44,
-44, -34, 15, 7, -27, 41, -45, 39, -23, 2, 19, -36, 45, -43, 30, -11,
--11, 30, -43, 45, -36, 19, 2, -23, 39, -45, 41, -27, 7, 15, -34, 44,
--44, 34, -15, -7, 27, -41, 45, -39, 23, -2, -19, 36, -45, 43, -30, 11},
-{ /* Row 55 */
-10, -28, 40, -45, 41, -30, 12, 8, -26, 39, -45, 42, -31, 14, 6, -24,
-38, -45, 43, -33, 16, 3, -22, 37, -45, 44, -34, 18, 1, -20, 36, -44,
-44, -36, 20, -1, -18, 34, -44, 45, -37, 22, -3, -16, 33, -43, 45, -38,
-24, -6, -14, 31, -42, 45, -39, 26, -8, -12, 30, -41, 45, -40, 28, -10},
-{ /* Row 56 */
-9, -25, 38, -44, 44, -38, 25, -9, -9, 25, -38, 44, -44, 38, -25, 9,
-9, -25, 38, -44, 44, -38, 25, -9, -9, 25, -38, 44, -44, 38, -25, 9,
-9, -25, 38, -44, 44, -38, 25, -9, -9, 25, -38, 44, -44, 38, -25, 9,
-9, -25, 38, -44, 44, -38, 25, -9, -9, 25, -38, 44, -44, 38, -25, 9},
-{ /* Row 57 */
-8, -22, 34, -42, 45, -43, 36, -24, 10, 6, -20, 33, -41, 45, -44, 37,
--26, 12, 3, -18, 31, -40, 45, -44, 38, -28, 14, 1, -16, 30, -39, 45,
--45, 39, -30, 16, -1, -14, 28, -38, 44, -45, 40, -31, 18, -3, -12, 26,
--37, 44, -45, 41, -33, 20, -6, -10, 24, -36, 43, -45, 42, -34, 22, -8},
-{ /* Row 58 */
-7, -19, 30, -39, 44, -45, 43, -36, 27, -15, 2, 11, -23, 34, -41, 45,
--45, 41, -34, 23, -11, -2, 15, -27, 36, -43, 45, -44, 39, -30, 19, -7,
--7, 19, -30, 39, -44, 45, -43, 36, -27, 15, -2, -11, 23, -34, 41, -45,
-45, -41, 34, -23, 11, 2, -15, 27, -36, 43, -45, 44, -39, 30, -19, 7},
-{ /* Row 59 */
-6, -16, 26, -34, 40, -44, 45, -44, 39, -33, 24, -14, 3, 8, -18, 28,
--36, 41, -45, 45, -43, 38, -31, 22, -12, 1, 10, -20, 30, -37, 42, -45,
-45, -42, 37, -30, 20, -10, -1, 12, -22, 31, -38, 43, -45, 45, -41, 36,
--28, 18, -8, -3, 14, -24, 33, -39, 44, -45, 44, -40, 34, -26, 16, -6},
-{ /* Row 60 */
-4, -13, 21, -29, 35, -40, 43, -45, 45, -43, 40, -35, 29, -21, 13, -4,
--4, 13, -21, 29, -35, 40, -43, 45, -45, 43, -40, 35, -29, 21, -13, 4,
-4, -13, 21, -29, 35, -40, 43, -45, 45, -43, 40, -35, 29, -21, 13, -4,
--4, 13, -21, 29, -35, 40, -43, 45, -45, 43, -40, 35, -29, 21, -13, 4},
-{ /* Row 61 */
-3, -10, 16, -22, 28, -33, 37, -40, 43, -45, 45, -45, 44, -41, 38, -34,
-30, -24, 18, -12, 6, 1, -8, 14, -20, 26, -31, 36, -39, 42, -44, 45,
--45, 44, -42, 39, -36, 31, -26, 20, -14, 8, -1, -6, 12, -18, 24, -30,
-34, -38, 41, -44, 45, -45, 45, -43, 40, -37, 33, -28, 22, -16, 10, -3},
-{ /* Row 62 */
-2, -7, 11, -15, 19, -23, 27, -30, 34, -36, 39, -41, 43, -44, 45, -45,
-45, -45, 44, -43, 41, -39, 36, -34, 30, -27, 23, -19, 15, -11, 7, -2,
--2, 7, -11, 15, -19, 23, -27, 30, -34, 36, -39, 41, -43, 44, -45, 45,
--45, 45, -44, 43, -41, 39, -36, 34, -30, 27, -23, 19, -15, 11, -7, 2},
-{ /* Row 63 */
-1, -3, 6, -8, 10, -12, 14, -16, 18, -20, 22, -24, 26, -28, 30, -31,
-33, -34, 36, -37, 38, -39, 40, -41, 42, -43, 44, -44, 45, -45, 45, -45,
-45, -45, 45, -45, 44, -44, 43, -42, 41, -40, 39, -38, 37, -36, 34, -33,
-31, -30, 28, -26, 24, -22, 20, -18, 16, -14, 12, -10, 8, -6, 3, -1}
-};
 
 static const uint32_t deblockFactor[13] =
 { 64, 71, 77, 84, 90, 96, 103, 109, 116, 122, 128, 128, 128 };
 
 
 SEIFilmGrainSynthesizer::SEIFilmGrainSynthesizer()
-  : m_width(0)
-  , m_height(0)
-  , m_chromaFormat(NUM_CHROMA_FORMAT)
-  , m_bitDepth(0)
-  , m_idrPicId(0)
-  , m_enableDeblocking(0)
-  , m_pGrainSynt(NULL)
-  , m_poc(0)
-  , m_errorCode(0)
-  , m_pFgcParameters(NULL)
+  : m_width           (0)
+  , m_height          (0)
+  , m_chromaFormat    (NUM_CHROMA_FORMAT)
+  , m_bitDepth        (0)
+  , m_idrPicId        (0)
+  , m_grainSynt       (NULL)
+  , m_fgsBlkSize      (8)
+  , m_poc             (0)
+  , m_errorCode       (0)
+  , m_fgcParameters   (NULL)
 {
 
 }
 
-void SEIFilmGrainSynthesizer::create(uint32_t width, uint32_t height, ChromaFormat fmt, 
-  uint8_t bitDepth, uint32_t idrPicId, uint8_t enableDeblocking)
+void SEIFilmGrainSynthesizer::create(uint32_t width, uint32_t height, ChromaFormat fmt, uint8_t bitDepth, uint32_t idrPicId)
 {
-  m_width = width;
-  m_height = height;
-  m_chromaFormat = fmt;
-  m_bitDepth = bitDepth;
-  m_idrPicId = idrPicId;
-  m_enableDeblocking = enableDeblocking;
-  m_pGrainSynt = NULL; 
-  m_errorCode = 0;
-  m_pFgcParameters = NULL;  
+  m_width             = width;
+  m_height            = height;
+  m_chromaFormat      = fmt;
+  m_bitDepth          = bitDepth;
+  m_idrPicId          = idrPicId;
+  m_fgsBlkSize        = 8;
+  m_errorCode         = 0;
+
+  if (!m_grainSynt)
+    m_grainSynt       = new GrainSynthesisStruct;
+  if (!m_fgcParameters)
+    m_fgcParameters   = new SEIFilmGrainCharacteristics;
 }
 
 SEIFilmGrainSynthesizer::~SEIFilmGrainSynthesizer()
 {
-  if (m_pGrainSynt)
-  {
-    fgsDeinit();
-  }
+  destroy();
 }
 
 void SEIFilmGrainSynthesizer::fgsInit()
 {
-  m_pGrainSynt = new GrainSynthesisStruct;
+  deriveFGSBlkSize();
   dataBaseGen();
 }
 
-void SEIFilmGrainSynthesizer::fgsDeinit()
+void SEIFilmGrainSynthesizer::destroy()
 {
-  delete m_pGrainSynt;
+  if (m_fgcParameters)
+  {
+    delete m_fgcParameters;
+    m_fgcParameters = NULL;
+  }
+  if (m_grainSynt)
+  {
+    delete m_grainSynt;
+    m_grainSynt = NULL;
+  }
 }
 
 void SEIFilmGrainSynthesizer::grainSynthesizeAndBlend(TComPicYuv* pGrainBuf, Bool isIdrPic)
 {
-  uint8_t numComp = MAX_NUM_COMPONENT, compCtr, blkId; /* number of color components */
-  uint8_t log2ScaleFactor, h, v;
-  uint8_t bitDepth; /*grain bit depth and decoded bit depth are assumed to be same */
-  uint8_t color_offset[MAX_NUM_COMPONENT];
-  uint32_t widthComp[MAX_NUM_COMPONENT], heightComp[MAX_NUM_COMPONENT], strideComp[MAX_NUM_COMPONENT];
-  Pel *decSampleBlk16, *decSampleBlk8, *decSampleOffsetY;
-  Pel *decComp[MAX_NUM_COMPONENT];
-  uint16_t numSamples;
-  int16_t scaleFactor;
-  uint32_t kOffset, lOffset, grainStripeOffset, grainStripeOffsetBlk8, offsetBlk8x8;
-  int32_t *grainStripe;/* worth a row of 16x16 : Max size : 16xw;*/
-  int32_t yOffset8x8, xOffset8x8;
-  uint32_t picOffset, x, y, intensityInt;
-  Pel blockAvg; 
-  uint32_t pseudoRandValEc; /* ec : seed to be used for the psudo random generator for a given color component */
-  uint32_t picOrderCntOffset=0;
+  uint8_t     numComp = MAX_NUM_COMPONENT, compCtr; /* number of color components */
+  uint8_t     color_offset[MAX_NUM_COMPONENT];
+  uint32_t    widthComp[MAX_NUM_COMPONENT], heightComp[MAX_NUM_COMPONENT], strideComp[MAX_NUM_COMPONENT];
+  uint32_t *  offsetsArr[MAX_NUM_COMPONENT];
+  Pel *       decComp[MAX_NUM_COMPONENT];
+  uint32_t    pseudoRandValEc;
+  uint32_t    picOffset;
 
   /* from SMPTE RDD5 */
   color_offset[0] = COLOUR_OFFSET_LUMA;
   color_offset[1] = COLOUR_OFFSET_CR;
   color_offset[2] = COLOUR_OFFSET_CB;
 
-  bitDepth = m_bitDepth;
-  log2ScaleFactor = m_pFgcParameters->m_log2ScaleFactor;
+  if (0 != m_fgcParameters->m_filmGrainCharacteristicsCancelFlag)
+  {
+    return;
+  }
 
-  widthComp[0] = m_width;
-  widthComp[1] = m_width;
-  widthComp[2] = m_width;
+  widthComp[0]  = m_width;
   heightComp[0] = m_height;
-  heightComp[1] = m_height;
-  heightComp[2] = m_height;
+
   if (CHROMA_420 == m_chromaFormat)
   {
-    widthComp[1] >>= 1;
-    widthComp[2] >>= 1;
-    heightComp[1] >>= 1;
-    heightComp[2] >>= 1;
+    widthComp[1]  = (m_width >> 1);
+    widthComp[2]  = (m_width >> 1);
+    heightComp[1] = (m_height >> 1);
+    heightComp[2] = (m_height >> 1);
   }
   else if (CHROMA_422 == m_chromaFormat)
   {
-    widthComp[1] >>= 1;
-    widthComp[2] >>= 1;
+    widthComp[1]  = (m_width >> 1);
+    widthComp[2]  = (m_width >> 1);
+    heightComp[1] = m_height;
+    heightComp[2] = m_height;
   }
   else if (CHROMA_400 == m_chromaFormat)
   {
     numComp = 1;
   }
 
-  /* component offset positions*/
+  /*Allocate memory for offsets assuming 16x16 block size,
+  32x32 will need lesser than this*/
+  uint32_t maxNumBlocks = ((m_width >> 4) + 1) * ((m_height >> 4) + 1);
+
+  for (compCtr = 0; compCtr < numComp; compCtr++)
+  {
+    offsetsArr[compCtr] = new uint32_t[maxNumBlocks];
+  }
+
   decComp[0] = pGrainBuf->getAddr(COMPONENT_Y);
   decComp[1] = pGrainBuf->getAddr(COMPONENT_Cb);
   decComp[2] = pGrainBuf->getAddr(COMPONENT_Cr);
 
   /* component strides */
   strideComp[0] = pGrainBuf->getStride(COMPONENT_Y);
-  strideComp[1] = pGrainBuf->getStride(COMPONENT_Cb);
-  strideComp[2] = pGrainBuf->getStride(COMPONENT_Cr);
-  
-  grainStripe = (int32_t *)malloc(strideComp[0] * BLK_16 * sizeof(int32_t));
+  strideComp[1] = 0;
+  strideComp[2] = 0;
 
-  if (isIdrPic)
+  if (CHROMA_400 != m_chromaFormat)
   {
-    picOrderCntOffset = m_idrPicId;
+    strideComp[1] = pGrainBuf->getStride(COMPONENT_Cb);
+    strideComp[2] = pGrainBuf->getStride(COMPONENT_Cr);
   }
 
-  if (FGS_SUCCESS == m_errorCode)
+  int32_t numBlks_x[MAX_NUM_COMPONENT];
+  int32_t numBlks_y[MAX_NUM_COMPONENT];
+
+  picOffset = m_poc;
+  for (compCtr = 0; compCtr < numComp; compCtr++)
   {
-    if (0 == m_pFgcParameters->m_filmGrainCharacteristicsCancelFlag)
+    if (FG_BLK_32 == m_fgsBlkSize)
     {
-      for (compCtr = 0; compCtr < numComp; compCtr++)
+      numBlks_x[compCtr]         = (widthComp[compCtr] >> 5) + ((widthComp[compCtr] & 0x1F) ? 1 : 0);
+      numBlks_y[compCtr]         = (heightComp[compCtr] >> 5) + ((heightComp[compCtr] & 0x1F) ? 1 : 0);
+    }
+    else
+    {
+      numBlks_x[compCtr]         = (widthComp[compCtr] >> 4) + ((widthComp[compCtr] & 0xF) ? 1 : 0);
+      numBlks_y[compCtr]         = (heightComp[compCtr] >> 4) + ((heightComp[compCtr] & 0xF) ? 1 : 0);
+    }
+  }
+
+  for (compCtr = 0; compCtr < numComp; compCtr++)
+  {
+    if (1 == m_fgcParameters->m_compModel[compCtr].bPresentFlag)
+    {
+      uint32_t *tmp = offsetsArr[compCtr];
+      int       i, j;
+
+      /* Seed initialization for current picture*/
+      pseudoRandValEc = seedLUT[((picOffset + color_offset[compCtr]) & 0xFF)];
+
+      for (i = 0; i < numBlks_y[compCtr]; i++)
       {
-        if (1 == m_pFgcParameters->m_compModel[compCtr].bPresentFlag)
+        for (j = 0; j < numBlks_x[compCtr]; j++)
         {
-          picOffset = (m_poc) + (picOrderCntOffset << 5);
-          /* Seed initialization for current picture*/
-          pseudoRandValEc = seedLUT[((picOffset + color_offset[compCtr]) % 256)];
-
-          decSampleOffsetY = decComp[compCtr];
-
-          /* Loop of 16x16 blocks */
-          for (y = 0; y < heightComp[compCtr]; y += BLK_16)
-          {
-            /* Initialization of grain stripe of 16xwidth size */
-            memset(grainStripe, 0, (strideComp[0] * BLK_16 * sizeof(int32_t)));
-            for (x = 0; x < widthComp[compCtr]; x += BLK_16)
-            {
-              /* start position offset of decoded sample in x direction */
-              grainStripeOffset = x;
-              decSampleBlk16 = decSampleOffsetY + x;
-
-              for (blkId = 0; blkId < NUM_8x8_BLKS_16x16; blkId++)
-              {
-                yOffset8x8 = (blkId >> 1) * BLK_8;
-                xOffset8x8 = (blkId & 0x1)* BLK_8;
-                offsetBlk8x8 = xOffset8x8 + (yOffset8x8 * strideComp[compCtr]);
-                grainStripeOffsetBlk8 = grainStripeOffset + offsetBlk8x8;
-
-                decSampleBlk8 = decSampleBlk16 + offsetBlk8x8;
-                blockAvg = blockAverage(decSampleBlk8, strideComp[compCtr], &numSamples,
-                  MIN(BLK_8, (heightComp[compCtr] - y - yOffset8x8)),
-                  MIN(BLK_8, (widthComp[compCtr] - x - xOffset8x8)),
-                  bitDepth);
-
-                /* Handling of non 8x8 blocks along with 8x8 blocks */
-                if (numSamples > 0)
-                {
-                  /* Selection of the component model */
-                  intensityInt = m_pGrainSynt->intensityInterval[compCtr][blockAvg];
-
-                  if (INTENSITY_INTERVAL_MATCH_FAIL != intensityInt)
-                  {
-                    /* 8x8 grain block offset using co-ordinates of decoded 8x8 block in the frame */
-                    kOffset = (MSB16(pseudoRandValEc) % 52);
-                    kOffset &= 0xFFFC;
-                    kOffset += (x + xOffset8x8) & 0x0008;
-                    lOffset = (LSB16(pseudoRandValEc) % 56);
-                    lOffset &= 0xFFF8;
-                    lOffset += (y + yOffset8x8) & 0x0008;
-                    scaleFactor = BIT0(pseudoRandValEc) ? -1 : 1;
-                    scaleFactor *=
-                      m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityInt].compModelValue[0];
-                    h = m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityInt].compModelValue[1] - 2;
-                    v = m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityInt].compModelValue[2] - 2;
-
-                    /* 8x8 block grain simulation */
-                    simulateGrainBlk8x8(grainStripe, grainStripeOffsetBlk8,
-                      m_pGrainSynt, strideComp[compCtr],
-                      log2ScaleFactor, scaleFactor, kOffset, lOffset, h, v, MIN(BLK_8, (widthComp[compCtr] - x - xOffset8x8)));
-                  }/* only if average falls in any interval */
-                } /* includes corner case handling */
-              } /* 8x8 level block processing */
-
-                /* uppdate the PRNG once per 16x16 block of samples */
-              pseudoRandValEc = prng(pseudoRandValEc);
-            } /* End of 16xwidth grain simulation */
-
-            /* deblocking at the vertical edges of 8x8 at 16xwidth*/
-            if (m_enableDeblocking)
-            {
-              deblockGrainStripe(grainStripe, widthComp[compCtr], strideComp[compCtr]);
-            }
-            /* Blending of size 16xwidth*/
-            blendStripe(decSampleOffsetY, grainStripe,
-              strideComp[compCtr], MIN(BLK_16, (heightComp[compCtr] - y)), bitDepth);
-            decSampleOffsetY += MIN(BLK_16, heightComp[compCtr] - y) * strideComp[compCtr];
-
-          } /* end of component loop */
+          *tmp            = pseudoRandValEc;
+          pseudoRandValEc = prng(pseudoRandValEc);
+          tmp++;
         }
       }
     }
   }
-  if (isIdrPic)
+
+  m_fgsArgs.numComp = numComp;
+  for (compCtr = 0; compCtr < numComp; compCtr++)
   {
-    m_idrPicId++;
+    if (1 == m_fgcParameters->m_compModel[compCtr].bPresentFlag)
+    {
+      m_fgsArgs.decComp[compCtr]    = decComp[compCtr];
+      m_fgsArgs.widthComp[compCtr]  = widthComp[compCtr];
+      m_fgsArgs.strideComp[compCtr] = strideComp[compCtr];
+      m_fgsArgs.fgsOffsets[compCtr] = offsetsArr[compCtr];
+
+      if (FG_BLK_32 == m_fgsBlkSize)
+      {
+        m_fgsArgs.heightComp[compCtr] = numBlks_y[compCtr] * FG_BLK_32;
+      }
+      else
+      {
+        m_fgsArgs.heightComp[compCtr] = numBlks_y[compCtr] * FG_BLK_16;
+      }
+    }
   }
-  free(grainStripe);
+  m_fgsArgs.pFgcParameters = m_fgcParameters;
+  m_fgsArgs.blkSize = m_fgsBlkSize;
+  m_fgsArgs.bitDepth = m_bitDepth;
+  m_fgsArgs.pGrainSynt = m_grainSynt;
+
+  fgsProcess(m_fgsArgs);
+
+  for (compCtr = 0; compCtr < numComp; compCtr++)
+  {
+    delete offsetsArr[compCtr];
+  }
+  return;
 }
 
+/* Function validates film grain parameters and returns 0 for valid parameters of SMPTE-RDD5 else 1*/
+/* Also down converts the chroma model values for 4:2:0 and 4:2:2 chroma_formats */
+uint8_t SEIFilmGrainSynthesizer::grainValidateParams()
+{
+  uint8_t   numComp = MAX_NUM_COMPONENT; /* number of color components */
+  uint8_t   compCtr, intensityCtr, multiGrainCheck[MAX_NUM_COMPONENT][MAX_NUM_INTENSITIES] = { 0 };
+  uint16_t  multiGrainCtr;
+  uint8_t   limitCompModelVal1[10] = { 0 }, limitCompModelVal2[10] = { 0 };
+  uint8_t   num_comp_model_pairs = 0, limitCompModelCtr, compPairMatch;
+
+  memset(m_grainSynt->intensityInterval, INTENSITY_INTERVAL_MATCH_FAIL, sizeof(m_grainSynt->intensityInterval));
+
+  if ((m_width < FG_MIN_WIDTH) || (m_width > FG_MAX_WIDTH) || (m_width % 4))
+  {
+    return FGS_INVALID_WIDTH; /* Width not supported */
+  }
+  if ((m_height < FG_MIN_HEIGHT) || (m_height > FG_MAX_HEIGHT) || (m_height % 4))
+  {
+    return FGS_INVALID_HEIGHT; /* Height not  supported */
+  }
+  if ((m_chromaFormat < MIN_CHROMA_FORMAT_IDC) || (m_chromaFormat > MAX_CHROMA_FORMAT_IDC))
+  {
+    return FGS_INVALID_CHROMA_FORMAT; /* Chroma format not supported */
+  }
+  if (m_chromaFormat == MIN_CHROMA_FORMAT_IDC) /* Mono Chrome */
+  {
+    numComp = 1;
+  }
+
+  if ((m_bitDepth < MIN_BIT_DEPTH) || (m_bitDepth > MAX_BIT_DEPTH))
+  {
+    return FGS_INVALID_BIT_DEPTH; /* Bit depth not supported */
+  }
+
+  if ((0 != m_fgcParameters->m_filmGrainCharacteristicsCancelFlag) &&
+      (1 != m_fgcParameters->m_filmGrainCharacteristicsCancelFlag))
+  {
+    return FGS_INVALID_FGC_CANCEL_FLAG; /* Film grain synthesis disabled */
+  }
+
+  if (FILM_GRAIN_MODEL_ID_VALUE != m_fgcParameters->m_filmGrainModelId)
+  {
+    return FGS_INVALID_GRAIN_MODEL_ID; /* Not supported */
+  }
+
+  if (0 != m_fgcParameters->m_separateColourDescriptionPresentFlag)
+  {
+    return FGS_INVALID_SEP_COL_DES_FLAG; /* Not supported */
+  }
+
+  if (BLENDING_MODE_VALUE != m_fgcParameters->m_blendingModeId)
+  {
+    return FGS_INVALID_BLEND_MODE; /* Not supported */
+  }
+
+  if (m_fgcParameters->m_compModel[0].bPresentFlag || m_fgcParameters->m_compModel[1].bPresentFlag || m_fgcParameters->m_compModel[2].bPresentFlag) {
+    if ((m_fgcParameters->m_log2ScaleFactor < MIN_LOG2SCALE_VALUE) ||
+      (m_fgcParameters->m_log2ScaleFactor > MAX_LOG2SCALE_VALUE))
+    {
+      return FGS_INVALID_LOG2_SCALE_FACTOR; /* Not supported  */
+    }
+  }
+
+  /* validation of component model present flag */
+  for (compCtr = 0; compCtr < numComp; compCtr++)
+  {
+    if ((m_fgcParameters->m_compModel[compCtr].bPresentFlag != true) &&
+        (m_fgcParameters->m_compModel[compCtr].bPresentFlag != false))
+    {
+      return FGS_INVALID_COMP_MODEL_PRESENT_FLAG; /* Not supported  */
+    }
+    if (m_fgcParameters->m_compModel[compCtr].bPresentFlag &&
+       (m_fgcParameters->m_compModel[compCtr].numModelValues > MAX_ALLOWED_MODEL_VALUES))
+    {
+      return FGS_INVALID_NUM_MODEL_VALUES; /* Not supported  */
+    }
+  }
+
+  /* validation of intensity intervals and  */
+  for (compCtr = 0; compCtr < numComp; compCtr++)
+  {
+    if (m_fgcParameters->m_compModel[compCtr].bPresentFlag)
+    {
+      for (intensityCtr = 0; intensityCtr < m_fgcParameters->m_compModel[compCtr].intensityValues.size(); intensityCtr++)
+      {
+
+        if (m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].intensityIntervalLowerBound >
+            m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].intensityIntervalUpperBound)
+        {
+          return FGS_INVALID_INTENSITY_BOUNDARY_VALUES; /* Not supported  */
+        }
+
+        for (multiGrainCtr = m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].intensityIntervalLowerBound;
+             multiGrainCtr <= m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].intensityIntervalUpperBound; multiGrainCtr++)
+        {
+          m_grainSynt->intensityInterval[compCtr][multiGrainCtr] = intensityCtr;
+          if (multiGrainCheck[compCtr][multiGrainCtr]) /* Non over lap */
+          {
+            return FGS_INVALID_INTENSITY_BOUNDARY_VALUES; /* Not supported  */
+          }
+          else
+          {
+            multiGrainCheck[compCtr][multiGrainCtr] = 1;
+          }
+        }
+
+        m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue.resize(MAX_NUM_MODEL_VALUES);
+        /* default initialization for cut off frequencies */
+        if (1 == m_fgcParameters->m_compModel[compCtr].numModelValues)
+        {
+          m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1] = DEFAULT_HORZ_CUT_OFF_FREQUENCY;
+          m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[2] = m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1];
+        }
+        else if (2 == m_fgcParameters->m_compModel[compCtr].numModelValues)
+        {
+          m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[2] = m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1];
+        }
+
+        /* Error check on model component value */
+        if (m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[0] > (MAX_STANDARD_DEVIATION << (m_bitDepth - FG_BIT_DEPTH_8)))
+        {
+          return FGS_INVALID_STANDARD_DEVIATION; /* Not supported  */
+        }
+        else if ((m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1] < MIN_CUT_OFF_FREQUENCY) ||
+                 (m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1] > MAX_CUT_OFF_FREQUENCY))
+        {
+          return FGS_INVALID_CUT_OFF_FREQUENCIES; /* Not supported  */
+        }
+        else if ((m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[2] < MIN_CUT_OFF_FREQUENCY) ||
+                 (m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[2] > MAX_CUT_OFF_FREQUENCY))
+        {
+          return FGS_INVALID_CUT_OFF_FREQUENCIES; /* Not supported  */
+        }
+
+        /* conversion of component model values for 4:2:0 and 4:4:4 */
+        if (CHROMA_444 != m_chromaFormat && (compCtr > 0))
+        {
+          if (CHROMA_420 == m_chromaFormat) /* 4:2:0 */
+          {
+            m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[0] >>= 1;
+            m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1] =
+              CLIP3(MIN_CUT_OFF_FREQUENCY, MAX_CUT_OFF_FREQUENCY,
+              (m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1] << 1));
+            m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[2] =
+              CLIP3(MIN_CUT_OFF_FREQUENCY, MAX_CUT_OFF_FREQUENCY,
+              (m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[2] << 1));
+
+          }
+          else if (CHROMA_422 == m_chromaFormat)/* 4:2:2 */
+          {
+            m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[0] =
+              (m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[0] * SCALE_DOWN_422) >> Q_FORMAT_SCALING;
+
+            m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1] =
+              CLIP3(MIN_CUT_OFF_FREQUENCY, MAX_CUT_OFF_FREQUENCY,
+              (m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1] << 1));
+          }
+        }
+
+        compPairMatch = 0;
+        for (limitCompModelCtr = 0; limitCompModelCtr <= num_comp_model_pairs; limitCompModelCtr++)
+        {
+          if ((limitCompModelVal1[limitCompModelCtr] ==
+            m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1]) &&
+            (limitCompModelVal2[limitCompModelCtr] ==
+              m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[2]))
+          {
+            compPairMatch = 1;
+          }
+        }
+
+        if (0 == compPairMatch)
+        {
+          num_comp_model_pairs++;
+          /* max allowed pairs are 10 as per SMPTE -RDD5*/
+          if (num_comp_model_pairs > MAX_ALLOWED_COMP_MODEL_PAIRS)
+          {
+            return FGS_INVALID_NUM_CUT_OFF_FREQ_PAIRS; /* Not supported  */
+          }
+          limitCompModelVal1[num_comp_model_pairs - 1] =
+            m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1];
+          limitCompModelVal2[num_comp_model_pairs - 1] =
+            m_fgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[2];
+        }
+      }
+    }
+  }
+  return FGS_SUCCESS; /* Success */
+}
+
+void SEIFilmGrainSynthesizer::deriveFGSBlkSize()
+{
+  uint32_t picSizeInLumaSamples = m_height * m_width;
+  if (picSizeInLumaSamples <= (1920 * 1080))
+  {
+    m_fgsBlkSize = FG_BLK_8;
+  }
+  else if (picSizeInLumaSamples <= (3840 * 2160))
+  {
+    m_fgsBlkSize = FG_BLK_16;
+  }
+  else
+  {
+    m_fgsBlkSize = FG_BLK_32;
+  }
+}
 void SEIFilmGrainSynthesizer::dataBaseGen()
 {
-  uint32_t pseudoRandValEhv;
-  uint8_t h, v; /* Horizaontal and vertical cut off frequencies (+2)*/
-  uint32_t ScaleCutOffFh, ScaleCutOffFv, l, r, i, j, k;
-  int32_t B[DATA_BASE_SIZE][DATA_BASE_SIZE], bIDCT[DATA_BASE_SIZE][DATA_BASE_SIZE];
-  int32_t bGrain[DATA_BASE_SIZE][DATA_BASE_SIZE];
-  int8_t R64_IDCT_TR[DATA_BASE_SIZE][DATA_BASE_SIZE]; /* Transpose of R64_IDCT[64][64]*/
+  uint32_t      pseudoRandValEhv;
+  uint8_t       h, v; /* Horizaontal and vertical cut off frequencies (+2)*/
+  uint32_t      ScaleCutOffFh, ScaleCutOffFv, l, r, i, j, k;
+  int32_t       B[FG_DATA_BASE_SIZE][FG_DATA_BASE_SIZE], IDCT[FG_DATA_BASE_SIZE][FG_DATA_BASE_SIZE];
+  int32_t       Grain[FG_DATA_BASE_SIZE][FG_DATA_BASE_SIZE];
 
-  for (l = 0; l < DATA_BASE_SIZE; l++)
+  const TMatrixCoeff *Tmp = g_aiT64[TRANSFORM_FORWARD][0];
+  const int transform_scale = 9;                      // upscaling of original transform as specified in VVC (for 64x64 block)
+  const int add_1st = 1 << (transform_scale - 1);
+
+  TMatrixCoeff T[FG_DATA_BASE_SIZE][FG_DATA_BASE_SIZE];     // Original
+  TMatrixCoeff TT[FG_DATA_BASE_SIZE][FG_DATA_BASE_SIZE];    // Transpose
+  for (int x = 0; x < FG_DATA_BASE_SIZE; x++)
   {
-    for (k = 0; k < DATA_BASE_SIZE; k++)
+    for (int y = 0; y < FG_DATA_BASE_SIZE; y++)
     {
-      R64_IDCT_TR[l][k] = R64_IDCT[k][l]; /* Matrix Transpose */
+      T[x][y] = Tmp[x * 64 + y]; /* Matrix Original */
+      TT[y][x] = Tmp[x * 64 + y]; /* Matrix Transpose */
     }
   }
 
@@ -765,9 +643,9 @@ void SEIFilmGrainSynthesizer::dataBaseGen()
   {
     for (v = 0; v < NUM_CUT_OFF_FREQ; v++)
     {
-      memset(&B, 0, DATA_BASE_SIZE*DATA_BASE_SIZE * sizeof(int32_t));
-      memset(&bIDCT, 0, DATA_BASE_SIZE*DATA_BASE_SIZE * sizeof(int32_t));
-      memset(&bGrain, 0, DATA_BASE_SIZE*DATA_BASE_SIZE * sizeof(int32_t));
+      memset(&B, 0, FG_DATA_BASE_SIZE*FG_DATA_BASE_SIZE * sizeof(int32_t));
+      memset(&IDCT, 0, FG_DATA_BASE_SIZE*FG_DATA_BASE_SIZE * sizeof(int32_t));
+      memset(&Grain, 0, FG_DATA_BASE_SIZE*FG_DATA_BASE_SIZE * sizeof(int32_t));
       ScaleCutOffFh = ((h + 3) << 2) - 1;
       ScaleCutOffFv = ((v + 3) << 2) - 1;
 
@@ -788,346 +666,605 @@ void SEIFilmGrainSynthesizer::dataBaseGen()
       }
       B[0][0] = 0;
 
-      for (i = 0; i < DATA_BASE_SIZE; i++)
+      for (i = 0; i < FG_DATA_BASE_SIZE; i++)
       {
-        for (j = 0; j < DATA_BASE_SIZE; j++)
+        for (j = 0; j < FG_DATA_BASE_SIZE; j++)
         {
-          for (k = 0; k < DATA_BASE_SIZE; k++)
+          for (k = 0; k < FG_DATA_BASE_SIZE; k++)
           {
-            bIDCT[i][j] += R64_IDCT_TR[i][k] * B[k][j];
+            IDCT[i][j] += TT[i][k] * B[k][j];
           }
-          bIDCT[i][j] += 128;
-          bIDCT[i][j] = bIDCT[i][j] >> 8;
+          IDCT[i][j] += add_1st;
+          IDCT[i][j] = IDCT[i][j] >> transform_scale;
         }
       }
 
-      for (i = 0; i < DATA_BASE_SIZE; i++)
+      for (i = 0; i < FG_DATA_BASE_SIZE; i++)
       {
-        for (j = 0; j < DATA_BASE_SIZE; j++)
+        for (j = 0; j < FG_DATA_BASE_SIZE; j++)
         {
-          for (k = 0; k < DATA_BASE_SIZE; k++)
+          for (k = 0; k < FG_DATA_BASE_SIZE; k++)
           {
-            bGrain[i][j] += bIDCT[i][k] * R64_IDCT[k][j];
+            Grain[i][j] += IDCT[i][k] * T[k][j];
           }
-          bGrain[i][j] += 128;
-          bGrain[i][j] = bGrain[i][j] >> 8;
-          m_pGrainSynt->dataBase[h][v][j][i] = CLIP3(-127, 127, bGrain[i][j]);
+          Grain[i][j] += add_1st;
+          Grain[i][j] = Grain[i][j] >> transform_scale;
+          m_grainSynt->dataBase[h][v][j][i] = CLIP3(-127, 127, Grain[i][j]);
         }
       }
 
-      /* De-blocking at horizontal 8×8 block edges */
-      if (m_enableDeblocking)
+      /* De-blocking at horizontal block edges */
+      for (l = 0; l < FG_DATA_BASE_SIZE; l += m_fgsBlkSize)
       {
-        for (l = 0; l < DATA_BASE_SIZE; l += 8)
+        for (k = 0; k < FG_DATA_BASE_SIZE; k++)
         {
-          for (k = 0; k < DATA_BASE_SIZE; k++)
-          {
-            m_pGrainSynt->dataBase[h][v][l][k] = ((m_pGrainSynt->dataBase[h][v][l][k]) * deblockFactor[v]) >> 7;
-            m_pGrainSynt->dataBase[h][v][l + 7][k] = ((m_pGrainSynt->dataBase[h][v][l + 7][k]) * deblockFactor[v]) >> 7;
-          }
+          m_grainSynt->dataBase[h][v][l][k] = ((m_grainSynt->dataBase[h][v][l][k]) * deblockFactor[v]) >> 7;
+          m_grainSynt->dataBase[h][v][l + m_fgsBlkSize - 1][k] = ((m_grainSynt->dataBase[h][v][l + m_fgsBlkSize - 1][k]) * deblockFactor[v]) >> 7;
         }
       }
-
     }
   }
   return;
-}
-
-/* Function validates film grain parameters  and returns 0 for valid parameters of SMPTE-RDD5 else 1*/
-/* Also down converts the chroma model values for 4:2:0 and 4:2:2 chroma_formats */
-uint8_t SEIFilmGrainSynthesizer::grainValidateParams()
-{
-  uint8_t numComp = MAX_NUM_COMPONENT; /* number of color components */
-  uint8_t compCtr, intensityCtr, multiGrainCheck[MAX_NUM_COMPONENT][MAX_NUM_INTENSITIES] = {{ 0 }};
-  uint16_t multiGrainCtr;
-  uint8_t limitCompModelVal1[10] = { 0 }, limitCompModelVal2[10] = { 0 };
-  uint8_t num_comp_model_pairs = 0, limitCompModelCtr, compPairMatch;
-
-  memset(m_pGrainSynt->intensityInterval, INTENSITY_INTERVAL_MATCH_FAIL,
-    sizeof(m_pGrainSynt->intensityInterval));
-
-  if ((m_width < MIN_WIDTH) || (m_width > MAX_WIDTH) || (m_width % 4))
-  {
-    return FGS_INVALID_WIDTH; /* Width not supported */
-  }
-  if ((m_height < MIN_HEIGHT) || (m_height > MAX_HEIGHT) || (m_height % 4))
-  {
-    return FGS_INVALID_HEIGHT; /* Height not  supported */
-  }
-  if ((m_chromaFormat < MIN_CHROMA_FORMAT_IDC) || (m_chromaFormat > MAX_CHROMA_FORMAT_IDC))
-  {
-    return FGS_INVALID_CHROMA_FORMAT; /* Chroma format not supported */
-  }
-  if (m_chromaFormat == MIN_CHROMA_FORMAT_IDC) /* Mono Chrome */
-  {
-    numComp = 1;
-  }
-
-  if ((m_bitDepth < MIN_BIT_DEPTH) || (m_bitDepth > MAX_BIT_DEPTH))
-  {
-    return FGS_INVALID_BIT_DEPTH; /* Bit depth not supported */
-  }
-
-  if ((0 != m_pFgcParameters->m_filmGrainCharacteristicsCancelFlag) &&
-    (1 != m_pFgcParameters->m_filmGrainCharacteristicsCancelFlag))
-  {
-    return FGS_INVALID_FGC_CANCEL_FLAG; /* Film grain synthesis disabled */
-  }
-
-  if (FILM_GRAIN_MODEL_ID_VALUE != m_pFgcParameters->m_filmGrainModelId)
-  {
-    return FGS_INVALID_GRAIN_MODEL_ID; /* Not supported  */
-  }
-
-  if (0 != m_pFgcParameters->m_separateColourDescriptionPresentFlag)
-  {
-    return FGS_INVALID_SEP_COL_DES_FLAG; /* Not supported  */
-  }
-
-  if (BLENDING_MODE_VALUE != m_pFgcParameters->m_blendingModeId)
-  {
-    return FGS_INVALID_BLEND_MODE; /* Not supported  */
-  }
-
-  if ((m_pFgcParameters->m_log2ScaleFactor < MIN_LOG2SCALE_VALUE) ||
-    (m_pFgcParameters->m_log2ScaleFactor > MAX_LOG2SCALE_VALUE))
-  {
-    return FGS_INVALID_LOG2_SCALE_FACTOR; /* Not supported  */
-  }
-
-  /* validation of component model present flag */
-  for (compCtr = 0; compCtr < numComp; compCtr++)
-  {
-    if ((m_pFgcParameters->m_compModel[compCtr].bPresentFlag != true) &&
-      (m_pFgcParameters->m_compModel[compCtr].bPresentFlag != false))
-    {
-      return FGS_INVALID_COMP_MODEL_PRESENT_FLAG; /* Not supported  */
-    }
-    if (m_pFgcParameters->m_compModel[compCtr].bPresentFlag &&
-      (m_pFgcParameters->m_compModel[compCtr].numModelValues > MAX_ALLOWED_MODEL_VALUES))
-    {
-      return FGS_INVALID_NUM_MODEL_VALUES; /* Not supported  */
-    }
-  }
-
-  /* validation of intensity intervals and  */
-  for (compCtr = 0; compCtr < numComp; compCtr++)
-  {
-    if (m_pFgcParameters->m_compModel[compCtr].bPresentFlag)
-    {
-      for (intensityCtr = 0; intensityCtr < m_pFgcParameters->m_compModel[compCtr].intensityValues.size(); intensityCtr++)
-      {
-
-        if (m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].intensityIntervalLowerBound >
-          m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].intensityIntervalUpperBound)
-        {
-          return FGS_INVALID_INTENSITY_BOUNDARY_VALUES; /* Not supported  */
-        }
-
-        for (multiGrainCtr = m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].intensityIntervalLowerBound;
-          multiGrainCtr <= m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].intensityIntervalUpperBound; multiGrainCtr++)
-        {
-          m_pGrainSynt->intensityInterval[compCtr][multiGrainCtr] = intensityCtr;
-          if (multiGrainCheck[compCtr][multiGrainCtr]) /* Non over lap */
-          {
-            return FGS_INVALID_INTENSITY_BOUNDARY_VALUES; /* Not supported  */
-          }
-          else
-          {
-            multiGrainCheck[compCtr][multiGrainCtr] = 1;
-          }
-        }
-
-        m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue.resize(MAX_NUM_MODEL_VALUES);
-        /* default initialization for cut off frequencies */
-        if (1 == m_pFgcParameters->m_compModel[compCtr].numModelValues)
-        {
-          m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1] = DEFAULT_HORZ_CUT_OFF_FREQUENCY;
-          m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[2] =
-            m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1];
-        }
-        else if (2 == m_pFgcParameters->m_compModel[compCtr].numModelValues)
-        {
-          m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[2] =
-            m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1];
-        }
-
-        /* Error check on model component value */
-        if (m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[0] > (MAX_STANDARD_DEVIATION << (m_bitDepth - BIT_DEPTH_8)))
-        {
-          return FGS_INVALID_STANDARD_DEVIATION; /* Not supported  */
-        }
-        else if ((m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1] < MIN_CUT_OFF_FREQUENCY) ||
-          (m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1] > MAX_CUT_OFF_FREQUENCY))
-        {
-          return FGS_INVALID_CUT_OFF_FREQUENCIES; /* Not supported  */
-        }
-        else if ((m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[2] < MIN_CUT_OFF_FREQUENCY) ||
-          (m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[2] > MAX_CUT_OFF_FREQUENCY))
-        {
-          return FGS_INVALID_CUT_OFF_FREQUENCIES; /* Not supported  */
-        }
-
-        /* conversion of component model values for 4:2:0 and 4:4:4 */
-        if ((CHROMA_444 != m_chromaFormat) && (compCtr > 0))
-        {
-          if (CHROMA_420 == m_chromaFormat) /* 4:2:0 */
-          {
-            m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[0] >>= 1;
-            m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1] =
-              CLIP3(MIN_CUT_OFF_FREQUENCY, MAX_CUT_OFF_FREQUENCY,
-              (m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1] << 1));
-            m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[2] =
-              CLIP3(MIN_CUT_OFF_FREQUENCY, MAX_CUT_OFF_FREQUENCY,
-              (m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[2] << 1));
-
-          }
-          else if (CHROMA_422 == m_chromaFormat)/* 4:2:2 */
-          {
-            m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[0] =
-              (m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[0] * SCALE_DOWN_422) >> Q_FORMAT_SCALING;
-
-            m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1] =
-              CLIP3(MIN_CUT_OFF_FREQUENCY, MAX_CUT_OFF_FREQUENCY,
-              (m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1] << 1));
-
-          }
-        }
-
-        compPairMatch = 0;
-        for (limitCompModelCtr = 0; limitCompModelCtr <= num_comp_model_pairs; limitCompModelCtr++)
-        {
-          if ((limitCompModelVal1[limitCompModelCtr] ==
-            m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1]) &&
-            (limitCompModelVal2[limitCompModelCtr] ==
-              m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[2]))
-          {
-            compPairMatch = 1;
-          }
-        }
-
-        if (0 == compPairMatch)
-        {
-          num_comp_model_pairs++;
-          /* max allowed pairs are 10 as per SMPTE -RDD5*/
-          if (num_comp_model_pairs > MAX_ALLOWED_COMP_MODEL_PAIRS)
-          {
-            return FGS_INVALID_NUM_CUT_OFF_FREQ_PAIRS; /* Not supported  */
-          }
-          limitCompModelVal1[num_comp_model_pairs - 1] =
-            m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[1];
-          limitCompModelVal2[num_comp_model_pairs - 1] =
-            m_pFgcParameters->m_compModel[compCtr].intensityValues[intensityCtr].compModelValue[2];
-        }
-      }
-    }
-  }
-
-  if (0 != m_pFgcParameters->m_filmGrainCharacteristicsPersistenceFlag)
-  {
-    return FGS_INVALID_FGC_REPETETION_PERIOD; /* Not supported  */
-  }
-  return FGS_SUCCESS; /* Success */
 }
 
 uint32_t SEIFilmGrainSynthesizer::prng(uint32_t x_r)
 {
   uint32_t addVal;
-  addVal = (1 + ((x_r & (POS_2)) > 0) + ((x_r & (POS_30)) > 0)) % 2;
-  x_r = (x_r << 1) + addVal;
+  addVal  = (1 + ((x_r & (POS_2)) > 0) + ((x_r & (POS_30)) > 0)) % 2;
+  x_r     = (x_r << 1) + addVal;
   return x_r;
 }
 
-/* Function to calculate block average for bit depths > 8 */
-Pel SEIFilmGrainSynthesizer::blockAverage(Pel *decSampleBlk8,
-  uint32_t widthComp,
-  uint16_t *pNumSamples,
-  uint8_t ySize,
-  uint8_t xSize,
-  uint8_t bitDepth)
+uint32_t SEIFilmGrainSynthesizer::fgsProcess(fgsProcessArgs &inArgs)
 {
-  uint32_t blockAvg = 0;
-  uint8_t k, l;
-  uint16_t numSamples = 0;
+  uint32_t errorCode;
+  uint8_t  blkSize = inArgs.blkSize;
 
-  for (k = 0; k < ySize; k++)
-  {
-    for (l = 0; l < xSize; l++)
-    {
-      blockAvg += *(decSampleBlk8 + l + (k*widthComp));
-      numSamples++;
-    }
-  }
-  if (numSamples > 0)
-  {
-    blockAvg /= numSamples;
-    blockAvg >>= (bitDepth - BIT_DEPTH_8); /* to handle high bit depths */
-  }
+  if (blkSize == 8)
+    errorCode = fgsSimulationBlending_8x8(&inArgs);
+  else if (blkSize == 16)
+    errorCode = fgsSimulationBlending_16x16(&inArgs);
+  else if (blkSize == 32)
+    errorCode = fgsSimulationBlending_32x32(&inArgs);
+  else
+    errorCode = FGS_FAIL;
 
-  assert(blockAvg < (1 << BIT_DEPTH_8));
-  *pNumSamples = numSamples;
-
-  blockAvg = CLIP3(0, (1 << BIT_DEPTH_8) - 1, blockAvg);
-  return blockAvg;
+  return errorCode;
 }
-void SEIFilmGrainSynthesizer::deblockGrainStripe(int32_t *grainStripe, uint32_t widthComp, uint32_t strideComp)
-{
-  int32_t left1, left0, right0, right1;
-  uint32_t pos8, vertCtr;
 
-  for (pos8 = 0; pos8 < (widthComp - BLK_8); pos8 += BLK_8)
+void SEIFilmGrainSynthesizer::deblockGrainStripe(Pel *grainStripe, uint32_t widthComp, uint32_t heightComp,
+  uint32_t strideComp, uint32_t blkSize)
+{
+  int32_t  left1, left0, right0, right1;
+  uint32_t pos, vertCtr;
+
+  uint32_t widthCropped = (widthComp - blkSize);
+  
+  for (vertCtr = 0; vertCtr < heightComp; vertCtr++)
   {
-    for (vertCtr = 0; vertCtr < BLK_16; vertCtr++) /* Across 16 pels of the vertical boundary*/
+    for (pos = 0; pos < widthCropped; pos += blkSize)
     {
-      left1 = *(grainStripe + pos8 + 6 + (vertCtr*strideComp));
-      left0 = *(grainStripe + pos8 + 7 + (vertCtr*strideComp));
-      right0 = *(grainStripe + pos8 + BLK_8 + 0 + (vertCtr*strideComp));
-      right1 = *(grainStripe + pos8 + BLK_8 + 1 + (vertCtr*strideComp));
-      *(grainStripe + pos8 + BLK_8 + 0 + (vertCtr*strideComp)) = (left0 + (right0 << 1) + right1) >> 2;
-      *(grainStripe + pos8 + 7 + (vertCtr*strideComp)) = (left1 + (left0 << 1) + right0) >> 2;
+      left1 = *(grainStripe + blkSize - 2);
+      left0 = *(grainStripe + blkSize - 1);
+      right0 = *(grainStripe + blkSize + 0);
+      right1 = *(grainStripe + blkSize + 1);
+      *(grainStripe + blkSize + 0) = (left0 + (right0 << 1) + right1) >> 2;
+      *(grainStripe + blkSize - 1) = (left1 + (left0 << 1) + right0) >> 2;
+      grainStripe += blkSize;
     }
+    grainStripe = grainStripe + (strideComp - pos);
   }
   return;
 }
-void SEIFilmGrainSynthesizer::blendStripe(Pel *decSampleOffsetY, int32_t *grainStripe,
-  uint32_t widthComp, uint32_t blockHeight, uint8_t bitDepth)
+
+void SEIFilmGrainSynthesizer::blendStripe(Pel *decSampleHbdOffsetY, Pel *grainStripe, uint32_t widthComp,
+  uint32_t strideSrc, uint32_t strideGrain, uint32_t blockHeight, uint8_t bitDepth)
 {
   uint32_t k, l;
-  int32_t grainSample;
-  Pel decodeSample;
   uint16_t maxRange;
   maxRange = (1 << bitDepth) - 1;
+
+  int32_t  grainSample;
+  uint16_t decodeSampleHbd;
+  uint8_t bitDepthShift = (bitDepth - FG_BIT_DEPTH_8);
+  uint32_t bufInc = (strideSrc - widthComp);
+  uint32_t grainBufInc = (strideGrain - widthComp);
+
   for (l = 0; l < blockHeight; l++) /* y direction */
   {
     for (k = 0; k < widthComp; k++) /* x direction */
     {
-      decodeSample = *(decSampleOffsetY + k + (l*widthComp));
-      grainSample = *(grainStripe + k + (l*widthComp));
-      grainSample <<= (bitDepth - BIT_DEPTH_8);
-      grainSample = CLIP3(0, maxRange, grainSample + decodeSample);
-      *(decSampleOffsetY + k + (l*widthComp)) = (Pel)grainSample;
+      decodeSampleHbd = *decSampleHbdOffsetY;
+      grainSample = *grainStripe;
+      grainSample <<= bitDepthShift;
+      grainSample = CLIP3(0, maxRange, grainSample + decodeSampleHbd);
+      *decSampleHbdOffsetY = (Pel)grainSample;
+      decSampleHbdOffsetY++;
+      grainStripe++;
     }
+    decSampleHbdOffsetY += bufInc;
+    grainStripe += grainBufInc;
   }
   return;
 }
 
-
-void SEIFilmGrainSynthesizer::simulateGrainBlk8x8(int32_t *grainStripe, uint32_t grainStripeOffsetBlk8,
-  GrainSynthesisStruct *pGrainSynt, uint32_t width, uint8_t log2ScaleFactor,
-  int16_t scaleFactor, uint32_t kOffset, uint32_t lOffset,
-  uint8_t h, uint8_t v, uint32_t xSize)
+void SEIFilmGrainSynthesizer::blendStripe_32x32(Pel *decSampleHbdOffsetY, Pel *grainStripe, uint32_t widthComp,
+  uint32_t strideSrc, uint32_t strideGrain, uint32_t blockHeight, uint8_t bitDepth)
 {
   uint32_t k, l;
-  for (l = 0; l < BLK_8; l++) /* y direction */
+  uint16_t maxRange;
+  maxRange = (1 << bitDepth) - 1;
+
+  int32_t  grainSample;
+  uint16_t decodeSampleHbd;
+  uint8_t bitDepthShift = (bitDepth - FG_BIT_DEPTH_8);
+  uint32_t bufInc = (strideSrc - widthComp);
+  uint32_t grainBufInc = (strideGrain - widthComp);
+
+  for (l = 0; l < blockHeight; l++) /* y direction */
+  {
+    for (k = 0; k < widthComp; k++) /* x direction */
+    {
+      decodeSampleHbd = *decSampleHbdOffsetY;
+      grainSample = *grainStripe;
+      grainSample <<= bitDepthShift;
+      grainSample = CLIP3(0, maxRange, grainSample + decodeSampleHbd);
+      *decSampleHbdOffsetY = (Pel)grainSample;
+      decSampleHbdOffsetY++;
+      grainStripe++;
+    }
+    decSampleHbdOffsetY += bufInc;
+    grainStripe += grainBufInc;
+  }
+  return;
+}
+
+Pel SEIFilmGrainSynthesizer::blockAverage_8x8(Pel *decSampleBlk8, uint32_t widthComp, uint16_t *pNumSamples,
+  uint8_t ySize, uint8_t xSize, uint8_t bitDepth)
+{
+  uint32_t blockAvg = 0;
+  uint8_t  k;
+  uint8_t l;
+  for (k = 0; k < ySize; k++)
+  {
+    for (l = 0; l < xSize; l++)
+    {
+      blockAvg += *decSampleBlk8;
+      decSampleBlk8++;
+    }
+    decSampleBlk8 += widthComp - xSize;
+  }
+
+  blockAvg = blockAvg >> (FG_BLK_8_shift + (bitDepth - FG_BIT_DEPTH_8));
+  *pNumSamples = FG_BLK_AREA_8x8;
+
+  return blockAvg;
+}
+
+uint32_t SEIFilmGrainSynthesizer::blockAverage_16x16(Pel *decSampleBlk8, uint32_t widthComp, uint16_t *pNumSamples,
+  uint8_t ySize, uint8_t xSize, uint8_t bitDepth)
+{
+  uint32_t blockAvg = 0;
+  uint8_t  k;
+  uint8_t l;
+  for (k = 0; k < ySize; k++)
+  {
+    for (l = 0; l < xSize; l++)
+    {
+      blockAvg += *decSampleBlk8;
+      decSampleBlk8++;
+    }
+    decSampleBlk8 += widthComp - xSize;
+  }
+
+  // blockAvg = blockAvg >> (FG_BLK_16_shift + (bitDepth - FG_BIT_DEPTH_8));
+  // If FG_BLK_16 is not used or changed FG_BLK_AREA_16x16 has to be changed
+  *pNumSamples = FG_BLK_AREA_16x16;
+  return blockAvg;
+}
+
+uint32_t SEIFilmGrainSynthesizer::blockAverage_32x32(Pel *decSampleBlk32, uint32_t strideComp, uint8_t bitDepth)
+{
+  uint32_t blockAvg = 0;
+  uint8_t  k;
+  uint8_t l;
+  uint32_t bufInc = strideComp - FG_BLK_32;
+  for (k = 0; k < FG_BLK_32; k++)
+  {
+    for (l = 0; l < FG_BLK_32; l++)
+    {
+      blockAvg += *decSampleBlk32++;
+    }
+    decSampleBlk32 += bufInc;
+  }
+  blockAvg = blockAvg >> (FG_BLK_32_shift + (bitDepth - FG_BIT_DEPTH_8));
+  return blockAvg;
+}
+
+void SEIFilmGrainSynthesizer::simulateGrainBlk8x8(Pel *grainStripe, uint32_t grainStripeOffsetBlk8,
+  GrainSynthesisStruct *grain_synt, uint32_t width,
+  uint8_t log2ScaleFactor, int16_t scaleFactor, uint32_t kOffset,
+  uint32_t lOffset, uint8_t h, uint8_t v, uint32_t xSize)
+{
+  uint32_t l;
+  int8_t * database_h_v = &grain_synt->dataBase[h][v][lOffset][kOffset];
+  grainStripe += grainStripeOffsetBlk8;
+  uint32_t k;
+  for (l = 0; l < FG_BLK_8; l++) /* y direction */
   {
     for (k = 0; k < xSize; k++) /* x direction */
     {
-      *(grainStripe + grainStripeOffsetBlk8 + k + (l*width)) =
-        ((scaleFactor *
-          pGrainSynt->dataBase[h][v][l + lOffset][k + kOffset]) >> (log2ScaleFactor + GRAIN_SCALE));
+      *grainStripe = ((scaleFactor * (*database_h_v)) >> (log2ScaleFactor + GRAIN_SCALE));
+      grainStripe++;
+      database_h_v++;
     }
+    grainStripe += width - xSize;
+    database_h_v += FG_DATA_BASE_SIZE - xSize;
   }
   return;
+}
+
+void SEIFilmGrainSynthesizer::simulateGrainBlk16x16(Pel *grainStripe, uint32_t grainStripeOffsetBlk8,
+  GrainSynthesisStruct *grain_synt, uint32_t width,
+  uint8_t log2ScaleFactor, int16_t scaleFactor, uint32_t kOffset,
+  uint32_t lOffset, uint8_t h, uint8_t v, uint32_t xSize)
+{
+  uint32_t l;
+  int8_t * database_h_v = &grain_synt->dataBase[h][v][lOffset][kOffset];
+  grainStripe += grainStripeOffsetBlk8;
+  uint32_t k;
+  for (l = 0; l < FG_BLK_16; l++) /* y direction */
+  {
+    for (k = 0; k < xSize; k++) /* x direction */
+    {
+      *grainStripe = (int16_t)(((int32_t)scaleFactor * (*database_h_v)) >> (log2ScaleFactor + GRAIN_SCALE));
+      grainStripe++;
+      database_h_v++;
+    }
+    grainStripe += width - xSize;
+    database_h_v += FG_DATA_BASE_SIZE - xSize;
+  }
+  return;
+}
+
+void SEIFilmGrainSynthesizer::simulateGrainBlk32x32(Pel *grainStripe, uint32_t grainStripeOffsetBlk32,
+  GrainSynthesisStruct *grain_synt, uint32_t width,
+  uint8_t log2ScaleFactor, int16_t scaleFactor, uint32_t kOffset,
+  uint32_t lOffset, uint8_t h, uint8_t v)
+{
+  uint32_t l;
+  int8_t * database_h_v = &grain_synt->dataBase[h][v][lOffset][kOffset];
+  grainStripe += grainStripeOffsetBlk32;
+  uint32_t k;
+  uint8_t shiftVal = log2ScaleFactor + GRAIN_SCALE;
+  uint32_t grainbufInc = width - FG_BLK_32;
+
+  for (l = 0; l < FG_BLK_32; l++) /* y direction */
+  {
+    for (k = 0; k < FG_BLK_32; k++) /* x direction */
+    {
+      *grainStripe = ((scaleFactor * (*database_h_v)) >> shiftVal);
+      grainStripe++;
+      database_h_v++;
+    }
+    grainStripe += grainbufInc;
+    database_h_v += FG_DATA_BASE_SIZE - FG_BLK_32;
+  }
+  return;
+}
+
+uint32_t SEIFilmGrainSynthesizer::fgsSimulationBlending_8x8(fgsProcessArgs *inArgs)
+{
+  uint8_t  numComp, compCtr, blkId; /* number of color components */
+  uint8_t  log2ScaleFactor, h, v;
+  uint8_t  bitDepth; /*grain bit depth and decoded bit depth are assumed to be same */
+  uint32_t widthComp[MAX_NUM_COMPONENT], heightComp[MAX_NUM_COMPONENT], strideComp[MAX_NUM_COMPONENT];
+  Pel *    decSampleHbdBlk16, *decSampleHbdBlk8, *decSampleHbdOffsetY;
+  Pel *    decHbdComp[MAX_NUM_COMPONENT];
+  uint16_t numSamples;
+  int16_t  scaleFactor;
+  uint32_t kOffset, lOffset, grainStripeOffset, grainStripeOffsetBlk8, offsetBlk8x8;
+  uint32_t kOffset_const, lOffset_const;
+  int16_t  scaleFactor_const;
+  Pel *    grainStripe; /* worth a row of 16x16 : Max size : 16xw;*/
+  int32_t  yOffset8x8, xOffset8x8;
+  uint32_t x, y;
+  uint32_t blockAvg, intensityInt; /* ec : seed to be used for the psudo random generator for a given color component */
+  uint32_t grainStripeWidth;
+  uint32_t wdPadded;
+
+  bitDepth        = inArgs->bitDepth;
+  numComp         = inArgs->numComp;
+  log2ScaleFactor = inArgs->pFgcParameters->m_log2ScaleFactor;
+
+  for (compCtr = 0; compCtr < numComp; compCtr++)
+  {
+    decHbdComp[compCtr] = inArgs->decComp[compCtr];
+    strideComp[compCtr] = inArgs->strideComp[compCtr];
+    widthComp[compCtr]  = inArgs->widthComp[compCtr];
+    heightComp[compCtr] = inArgs->heightComp[compCtr];
+  }
+
+  wdPadded = ((inArgs->widthComp[0] - 1) | 0xF) + 1;
+  grainStripe = new Pel[wdPadded * FG_BLK_16];
+
+  if (0 == inArgs->pFgcParameters->m_filmGrainCharacteristicsCancelFlag)
+  {
+    for (compCtr = 0; compCtr < numComp; compCtr++)
+    {
+      if (1 == inArgs->pFgcParameters->m_compModel[compCtr].bPresentFlag)
+      {
+        decSampleHbdOffsetY  = decHbdComp[compCtr];
+        uint32_t *offset_tmp = inArgs->fgsOffsets[compCtr];
+        grainStripeWidth = ((widthComp[compCtr] - 1) | 0xF) + 1;   // Make next muliptle of 16
+
+        /* Loop of 16x16 blocks */
+        for (y = 0; y < heightComp[compCtr]; y += FG_BLK_16)
+        {
+          /* Initialization of grain stripe of 16xwidth size */
+          memset(grainStripe, 0, (grainStripeWidth * FG_BLK_16 * sizeof(Pel)));
+          for (x = 0; x < widthComp[compCtr]; x += FG_BLK_16)
+          {
+            /* start position offset of decoded sample in x direction */
+            grainStripeOffset = x;
+
+            decSampleHbdBlk16 = decSampleHbdOffsetY + x;
+
+            kOffset_const = (MSB16(*offset_tmp) % 52);
+            kOffset_const &= 0xFFFC;
+
+            lOffset_const = (LSB16(*offset_tmp) % 56);
+            lOffset_const &= 0xFFF8;
+            scaleFactor_const = 1 - 2 * BIT0(*offset_tmp);
+            for (blkId = 0; blkId < NUM_8x8_BLKS_16x16; blkId++)
+            {
+              yOffset8x8   = (blkId >> 1) * FG_BLK_8;
+              xOffset8x8   = (blkId & 0x1) * FG_BLK_8;
+              offsetBlk8x8 = xOffset8x8 + (yOffset8x8 * strideComp[compCtr]);
+
+              grainStripeOffsetBlk8 = grainStripeOffset + (xOffset8x8 + (yOffset8x8 * grainStripeWidth));
+
+              decSampleHbdBlk8 = decSampleHbdBlk16 + offsetBlk8x8;
+              blockAvg = blockAverage_8x8(decSampleHbdBlk8, strideComp[compCtr], &numSamples, FG_BLK_8, FG_BLK_8, bitDepth);
+
+              /* Selection of the component model */
+              intensityInt = inArgs->pGrainSynt->intensityInterval[compCtr][blockAvg];
+
+              if (INTENSITY_INTERVAL_MATCH_FAIL != intensityInt)
+              {
+                /* 8x8 grain block offset using co-ordinates of decoded 8x8 block in the frame */
+                // kOffset = kOffset_const;
+                kOffset = kOffset_const + xOffset8x8;
+
+                lOffset = lOffset_const + yOffset8x8;
+
+                scaleFactor =
+                  scaleFactor_const
+                  * inArgs->pFgcParameters->m_compModel[compCtr].intensityValues[intensityInt].compModelValue[0];
+                h = inArgs->pFgcParameters->m_compModel[compCtr].intensityValues[intensityInt].compModelValue[1] - 2;
+                v = inArgs->pFgcParameters->m_compModel[compCtr].intensityValues[intensityInt].compModelValue[2] - 2;
+
+                /* 8x8 block grain simulation */
+                simulateGrainBlk8x8(grainStripe, grainStripeOffsetBlk8, inArgs->pGrainSynt, grainStripeWidth,
+                                    log2ScaleFactor, scaleFactor, kOffset, lOffset, h, v, FG_BLK_8);
+              } /* only if average falls in any interval */
+              //  }/* includes corner case handling */
+            } /* 8x8 level block processing */
+
+            /* uppdate the PRNG once per 16x16 block of samples */
+            offset_tmp++;
+          } /* End of 16xwidth grain simulation */
+
+          /* deblocking at the vertical edges of 8x8 at 16xwidth*/
+          deblockGrainStripe(grainStripe, widthComp[compCtr], FG_BLK_16, grainStripeWidth, FG_BLK_8);
+
+          /* Blending of size 16xwidth*/
+
+          blendStripe(decSampleHbdOffsetY, grainStripe, widthComp[compCtr], strideComp[compCtr], grainStripeWidth,
+                      FG_BLK_16, bitDepth);
+          decSampleHbdOffsetY += FG_BLK_16 * strideComp[compCtr];
+
+        } /* end of component loop */
+      }
+    }
+  }
+
+  delete grainStripe;
+  return FGS_SUCCESS;
+}
+
+uint32_t SEIFilmGrainSynthesizer::fgsSimulationBlending_16x16(fgsProcessArgs *inArgs)
+{
+  uint8_t  numComp, compCtr; /* number of color components */
+  uint8_t  log2ScaleFactor, h, v;
+  uint8_t  bitDepth; /*grain bit depth and decoded bit depth are assumed to be same */
+  uint32_t widthComp[MAX_NUM_COMPONENT], heightComp[MAX_NUM_COMPONENT], strideComp[MAX_NUM_COMPONENT];
+  Pel *    decSampleHbdBlk16, *decSampleHbdOffsetY;
+  Pel *    decHbdComp[MAX_NUM_COMPONENT];
+  uint16_t numSamples;
+  int16_t  scaleFactor;
+  uint32_t kOffset, lOffset, grainStripeOffset;
+  Pel *    grainStripe; /* worth a row of 16x16 : Max size : 16xw;*/
+  uint32_t x, y;
+  uint32_t blockAvg, intensityInt; /* ec : seed to be used for the psudo random generator for a given color component */
+  uint32_t grainStripeWidth;
+  uint32_t wdPadded;
+
+  bitDepth        = inArgs->bitDepth;
+  numComp         = inArgs->numComp;
+  log2ScaleFactor = inArgs->pFgcParameters->m_log2ScaleFactor;
+
+  for (compCtr = 0; compCtr < numComp; compCtr++)
+  {
+    decHbdComp[compCtr] = inArgs->decComp[compCtr];
+    strideComp[compCtr] = inArgs->strideComp[compCtr];
+    widthComp[compCtr]  = inArgs->widthComp[compCtr];
+    heightComp[compCtr] = inArgs->heightComp[compCtr];
+  }
+
+  wdPadded = ((inArgs->widthComp[0] - 1) | 0xF) + 1;
+  grainStripe = new Pel[wdPadded * FG_BLK_16];
+
+  if (0 == inArgs->pFgcParameters->m_filmGrainCharacteristicsCancelFlag)
+  {
+    for (compCtr = 0; compCtr < numComp; compCtr++)
+    {
+      if (1 == inArgs->pFgcParameters->m_compModel[compCtr].bPresentFlag)
+      {
+        decSampleHbdOffsetY  = decHbdComp[compCtr];
+        uint32_t *offset_tmp = inArgs->fgsOffsets[compCtr];
+        grainStripeWidth = ((widthComp[compCtr] - 1) | 0xF) + 1;   // Make next muliptle of 16
+
+        /* Loop of 16x16 blocks */
+        for (y = 0; y < heightComp[compCtr]; y += FG_BLK_16)
+        {
+          /* Initialization of grain stripe of 16xwidth size */
+          memset(grainStripe, 0, (grainStripeWidth * FG_BLK_16 * sizeof(Pel)));
+          for (x = 0; x < widthComp[compCtr]; x += FG_BLK_16)
+          {
+            /* start position offset of decoded sample in x direction */
+            grainStripeOffset = x;
+
+            decSampleHbdBlk16 = decSampleHbdOffsetY + x;
+
+            blockAvg =
+              blockAverage_16x16(decSampleHbdBlk16, strideComp[compCtr], &numSamples, FG_BLK_16, FG_BLK_16, bitDepth);
+            blockAvg = blockAvg >> (FG_BLK_16_shift + (bitDepth - FG_BIT_DEPTH_8));
+            /* Selection of the component model */
+            intensityInt = inArgs->pGrainSynt->intensityInterval[compCtr][blockAvg];
+
+            if (INTENSITY_INTERVAL_MATCH_FAIL != intensityInt)
+            {
+              kOffset = (MSB16(*offset_tmp) % 52);
+              kOffset &= 0xFFFC;
+
+              lOffset = (LSB16(*offset_tmp) % 56);
+              lOffset &= 0xFFF8;
+              scaleFactor = 1 - 2 * BIT0(*offset_tmp);
+
+              scaleFactor *=
+                inArgs->pFgcParameters->m_compModel[compCtr].intensityValues[intensityInt].compModelValue[0];
+              h = inArgs->pFgcParameters->m_compModel[compCtr].intensityValues[intensityInt].compModelValue[1] - 2;
+              v = inArgs->pFgcParameters->m_compModel[compCtr].intensityValues[intensityInt].compModelValue[2] - 2;
+
+              /* 16x16 block grain simulation */
+              simulateGrainBlk16x16(grainStripe, grainStripeOffset, inArgs->pGrainSynt, grainStripeWidth,
+                                    log2ScaleFactor, scaleFactor, kOffset, lOffset, h, v, FG_BLK_16);
+
+            } /* only if average falls in any interval */
+            //  }/* includes corner case handling */
+            /* uppdate the PRNG once per 16x16 block of samples */
+            offset_tmp++;
+          } /* End of 16xwidth grain simulation */
+          /* deblocking at the vertical edges of 16x16 at 16xwidth*/
+          deblockGrainStripe(grainStripe, widthComp[compCtr], FG_BLK_16, grainStripeWidth, FG_BLK_16);
+
+          /* Blending of size 16xwidth*/
+          blendStripe(decSampleHbdOffsetY, grainStripe, widthComp[compCtr], strideComp[compCtr], grainStripeWidth,
+                      FG_BLK_16, bitDepth);
+          decSampleHbdOffsetY += FG_BLK_16 * strideComp[compCtr];
+
+        } /* end of component loop */
+      }
+    }
+  }
+
+  delete grainStripe;
+  return FGS_SUCCESS;
+}
+
+uint32_t SEIFilmGrainSynthesizer::fgsSimulationBlending_32x32(fgsProcessArgs *inArgs)
+{
+  uint8_t  numComp, compCtr; /* number of color components */
+  uint8_t  log2ScaleFactor, h, v;
+  uint8_t  bitDepth; /*grain bit depth and decoded bit depth are assumed to be same */
+  uint32_t widthComp[MAX_NUM_COMPONENT], heightComp[MAX_NUM_COMPONENT], strideComp[MAX_NUM_COMPONENT];
+  Pel *    decSampleBlk32, *decSampleOffsetY;
+  Pel *    decComp[MAX_NUM_COMPONENT];
+  int16_t  scaleFactor;
+  uint32_t kOffset, lOffset, grainStripeOffset;
+  Pel *    grainStripe;
+  uint32_t x, y;
+  uint32_t blockAvg, intensityInt; /* ec : seed to be used for the psudo random generator for a given color component */
+  uint32_t grainStripeWidth;
+  uint32_t wdPadded;
+
+  bitDepth = inArgs->bitDepth;
+  numComp  = inArgs->numComp;
+
+  log2ScaleFactor = inArgs->pFgcParameters->m_log2ScaleFactor;
+
+  for (compCtr = 0; compCtr < numComp; compCtr++)
+  {
+    decComp[compCtr]    = inArgs->decComp[compCtr];
+    strideComp[compCtr] = inArgs->strideComp[compCtr];
+    heightComp[compCtr] = inArgs->heightComp[compCtr];
+    widthComp[compCtr]  = inArgs->widthComp[compCtr];
+  }
+
+  wdPadded = ((inArgs->widthComp[0] - 1) | 0x1F) + 1;
+  grainStripe = new Pel[wdPadded * FG_BLK_32];
+
+  if (0 == inArgs->pFgcParameters->m_filmGrainCharacteristicsCancelFlag)
+  {
+    for (compCtr = 0; compCtr < numComp; compCtr++)
+    {
+      if (1 == inArgs->pFgcParameters->m_compModel[compCtr].bPresentFlag)
+      {
+        uint32_t *offset_tmp = inArgs->fgsOffsets[compCtr];
+        decSampleOffsetY     = decComp[compCtr];
+        grainStripeWidth = ((widthComp[compCtr] - 1) | 0x1F) + 1;   // Make next muliptle of 32
+
+        /* Loop of 32x32 blocks */
+        for (y = 0; y < heightComp[compCtr]; y += FG_BLK_32)
+        {
+          /* Initialization of grain stripe of 32xwidth size */
+          memset(grainStripe, 0, (grainStripeWidth * FG_BLK_32 * sizeof(Pel)));
+          for (x = 0; x < widthComp[compCtr]; x += FG_BLK_32)
+          {
+            /* start position offset of decoded sample in x direction */
+            grainStripeOffset = x;
+            decSampleBlk32    = decSampleOffsetY + x;
+            blockAvg = blockAverage_32x32(decSampleBlk32, strideComp[compCtr], bitDepth);
+
+            /* Selection of the component model */
+            intensityInt = inArgs->pGrainSynt->intensityInterval[compCtr][blockAvg];
+
+            if (INTENSITY_INTERVAL_MATCH_FAIL != intensityInt)
+            {
+              kOffset = (MSB16(*offset_tmp) % 36);
+              kOffset &= 0xFFFC;
+
+              lOffset = (LSB16(*offset_tmp) % 40);
+              lOffset &= 0xFFF8;
+              scaleFactor = 1 - 2 * BIT0(*offset_tmp);
+
+              scaleFactor *= inArgs->pFgcParameters->m_compModel[compCtr].intensityValues[intensityInt].compModelValue[0];
+              h = inArgs->pFgcParameters->m_compModel[compCtr].intensityValues[intensityInt].compModelValue[1] - 2;
+              v = inArgs->pFgcParameters->m_compModel[compCtr].intensityValues[intensityInt].compModelValue[2] - 2;
+
+              /* 32x32 block grain simulation */
+              simulateGrainBlk32x32(grainStripe, grainStripeOffset, inArgs->pGrainSynt, grainStripeWidth,
+                                    log2ScaleFactor, scaleFactor, kOffset, lOffset, h, v);
+
+            } /* only if average falls in any interval */
+
+            /* uppdate the PRNG once per 16x16 block of samples */
+            offset_tmp++;
+          } /* End of 32xwidth grain simulation */
+
+          /* deblocking at the vertical edges of 8x8 at 16xwidth*/
+          deblockGrainStripe(grainStripe, widthComp[compCtr], FG_BLK_32, grainStripeWidth, FG_BLK_32);
+
+          blendStripe_32x32(decSampleOffsetY, grainStripe, widthComp[compCtr], strideComp[compCtr], grainStripeWidth, FG_BLK_32, bitDepth);
+          decSampleOffsetY += FG_BLK_32 * strideComp[compCtr];
+        } /* end of component loop */
+      }
+    }
+  }
+
+  delete grainStripe;
+  return FGS_SUCCESS;
 }
 
 #endif

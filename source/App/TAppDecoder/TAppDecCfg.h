@@ -66,7 +66,7 @@ protected:
   Int           m_decodedPictureHashSEIEnabled;       ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
   Bool          m_decodedNoDisplaySEIEnabled;         ///< Enable(true)/disable(false) writing only pictures that get displayed based on the no display SEI message
   std::string   m_colourRemapSEIFileName;             ///< output Colour Remapping file name
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
   std::string   m_SEIFGSFileName;                     ///< output reconstruction file name
 #endif
 #if SHUTTER_INTERVAL_SEI_PROCESSING
@@ -95,7 +95,7 @@ public:
   , m_decodedPictureHashSEIEnabled(0)
   , m_decodedNoDisplaySEIEnabled(false)
   , m_colourRemapSEIFileName()
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
   , m_SEIFGSFileName()
 #endif
 #if SHUTTER_INTERVAL_SEI_PROCESSING

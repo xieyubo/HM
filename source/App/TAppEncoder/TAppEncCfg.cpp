@@ -449,6 +449,7 @@ static inline istream& operator >> (istream &in, ScalingListMode &mode)
   return readStrToEnum(strToScalingListMode, sizeof(strToScalingListMode)/sizeof(*strToScalingListMode), in, mode);
 }
 
+#if !JVET_X0048_X0103_FILM_GRAIN
 template <class T>
 struct SMultiValueInput
 {
@@ -470,6 +471,7 @@ struct SMultiValueInput
 
   istream& readValues(std::istream &in);
 };
+#endif
 
 template <class T>
 static inline istream& operator >> (std::istream &in, SMultiValueInput<T> &values)
@@ -716,7 +718,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   SMultiValueInput<Bool> cfg_timeCodeSeiHoursFlag            (0,  1, 0, MAX_TIMECODE_SEI_SETS);
   SMultiValueInput<Int>  cfg_timeCodeSeiTimeOffsetLength     (0, 31, 0, MAX_TIMECODE_SEI_SETS);
   SMultiValueInput<Int>  cfg_timeCodeSeiTimeOffsetValue      (std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max(), 0, MAX_TIMECODE_SEI_SETS);
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
   // default values used for FGC SEI parameter parsing
   SMultiValueInput<UInt>  cfg_FgcSEIIntensityIntervalLowerBoundComp[3]={SMultiValueInput<UInt> (0, 255, 0, 256), SMultiValueInput<UInt> (0, 255, 0, 256), SMultiValueInput<UInt> (0, 255, 0, 256)};
   SMultiValueInput<UInt>  cfg_FgcSEIIntensityIntervalUpperBoundComp[3]={SMultiValueInput<UInt> (0, 255, 0, 256), SMultiValueInput<UInt> (0, 255, 0, 256), SMultiValueInput<UInt> (0, 255, 0, 256)};
@@ -1219,7 +1221,11 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("SEIFGCCompModelPresentComp0",                     m_fgcSEICompModelPresent[0],                       false, "Specifies the presense of film grain modelling on colour component 0.")
   ("SEIFGCCompModelPresentComp1",                     m_fgcSEICompModelPresent[1],                       false, "Specifies the presense of film grain modelling on colour component 1.")
   ("SEIFGCCompModelPresentComp2",                     m_fgcSEICompModelPresent[2],                       false, "Specifies the presense of film grain modelling on colour component 2.")
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
+  ("SEIFGCAnalysisEnabled",                           m_fgcSEIAnalysisEnabled,                           false, "Control adaptive film grain parameter estimation - film grain analysis")
+  ("SEIFGCExternalMask",                              m_fgcSEIExternalMask,                       string( "" ), "Read external file with mask for film grain analysis. If empty string, use internally calculated mask.")
+  ("SEIFGCExternalDenoised",                          m_fgcSEIExternalDenoised,                   string( "" ), "Read external file with denoised sequence for film grain analysis. If empty string, use MCTF for denoising.")
+  ("SEIFGCPerPictureSEI",                             m_fgcSEIPerPictureSEI,                             false, "Film Grain SEI is added for each picture as speciffied in RDD5 to ensure bit accurate synthesis in tricky mode")
   ("SEIFGCNumIntensityIntervalMinus1Comp0", m_fgcSEINumIntensityIntervalMinus1[0], 0u, "Specifies the number of intensity intervals minus1 on colour component 0.")
   ("SEIFGCNumIntensityIntervalMinus1Comp1", m_fgcSEINumIntensityIntervalMinus1[1], 0u, "Specifies the number of intensity intervals minus1 on colour component 1.")
   ("SEIFGCNumIntensityIntervalMinus1Comp2", m_fgcSEINumIntensityIntervalMinus1[2], 0u, "Specifies the number of intensity intervals minus1 on colour component 2.")
@@ -2118,10 +2124,51 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
       m_timeSetArray[i].timeOffsetValue       = cfg_timeCodeSeiTimeOffsetValue      .values.size()>i ? cfg_timeCodeSeiTimeOffsetValue      .values [i] : 0;
     }
   }
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
   // Assigning the FGC SEI params from App to Lib
+  if (!m_fgcSEIEnabled && m_fgcSEIAnalysisEnabled)
+  {
+    fprintf(stderr, "FGC SEI must be enabled in order to perform film grain analysis!\n"); exit(EXIT_FAILURE);
+  }
   if (m_fgcSEIEnabled)
   {
+    if (m_iQP < 17 && m_fgcSEIAnalysisEnabled == true)
+    {
+      fprintf(stderr, "***************************************************************************************************************\n");
+      fprintf(stderr, "** WARNING: Film Grain Estimation is disabled for Qp<17! FGC SEI will use default parameters for film grain! **\n");
+      fprintf(stderr, "***************************************************************************************************************\n");
+      m_fgcSEIAnalysisEnabled = false;
+    }
+    if (m_iIntraPeriod < 1)
+    {
+      fprintf(stderr, "*************************************************************************************\n");
+      fprintf(stderr, "** WARNING: For low delay configuration, FGC SEI is inserted for first frame only! **\n");
+      fprintf(stderr, "*************************************************************************************\n");
+      m_fgcSEIPerPictureSEI = false;
+      m_fgcSEIPersistenceFlag = true;
+    }
+    else if (m_iIntraPeriod == 1)
+    {
+      fprintf(stderr, "*******************************************************************\n");
+      fprintf(stderr, "** WARNING: For Intra Period = 1, FGC SEI is inserted per frame! **\n");
+      fprintf(stderr, "*******************************************************************\n");
+      m_fgcSEIPerPictureSEI = true;
+      m_fgcSEIPersistenceFlag = false;
+    }
+    if (!m_fgcSEIPerPictureSEI && !m_fgcSEIPersistenceFlag)
+    {
+      fprintf(stderr, "*************************************************************************************\n");
+      fprintf(stderr, "** WARNING: SEIPerPictureSEI is set to 0, SEIPersistenceFlag needs to be set to 1! **\n");
+      fprintf(stderr, "*************************************************************************************\n");
+      m_fgcSEIPersistenceFlag = true;
+    }
+    else if (m_fgcSEIPerPictureSEI && m_fgcSEIPersistenceFlag)
+    {
+      fprintf(stderr, "*************************************************************************************\n");
+      fprintf(stderr, "** WARNING: SEIPerPictureSEI is set to 1, SEIPersistenceFlag needs to be set to 0! **\n");
+      fprintf(stderr, "*************************************************************************************\n");
+      m_fgcSEIPersistenceFlag = false;
+    }
     UInt numModelCtr;
     for (UInt c = 0; c <= 2; c++ )
     {
@@ -2130,16 +2177,17 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
         numModelCtr = 0;
         for (UInt i = 0; i <= m_fgcSEINumIntensityIntervalMinus1[c]; i++)
         {
-          m_fgcSEIIntensityIntervalLowerBound[c][i] = UChar((cfg_FgcSEIIntensityIntervalLowerBoundComp[c].values.size() > i) ? cfg_FgcSEIIntensityIntervalLowerBoundComp[c].values[i] : 0);
-          m_fgcSEIIntensityIntervalUpperBound[c][i] = UChar((cfg_FgcSEIIntensityIntervalUpperBoundComp[c].values.size() > i) ? cfg_FgcSEIIntensityIntervalUpperBoundComp[c].values[i] : 0);
+          m_fgcSEIIntensityIntervalLowerBound[c][i] = UChar((cfg_FgcSEIIntensityIntervalLowerBoundComp[c].values.size() > i) ? cfg_FgcSEIIntensityIntervalLowerBoundComp[c].values[i] : 10);
+          m_fgcSEIIntensityIntervalUpperBound[c][i] = UChar((cfg_FgcSEIIntensityIntervalUpperBoundComp[c].values.size() > i) ? cfg_FgcSEIIntensityIntervalUpperBoundComp[c].values[i] : 250);
           for (UInt j = 0; j <= m_fgcSEINumModelValuesMinus1[c]; j++)
           {
-            m_fgcSEICompModelValue[c][i][j] = UInt((cfg_FgcSEICompModelValueComp[c].values.size() > numModelCtr) ? cfg_FgcSEICompModelValueComp[c].values[numModelCtr] : 0);
+            m_fgcSEICompModelValue[c][i][j] = UInt((cfg_FgcSEICompModelValueComp[c].values.size() > numModelCtr) ? cfg_FgcSEICompModelValueComp[c].values[numModelCtr] : 24);
             numModelCtr++;
           }
         }
       }
     }
+    m_fgcSEILog2ScaleFactor = m_fgcSEILog2ScaleFactor ? m_fgcSEILog2ScaleFactor : 2;
   }
 #endif
   // check validity of input parameters

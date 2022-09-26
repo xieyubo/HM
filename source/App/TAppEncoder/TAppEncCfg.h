@@ -514,7 +514,11 @@ protected:
   UInt      m_fgcSEIBlendingModeID;
   UInt      m_fgcSEILog2ScaleFactor;
   Bool      m_fgcSEICompModelPresent[MAX_NUM_COMPONENT];
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
+  Bool      m_fgcSEIAnalysisEnabled;
+  std::string m_fgcSEIExternalMask;
+  std::string m_fgcSEIExternalDenoised;
+  Bool      m_fgcSEIPerPictureSEI;
   UInt      m_fgcSEINumIntensityIntervalMinus1[MAX_NUM_COMPONENT];
   UInt      m_fgcSEINumModelValuesMinus1[MAX_NUM_COMPONENT];
   UInt      m_fgcSEIIntensityIntervalLowerBound[MAX_NUM_COMPONENT][MAX_NUM_INTENSITIES];

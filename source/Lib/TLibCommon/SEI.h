@@ -365,6 +365,9 @@ public:
   {
     Bool  bPresentFlag;
     UChar numModelValues; // this must be the same as intensityValues[*].compModelValue.size()
+#if JVET_X0048_X0103_FILM_GRAIN
+    UInt  numIntensityIntervals;
+#endif
     std::vector<CompModelIntensityValues> intensityValues;
   };
 

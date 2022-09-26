@@ -823,11 +823,20 @@ Void SEIReader::xParseSEIFilmGrainCharacteristics(SEIFilmGrainCharacteristics& s
       SEIFilmGrainCharacteristics::CompModel &cm=sei.m_compModel[c];
       if (cm.bPresentFlag)
       {
+#if JVET_X0048_X0103_FILM_GRAIN
+        sei_read_code( pDecodedMessageOutputStream, 8, code, "num_intensity_intervals_minus1[c]"); cm.numIntensityIntervals = code + 1;
+#else
         UInt numIntensityIntervals;
         sei_read_code( pDecodedMessageOutputStream, 8, code, "num_intensity_intervals_minus1[c]" ); numIntensityIntervals = code+1;
+#endif
         sei_read_code( pDecodedMessageOutputStream, 3, code, "num_model_values_minus1[c]" );        cm.numModelValues     = code+1;
+#if JVET_X0048_X0103_FILM_GRAIN
+        cm.intensityValues.resize(cm.numIntensityIntervals);
+        for (UInt interval = 0; interval < cm.numIntensityIntervals; interval++)
+#else
         cm.intensityValues.resize(numIntensityIntervals);
         for(UInt interval=0; interval<numIntensityIntervals; interval++)
+#endif
         {
           SEIFilmGrainCharacteristics::CompModelIntensityValues &cmiv=cm.intensityValues[interval];
           sei_read_code( pDecodedMessageOutputStream, 8, code, "intensity_interval_lower_bound[c][i]" ); cmiv.intensityIntervalLowerBound=code;

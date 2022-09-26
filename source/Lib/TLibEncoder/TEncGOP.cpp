@@ -124,6 +124,12 @@ Void  TEncGOP::destroy()
     delete m_pcDeblockingTempPicYuv;
     m_pcDeblockingTempPicYuv = NULL;
   }
+#if JVET_X0048_X0103_FILM_GRAIN
+  if (m_pcCfg->getFilmGrainAnalysisEnabled())
+  {
+    m_FGAnalyser.destroy();
+  }
+#endif
 }
 
 Void TEncGOP::init ( TEncTop* pcTEncTop )
@@ -144,6 +150,17 @@ Void TEncGOP::init ( TEncTop* pcTEncTop )
   m_pcRateCtrl           = pcTEncTop->getRateCtrl();
   m_lastBPSEI          = 0;
   m_totalCoded         = 0;
+#if JVET_X0048_X0103_FILM_GRAIN
+  if (m_pcCfg->getFilmGrainAnalysisEnabled())
+  {
+      m_FGAnalyser.init(m_pcCfg->getSourceWidth(), m_pcCfg->getSourceHeight(), m_pcCfg->getSourcePadding(0),
+          m_pcCfg->getSourcePadding(1), IPCOLOURSPACE_UNCHANGED, false, m_pcCfg->getChromaFormatIdc(),
+          *(BitDepths*)m_pcCfg->getBitDepthInput(), *(BitDepths*)m_pcCfg->getBitDepth(),
+          m_pcCfg->getFrameSkip(), m_pcCfg->getFGCSEICompModelPresent(),
+          m_pcCfg->getFilmGrainExternalMask(), m_pcCfg->getFilmGrainExternalDenoised());
+
+  }
+#endif
 
 }
 
@@ -518,7 +535,25 @@ Void TEncGOP::xCreateIRAPLeadingSEIMessages (SEIMessages& seiMessages, const TCo
 #endif
 
 #if SEI_ENCODER_CONTROL
-#if !FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
+  if (m_pcCfg->getFilmGrainCharactersticsSEIEnabled() && !m_pcCfg->getFilmGrainCharactersticsSEIPerPictureSEI())
+  {
+    SEIFilmGrainCharacteristics* seiFGC = new SEIFilmGrainCharacteristics;
+    m_seiEncoder.initSEIFilmGrainCharacteristics(seiFGC);
+    if (m_pcCfg->getFilmGrainAnalysisEnabled())
+    {
+      seiFGC->m_log2ScaleFactor = m_FGAnalyser.getLog2scaleFactor();
+      for (int compIdx = 0; compIdx < getNumberValidComponents(m_pcCfg->getChromaFormatIdc()); compIdx++)
+      {
+        if (seiFGC->m_compModel[compIdx].bPresentFlag)
+        {   // higher importance of presentFlag is from cfg file
+          seiFGC->m_compModel[compIdx] = m_FGAnalyser.getCompModel(compIdx);
+        }
+      }
+    }
+    seiMessages.push_back(seiFGC);
+}
+#else
   // film grain
   if (m_pcCfg->getFilmGrainCharactersticsSEIEnabled())
   {
@@ -703,12 +738,23 @@ Void TEncGOP::xCreatePerPictureSEIMessages (Int picInGOP, SEIMessages& seiMessag
       delete seiRegionalNesting;
     }
   }
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
   // Film Grain Characteristics SEI insertion at at frame level
-  if (m_pcCfg->getFilmGrainCharactersticsSEIEnabled())
+  if (m_pcCfg->getFilmGrainCharactersticsSEIEnabled() && m_pcCfg->getFilmGrainCharactersticsSEIPerPictureSEI())
   {
-    SEIFilmGrainCharacteristics *fgcSEI = new SEIFilmGrainCharacteristics;
+    SEIFilmGrainCharacteristics* fgcSEI = new SEIFilmGrainCharacteristics;
     m_seiEncoder.initSEIFilmGrainCharacteristics(fgcSEI);
+    if (m_pcCfg->getFilmGrainAnalysisEnabled())
+    {
+      fgcSEI->m_log2ScaleFactor = m_FGAnalyser.getLog2scaleFactor();
+      for (int compIdx = 0; compIdx < getNumberValidComponents(m_pcCfg->getChromaFormatIdc()); compIdx++)
+      {
+        if (fgcSEI->m_compModel[compIdx].bPresentFlag)
+        {   // higher importance of presentFlag is from cfg file
+          fgcSEI->m_compModel[compIdx] = m_FGAnalyser.getCompModel(compIdx);
+        }
+      }
+    }
     seiMessages.push_back(fgcSEI);
   }
 #endif
@@ -1788,6 +1834,19 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       }
     }
     m_pcLoopFilter->loopFilterPic( pcPic );
+
+#if JVET_X0048_X0103_FILM_GRAIN
+    if (m_pcCfg->getFilmGrainAnalysisEnabled())
+    {
+      int  filteredFrame = m_pcCfg->getIntraPeriod() < 1 ? 2 * m_pcCfg->getFrameRate() : m_pcCfg->getIntraPeriod();
+      bool ready_to_analyze = pcPic->getPOC() % filteredFrame ? false : true; // either it is mctf denoising or external source for film grain analysis. note: if mctf is used, it is different from mctf for encoding.
+      if (ready_to_analyze)
+      {
+          m_FGAnalyser.initBufs(pcPic);
+          m_FGAnalyser.estimate_grain(pcPic);
+      }
+    }
+#endif
 
     /////////////////////////////////////////////////////////////////////////////////////////////////// File writing
     // Set entropy coder

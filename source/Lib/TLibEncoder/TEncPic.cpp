@@ -122,25 +122,41 @@ TEncPic::~TEncPic()
  * \param bIsVirtual
  */
 #if REDUCED_ENCODER_MEMORY
+Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, const Bool bCreateForProcessedReconstruction )
-{
-  TComPic::create( sps, pps, true, false, bCreateForProcessedReconstruction );
-#else
-Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth )
-{
-  TComPic::create( sps, pps, true, false );
+                    , const Bool bCreateForProcessedReconstruction
 #endif
-#else
+#if JVET_X0048_X0103_FILM_GRAIN
+                    , const Bool bCreateFilteredSourcePicYuv
+#endif
+                    )
+{
+  TComPic::create( sps, pps, true, false
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual, const Bool bCreateForProcessedReconstruction )
-{
-  TComPic::create( sps, pps, bIsVirtual, bCreateForProcessedReconstruction );
-#else
-Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual )
-{
-  TComPic::create( sps, pps, bIsVirtual );
+                  , bCreateForProcessedReconstruction
 #endif
+#if JVET_X0048_X0103_FILM_GRAIN
+                  , bCreateFilteredSourcePicYuv
+#endif
+                  );
+#else
+Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+                    , const Bool bCreateForProcessedReconstruction
+#endif
+#if JVET_X0048_X0103_FILM_GRAIN
+                    , const Bool bCreateFilteredSourcePicYuv
+#endif
+                    )
+{
+  TComPic::create( sps, pps, bIsVirtual
+#if SHUTTER_INTERVAL_SEI_PROCESSING
+                  , bCreateForProcessedReconstruction
+#endif
+#if JVET_X0048_X0103_FILM_GRAIN
+                  , bCreateFilteredSourcePicYuv
+#endif
+                  );
 #endif
   const Int  iWidth      = sps.getPicWidthInLumaSamples();
   const Int  iHeight     = sps.getPicHeightInLumaSamples();

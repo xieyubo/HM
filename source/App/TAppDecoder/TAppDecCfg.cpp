@@ -86,7 +86,7 @@ Bool TAppDecCfg::parseCfg( Int argc, TChar* argv[] )
   ("TarDecLayerIdSetFile,l",    cfg_TargetDecLayerIdSetFile,           string(""), "targetDecLayerIdSet file name. The file should include white space separated LayerId values to be decoded. Omitting the option or a value of -1 in the file decodes all layers.")
   ("RespectDefDispWindow,w",    m_respectDefDispWindow,                0,          "Only output content inside the default display window\n")
   ("SEIColourRemappingInfoFilename",  m_colourRemapSEIFileName,        string(""), "Colour Remapping YUV output file name. If empty, no remapping is applied (ignore SEI message)\n")
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
   ("SEIFGSFilename",            m_SEIFGSFileName,                      string(""), "FGS YUV output file name. If empty, no film grain is applied (ignore SEI message)\n")
 #endif
 #if SHUTTER_INTERVAL_SEI_PROCESSING
