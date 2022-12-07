@@ -729,7 +729,7 @@ Void TEncGOP::xCreatePerPictureSEIMessages (Int picInGOP, SEIMessages& seiMessag
     int NumOfSEIPrefixMsg = 0;
     for (auto& it : seiMessages)
     {
-      if (it->payloadType() == 200)
+      if (it->payloadType() == SEI::SEI_MANIFEST)
       {
         break;
       }
@@ -737,7 +737,7 @@ Void TEncGOP::xCreatePerPictureSEIMessages (Int picInGOP, SEIMessages& seiMessag
     }
     for (auto& it : seiMessages)
     {
-      if (NumOfSEIPrefixMsg == 0 || it->payloadType() == 200)
+      if (NumOfSEIPrefixMsg == 0 || it->payloadType() == SEI::SEI_MANIFEST)
       {
         break;
       }
