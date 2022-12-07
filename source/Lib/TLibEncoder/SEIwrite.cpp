@@ -666,7 +666,7 @@ Void SEIWriter::xWriteSEIFramePacking(const SEIFramePacking& sei
   if (SEIPrefixIndicationIdx)
   {
     int numBits = 0;
-    numBits += getUESENumBits("ue", sei.m_arrangementId);
+    numBits += getBitsUe(sei.m_arrangementId);
     if (!sei.m_arrangementCancelFlag)
     {
       numBits += 9;
@@ -1685,39 +1685,7 @@ Void SEIWriter::xWriteSEISEIPrefixIndication(TComBitIf& bs, const SEIPrefixIndic
   xWriteSEIpayloadData(bs, *static_cast<const SEI*>(sei.m_payload), sps, idx);
   xWriteSEIPrefixIndicationByteAlign();
 }
-Int SEIWriter::getUESENumBits(std::string str, int codeNum) {
-  if (str == "ue") {
-    if (codeNum <= 0)
-    {
-      return 1;
-    }
-    else if (codeNum <= 2)
-    {
-      return 3;
-    }
-    else if (codeNum <= 6)
-    {
-      return 5;
-    }
-    else if (codeNum <= 14)
-    {
-      return 7;
-    }
-    else if (codeNum <= 30)
-    {
-      return 9;
-    }
-    else
-    {
-      return 11;
-    }
-  }
-  else if (str == "se")
-  {
-    return getUESENumBits("ue", 2 * std::abs(codeNum));
-  }
-  return -1;
-}
+
 Void SEIWriter::xWriteSEIPrefixIndicationByteAlign() {
   while (m_pcBitIf->getNumberOfWrittenBits() % 8 != 0)
   {

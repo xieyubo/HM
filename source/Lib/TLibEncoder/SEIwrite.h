@@ -128,8 +128,23 @@ protected:
 #if JCTVC_AD0021_SEI_PREFIX_INDICATION
   //SEI prefix indication
   Void xWriteSEISEIPrefixIndication(TComBitIf& bs, const SEIPrefixIndication& sei, const TComSPS* sps);
-  Int  getUESENumBits(std::string str, int codeNum);
   Void xWriteSEIPrefixIndicationByteAlign();
+  UInt getBitsUe(UInt x)
+  {
+    UInt n = 0;
+    x += 1;
+    for (Int s = 4; s >= 0; s--)
+    {
+      Int b = 1 << s;
+      UInt m = (1u << b) - 1u;
+      if ((x & ~m) != 0)
+      {
+        x >>= b;
+        n += b;
+      }
+    }
+    return 2 * n + 1;
+  }
 #endif 
 
 #if SHUTTER_INTERVAL_SEI_MESSAGE
