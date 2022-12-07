@@ -1,4 +1,4 @@
-\documentclass[a4paper,11pt]{jctvcdoc}
+\documentclass[a4paper,11pt]{jvetdoc}
 
 \usepackage{geometry}[2010/02/12]
 
@@ -193,17 +193,17 @@ fontsize=\footnotesize}
 	\email{karsten.suehring@hhi.fraunhofer.de}
 }
 
-\jctvcmeeting{}
-\jctvcdocnum{Software Manual}
-\jctvcdocstatus{Software AHG working document}
-\jctvcdocpurpose{Information}
-\jctvcdocsource{AHG chairs}
+\jvetmeeting{}
+\jvetdocnum{Software Manual}
+\jvetdocstatus{Software AHG working document}
+\jvetdocpurpose{Information}
+\jvetdocsource{AHG chairs}
 
 \begin{document}
 \maketitle
 \begin{abstract}
 This document is a user manual describing usage of reference software
-for the HEVC project. It applies to version 16.23
+for the HEVC project. It applies to version 16.26
 of the software.
 \end{abstract}
 
@@ -1536,6 +1536,10 @@ Threshold parameter for controlling amount of QP reduction by the QP reduction m
 Periodicity parameter for application of the QP reduction model. 1: all frames, 0: only intra pictures, 2: every second frame, etc.
 \\
 
+\Option{BIM} &
+\Default{false} &
+Enable or disable Block Importance Mapping, QP adaptation depending on estimated propagation of reference samples. Depends on future and past reference frames configured for temporal filter.
+\\
 
 \Option{SliceChromaQPOffsetPeriodicity} &
 \Default{0} &
@@ -2051,17 +2055,35 @@ This option has no effect if TransformSkip is disabled.
 %% GOP based termporal filter parameters
 %%
 
-\begin{OptionTableNoShorthand}{GOP based temporal filter paramters}{tab:gop-based-temporal-filter}
+\begin{OptionTableNoShorthand}{GOP based temporal filter parameters}{tab:gop-based-temporal-filter}
 
 \Option{TemporalFilter} &
 %\ShortOption{\None} &
 \Default{false} &
-Enables or disables GOP based temporal filter.
+Enable motion-compensated temporal pre-filter. When enabled, at least one of TemporalFilterPastRefs and TemporalFilterFutureRefs
+must be larger than 0.
 \\
-\Option{TemporalFilterFutureReference} &
+\Option{TemporalFilterPastRefs} &
+ %\ShortOption{\None} &
+\Default{4} &
+Number of past frames used by the temporal filter.
+\\
+\Option{TemporalFilterFutureRefs} &
 %\ShortOption{\None} &
-\Default{true} &
-Enables or disable referencing future frames in the GOP based temporal filter. Can be used for low delay configuration.
+\Default{4} &
+Number of future frames used by the temporal filter. This may be set to 0 to avoid using future frames.
+\\
+\Option{FirstValidFrame} &
+%\ShortOption{\None} &
+\Default{0} &
+Index of first frame in video sequence that may be used by the temporal filter. If a negative value is given, the index defaults to the value
+of FrameSkip.
+\\
+\Option{LastValidFrame} &
+%\ShortOption{\None} &
+\Default{MAX_INT} &
+Index of last frame in video sequence that may be used by the temporal filter. If a negative value is given, the index defaults to the value
+of FrameSkip + FramesToBeEncoded - 1.
 \\
 \Option{TemporalFilterStrengthFrame*} &
 %\ShortOption{\None} &

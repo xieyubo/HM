@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.
  *
- * Copyright (c) 2010-2020, ITU/ISO/IEC
+ * Copyright (c) 2010-2022, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -111,6 +111,7 @@ enum UIProfileName // this is used for determining profile strings, where multip
   UI_HIGHTHROUGHPUT_444_16_INTRA  = 22316
 };
 
+constexpr int TF_DEFAULT_REFS = 4;
 
 //! \ingroup TAppEncoder
 //! \{
@@ -333,16 +334,28 @@ strToLevel[] =
   {"6",   Level::LEVEL6},
   {"6.1", Level::LEVEL6_1},
   {"6.2", Level::LEVEL6_2},
+#if JVET_X0079_MODIFIED_BITRATES
+  {"6.3", Level::LEVEL6_3},
+#endif
   {"8.5", Level::LEVEL8_5},
 };
 
 #if !DPB_ENCODER_USAGE_CHECK
+#if JVET_X0079_MODIFIED_BITRATES
+UInt g_uiMaxCpbSize[2][28] =
+{
+  //            LEVEL1,          LEVEL2,  LEVEL2_1,      LEVEL3,  LEVEL3_1,       LEVEL4,   LEVEL4_1,       LEVEL5,    LEVEL5_1,  LEVEL5_2,     LEVEL6,    LEVEL6_1,  LEVEL6_2,  LEVEL6_3
+  { 0, 0, 0, 0, 350000, 0, 0, 0, 1500000, 3000000, 0, 0, 6000000, 10000000, 0, 0, 12000000, 20000000, 0, 0,  25000000,  40000000,  60000000, 0,  60000000, 120000000, 240000000,  240000000 },
+  { 0, 0, 0, 0,      0, 0, 0, 0,       0,       0, 0, 0,       0,        0, 0, 0, 30000000, 50000000, 0, 0, 100000000, 160000000, 240000000, 0, 240000000, 480000000, 800000000, 1600000000 }
+};
+#else
 UInt g_uiMaxCpbSize[2][21] =
 {
   //         LEVEL1,        LEVEL2,LEVEL2_1,     LEVEL3, LEVEL3_1,      LEVEL4, LEVEL4_1,       LEVEL5,  LEVEL5_1,  LEVEL5_2,    LEVEL6,  LEVEL6_1,  LEVEL6_2 
   { 0, 0, 0, 350000, 0, 0, 1500000, 3000000, 0, 6000000, 10000000, 0, 12000000, 20000000, 0,  25000000,  40000000,  60000000,  60000000, 120000000, 240000000 },
   { 0, 0, 0,      0, 0, 0,       0,       0, 0,       0,        0, 0, 30000000, 50000000, 0, 100000000, 160000000, 240000000, 240000000, 480000000, 800000000 }
 };
+#endif
 #endif
 
 static const struct MapStrToCostMode
@@ -937,7 +950,9 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("SmoothQPReductionLimit",                          m_iSmoothQPReductionLimit,                          -16, "Threshold parameter for controlling maximum amount of QP reduction by the QP reduction model")
   ("SmoothQPReductionPeriodicity",                    m_iSmoothQPReductionPeriodicity,                      1, "Periodicity parameter of the QP reduction model, 1: all frames, 0: only intra pictures, 2: every second frame, etc")
 #endif
-
+#if JVET_Y0077_BIM
+  ("BIM",                                             m_bimEnabled,                                     false, "Block Importance Mapping QP adaptation depending on estimated propagation of reference samples.")
+#endif
   ("AdaptiveQP,-aq",                                  m_bUseAdaptiveQP,                                 false, "QP adaptation based on a psycho-visual model")
   ("MaxQPAdaptationRange,-aqr",                       m_iQPAdaptationRange,                                 6, "QP adaptation range")
   ("dQPFile,m",                                       m_dQPFileName,                               string(""), "dQP file name")
@@ -1344,7 +1359,10 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
 
   opts.addOptions()
     ("TemporalFilter", m_gopBasedTemporalFilterEnabled, false, "Enable GOP based temporal filter. Disabled per default")
-    ("TemporalFilterFutureReference", m_gopBasedTemporalFilterFutureReference, true, "Enable referencing of future frames in the GOP based temporal filter. This is typically disabled for Low Delay configurations.")
+    ("TemporalFilterPastRefs", m_gopBasedTemporalFilterPastRefs, TF_DEFAULT_REFS, "Number of past references for temporal prefilter")
+    ("TemporalFilterFutureRefs", m_gopBasedTemporalFilterFutureRefs, TF_DEFAULT_REFS, "Number of future references for temporal prefilter")
+    ("FirstValidFrame", m_firstValidFrame, 0, "First valid frame")
+    ("LastValidFrame", m_lastValidFrame, MAX_INT, "Last valid frame")
     ("TemporalFilterStrengthFrame*", m_gopBasedTemporalFilterStrengths, std::map<Int, Double>(), "Strength for every * frame in GOP based temporal filter, where * is an integer."
                                                                                                    " E.g. --TemporalFilterStrengthFrame8 0.95 will enable GOP based temporal filter at every 8th frame with strength 0.95");
 
@@ -1395,6 +1413,15 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
     inputPathPrefix += "/";
   }
   m_inputFileName   = inputPathPrefix + m_inputFileName;
+
+  if (m_firstValidFrame < 0)
+  {
+    m_firstValidFrame = m_FrameSkip;
+  }
+  if (m_lastValidFrame < 0)
+  {
+    m_lastValidFrame = m_firstValidFrame + m_framesToBeEncoded - 1;
+  }
 
   m_framesToBeEncoded = ( m_framesToBeEncoded + m_temporalSubsampleRatio - 1 ) / m_temporalSubsampleRatio;
   m_adIntraLambdaModifier = cfg_adIntraLambdaModifier.values;
@@ -2965,7 +2992,11 @@ Void TAppEncCfg::xCheckParameter()
 #else
     if ((m_RCCpbSaturationEnabled) && (m_level!=Level::NONE) && (m_profile!=Profile::NONE))
     {
+#if JVET_X0079_MODIFIED_BITRATES
+      UInt uiLevelIdx = (m_level / 30) * 4 + (UInt)((m_level % 30) / 3);
+#else
       UInt uiLevelIdx = (m_level / 10) + (UInt)((m_level % 10) / 3);    // (m_level / 30)*3 + ((m_level % 10) / 3);
+#endif
       xConfirmPara(m_RCCpbSize > g_uiMaxCpbSize[m_levelTier][uiLevelIdx], "RCCpbSize should be smaller than or equal to Max CPB size according to tier and level");
 #endif
       xConfirmPara(m_RCInitialCpbFullness > 1, "RCInitialCpbFullness should be smaller than or equal to 1");
@@ -3069,7 +3100,22 @@ Void TAppEncCfg::xCheckParameter()
   if (m_gopBasedTemporalFilterEnabled)
   {
     xConfirmPara(m_temporalSubsampleRatio != 1, "GOP Based Temporal Filter only support Temporal sub-sample ratio 1");
+
+    xConfirmPara(m_gopBasedTemporalFilterPastRefs <= 0 && m_gopBasedTemporalFilterFutureRefs <= 0,
+                 "Either TemporalFilterPastRefs or TemporalFilterFutureRefs must be larger than 0 when TemporalFilter is enabled");
+
+    if ((m_gopBasedTemporalFilterPastRefs != 0 && m_gopBasedTemporalFilterPastRefs != TF_DEFAULT_REFS)
+        || (m_gopBasedTemporalFilterFutureRefs != 0 && m_gopBasedTemporalFilterFutureRefs != TF_DEFAULT_REFS))
+    {
+      printf("Warning: Number of frames used for temporal prefilter is different from default.\n");
+    }
   }
+#if JVET_Y0077_BIM
+  if (m_bimEnabled)
+  {
+    xConfirmPara(m_temporalSubsampleRatio != 1, "Block Importance Mapping only support Temporal sub-sample ratio 1");
+  }
+#endif
 
 #if EXTENSION_360_VIDEO
   check_failed |= m_ext360.verifyParameters();

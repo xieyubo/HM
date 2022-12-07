@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.
  *
- * Copyright (c) 2010-2020, ITU/ISO/IEC
+ * Copyright (c) 2010-2022, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -419,8 +419,14 @@ protected:
   std::vector<Bool>     m_rwpSEIRwpGuardBandNotUsedForPredFlag;
   std::vector<UChar>    m_rwpSEIRwpGuardBandType;
   Bool                  m_gopBasedTemporalFilterEnabled;               ///< GOP-based Temporal Filter enable/disable
-  Bool                  m_gopBasedTemporalFilterFutureReference;       ///< Enable/disable future frame references in the GOP-based Temporal Filter
+  Int                   m_gopBasedTemporalFilterPastRefs;
+  Int                   m_gopBasedTemporalFilterFutureRefs;
+  Int                   m_firstValidFrame;
+  Int                   m_lastValidFrame;
   std::map<Int, Double> m_gopBasedTemporalFilterStrengths;             ///< Filter strength per frame for the GOP-based Temporal Filter
+#if JVET_Y0077_BIM
+  Bool                  m_bimEnabled;
+#endif
 
   std::string           m_arSEIFileRoot;
   Bool                    m_fisheyeVIdeoInfoSEIEnabled;

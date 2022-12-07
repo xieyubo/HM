@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.
  *
- * Copyright (c) 2010-2020, ITU/ISO/IEC
+ * Copyright (c) 2010-2022, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,10 +49,15 @@
 //! \ingroup TLibCommon
 //! \{
 
-#define JCTVC_AD0021_SEI_MANIFEST                         1  // JCTVC_AD0021£¨JVET-T0056£©: SEI manifest SEI message
-#define JCTVC_AD0021_SEI_PREFIX_INDICATION                1  // JCTVC_AD0021£¨JVET-T0056£©: SEI prefix indication SEI message
+#define JCTVC_AD0021_SEI_MANIFEST                         1  // JCTVC_AD0021(JVET-T0056): SEI manifest SEI message
+#define JCTVC_AD0021_SEI_PREFIX_INDICATION                1  // JCTVC_AD0021(JVET-T0056): SEI prefix indication SEI message
+#define JVET_X0079_MODIFIED_BITRATES                      1 // JVET-X0079: Addition of level 6.3
 
 #define JVET_V0078                                        1 // JVET-V0078: QP control for very smooth blocks
+#define JVET_Y0077_BIM                                    1 // JVET-Y0077: Block Importance Mapping
+
+#define JVET_Y0105_SW_AND_QDF                             1 // An adaptive smooth window (SW) size and extension of quality dependency factor (QDF) to low frame rate in rate control 
+
 
 // ====================================================================================================================
 // Debugging
@@ -99,6 +104,7 @@
 #define SEI_ENCODER_CONTROL                               1  ///< add encoder control for the following SEI: film grain characteristics, content light level, ambient viewing environment
 #define DPB_ENCODER_USAGE_CHECK                           1 ///< Adds DPB encoder usage check.
 #define FGS_RDD5_ENABLE                                   1 // SMPTE RDD5 based film grain synthesis enabled
+#define JVET_T0050_ANNOTATED_REGIONS_SEI                  1 ///< Detect static objects and use it in Annotated Regions SEI message
 
 #if SHUTTER_INTERVAL_SEI_MESSAGE
 #define SHUTTER_INTERVAL_SEI_PROCESSING                   1 ///< JCTVC-AM0024: pre-/post-processing to use shutter interval SEI
@@ -619,6 +625,9 @@ namespace Level
     LEVEL6   = 180,
     LEVEL6_1 = 183,
     LEVEL6_2 = 186,
+#if JVET_X0079_MODIFIED_BITRATES
+    LEVEL6_3 = 189,
+#endif
     LEVEL8_5 = 255,
   };
 }

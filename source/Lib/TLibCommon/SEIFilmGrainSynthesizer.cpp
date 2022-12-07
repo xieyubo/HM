@@ -3,7 +3,7 @@
 * and contributor rights, including patent rights, and no such rights are
 * granted under this license.
 *
-* Copyright (c) 2010-2020, ITU/ISO/IEC
+* Copyright (c) 2010-2022, ITU/ISO/IEC
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -567,7 +567,10 @@ void SEIFilmGrainSynthesizer::create(uint32_t width, uint32_t height, ChromaForm
 
 SEIFilmGrainSynthesizer::~SEIFilmGrainSynthesizer()
 {
-
+  if (m_pGrainSynt)
+  {
+    fgsDeinit();
+  }
 }
 
 void SEIFilmGrainSynthesizer::fgsInit()

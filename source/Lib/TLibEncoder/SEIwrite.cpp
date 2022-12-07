@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.
  *
- * Copyright (c) 2010-2020, ITU/ISO/IEC
+ * Copyright (c) 2010-2022, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1179,11 +1179,11 @@ Void SEIWriter::xWriteSEIContentColourVolume(const SEIContentColourVolume &sei)
     {
       WRITE_CODE( (UInt)sei.m_ccvMinLuminanceValue, 32,  "ccv_min_luminance_value" );
     }
-    if (sei.m_ccvMinLuminanceValuePresentFlag == true) 
+    if (sei.m_ccvMaxLuminanceValuePresentFlag == true) 
     {
       WRITE_CODE( (UInt)sei.m_ccvMaxLuminanceValue, 32,  "ccv_max_luminance_value" );
     }
-    if (sei.m_ccvMinLuminanceValuePresentFlag == true) 
+    if (sei.m_ccvAvgLuminanceValuePresentFlag == true) 
     {
       WRITE_CODE( (UInt)sei.m_ccvAvgLuminanceValue, 32,  "ccv_avg_luminance_value" );
     }
@@ -1633,18 +1633,22 @@ Void SEIWriter::xWriteSEIAnnotatedRegions(const SEIAnnotatedRegions &sei, const 
         WRITE_FLAG(ar.boundingBoxValid, "ar_object_bounding_box_update_flag");
         if (ar.boundingBoxValid)
         {
-          WRITE_CODE(ar.boundingBoxTop,   16, "ar_bounding_box_top");
-          WRITE_CODE(ar.boundingBoxLeft,  16, "ar_bounding_box_left");
-          WRITE_CODE(ar.boundingBoxWidth, 16, "ar_bounding_box_width");
-          WRITE_CODE(ar.boundingBoxHeight,16, "ar_bounding_box_height");
-          if (sei.m_hdr.m_partialObjectFlagPresentFlag)
+          WRITE_FLAG(ar.boundingBoxCancelFlag, "ar_object_bounding_box_cancel_flag");
+          if (!ar.boundingBoxCancelFlag)
           {
-            WRITE_UVLC(ar.partialObjectFlag, "ar_partial_object_flag");
-          }
-          if (sei.m_hdr.m_objectConfidenceInfoPresentFlag)
-          {
-            assert(ar.objectConfidence < (1<<sei.m_hdr.m_objectConfidenceLength));
-            WRITE_CODE(ar.objectConfidence, sei.m_hdr.m_objectConfidenceLength, "ar_object_confidence");
+            WRITE_CODE(ar.boundingBoxTop,   16, "ar_bounding_box_top");
+            WRITE_CODE(ar.boundingBoxLeft,  16, "ar_bounding_box_left");
+            WRITE_CODE(ar.boundingBoxWidth, 16, "ar_bounding_box_width");
+            WRITE_CODE(ar.boundingBoxHeight,16, "ar_bounding_box_height");
+            if (sei.m_hdr.m_partialObjectFlagPresentFlag)
+            {
+              WRITE_UVLC(ar.partialObjectFlag, "ar_partial_object_flag");
+            }
+            if (sei.m_hdr.m_objectConfidenceInfoPresentFlag)
+            {
+              assert(ar.objectConfidence < (1<<sei.m_hdr.m_objectConfidenceLength));
+              WRITE_CODE(ar.objectConfidence, sei.m_hdr.m_objectConfidenceLength, "ar_object_confidence");
+            }
           }
         }
       }

@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.
  *
- * Copyright (c) 2010-2020, ITU/ISO/IEC
+ * Copyright (c) 2010-2022, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -2318,6 +2318,7 @@ TEncSearch::estIntraPredLumaQT(TComDataCU* pcCU,
 
         CandNum += xUpdateCandList( uiMode, cost, numModesForFullRD, uiRdModeList, CandCostList );
       }
+      (Void)CandNum; // Avoid compiler warning: CandNum is never used
 
       if (m_pcEncCfg->getFastUDIUseMPMEnabled())
       {
@@ -4087,6 +4088,8 @@ Void TEncSearch::xTZSearch( const TComDataCU* const pcCU,
 #endif
   // init TZSearchStruct
   IntTZSearchStruct cStruct;
+  cStruct.iBestX      = 0;
+  cStruct.iBestY      = 0;
   cStruct.iYStride    = iRefStride;
   cStruct.piRefY      = piRefY;
   cStruct.uiBestSad   = MAX_UINT;

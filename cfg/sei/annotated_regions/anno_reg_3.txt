@@ -16,6 +16,7 @@ SEIArObjIdx[c]: 0
 SEIArObjCancelFlag[c]: 0
 SEIArObjLabelUpdateFlag[c]: 0
 SEIArBoundBoxUpdateFlag[c]: 1
+SEIArBoundBoxCancelFlag[c]: 0
 SEIArObjTop[c]: 30
 SEIArObjLeft[c]: 30
 SEIArObjWidth[c]: 50

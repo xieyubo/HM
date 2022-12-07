@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.
  *
- * Copyright (c) 2010-2020, ITU/ISO/IEC
+ * Copyright (c) 2010-2022, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,9 @@
 
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComSlice.h"
+#if JVET_T0050_ANNOTATED_REGIONS_SEI
+#include "TLibCommon/SEI.h"
+#endif
 #include <assert.h>
 
 struct GOPEntry
@@ -125,6 +128,10 @@ struct TEncSEIKneeFunctionInformation
   Int       m_outputDispLuminance;
   std::vector<KneePointPair> m_kneeSEIKneePointPairs;
 };
+
+#if JVET_T0050_ANNOTATED_REGIONS_SEI
+  std::map<UInt, SEIAnnotatedRegions::AnnotatedRegionObject> m_arObjects;
+#endif
 
 protected:
   //==== File I/O ========
@@ -410,6 +417,10 @@ protected:
   std::vector<UInt> m_omniViewportSEIHorRange;
   std::vector<UInt> m_omniViewportSEIVerRange; 
   Bool      m_gopBasedTemporalFilterEnabled;
+#if JVET_Y0077_BIM
+  Bool                  m_bimEnabled;
+  std::map<Int, Int*>   m_adaptQPmap;
+#endif
   Bool                  m_cmpSEIEnabled;
   Bool                  m_cmpSEICmpCancelFlag;
   Bool                  m_cmpSEICmpPersistenceFlag;
@@ -1139,6 +1150,13 @@ public:
   UInt  getOmniViewportSEIVerRange(Int idx)                          { return m_omniViewportSEIVerRange[idx]; }
   Void  setGopBasedTemporalFilterEnabled(Bool flag)                  { m_gopBasedTemporalFilterEnabled = flag; }
   Bool  getGopBasedTemporalFilterEnabled() const                     { return m_gopBasedTemporalFilterEnabled; }
+#if JVET_Y0077_BIM
+  void  setBIM(Bool flag)                                            { m_bimEnabled = flag; }
+  Bool  getBIM() const                                               { return m_bimEnabled; }
+  void  setAdaptQPmap(std::map<Int, Int*> map)                       { m_adaptQPmap = map; }
+  Int*  getAdaptQPmap(Int poc)                                       { return m_adaptQPmap[poc]; }
+  std::map<Int, Int*> *getAdaptQPmap()                               { return &m_adaptQPmap; }
+#endif
   Void     setCmpSEIEnabled(Bool b)                                  { m_cmpSEIEnabled = b; }
   Bool     getCmpSEIEnabled()                                        { return m_cmpSEIEnabled; }
   Void     setCmpSEICmpCancelFlag(Bool b)                            { m_cmpSEICmpCancelFlag = b; }
@@ -1214,8 +1232,11 @@ public:
   UChar getSEIXSDMetricType() const                                  { return m_xsdMetricType; }
   Void  setRegionalNestingSEIFileRoot( const std::string &s )        { m_regionalNestingSEIFileRoot = s; }
   const std::string &getRegionalNestingSEIFileRoot() const           { return m_regionalNestingSEIFileRoot; }
-
+#if JVET_T0050_ANNOTATED_REGIONS_SEI
+  Void  setAnnotatedRegionSEIFileRoot(const std::string &s)          { m_arSEIFileRoot = s; m_arObjects.clear(); }
+#else
   Void  setAnnotatedRegionSEIFileRoot(const std::string &s)          { m_arSEIFileRoot = s; }
+#endif
   const std::string &getAnnotatedRegionSEIFileRoot() const           { return m_arSEIFileRoot; }
 
   const TComSEIMasteringDisplay &getMasteringDisplaySEI() const      { return m_masteringDisplay; }

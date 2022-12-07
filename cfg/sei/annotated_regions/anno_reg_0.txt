@@ -21,6 +21,7 @@ SEIArObjCancelFlag[c]: 0
 SEIArObjLabelUpdateFlag[c]: 1
 SEIArObjectLabelIdc[c]: 0
 SEIArBoundBoxUpdateFlag[c]: 1
+SEIArBoundBoxCancelFlag[c]: 0
 SEIArObjTop[c]: 10
 SEIArObjLeft[c]: 10
 SEIArObjWidth[c]: 50
@@ -31,6 +32,7 @@ SEIArObjCancelFlag[c]: 0
 SEIArObjLabelUpdateFlag[c]: 1
 SEIArObjectLabelIdc[c]: 0
 SEIArBoundBoxUpdateFlag[c]: 1
+SEIArBoundBoxCancelFlag[c]: 0
 SEIArObjTop[c]: 100
 SEIArObjLeft[c]: 100
 SEIArObjWidth[c]: 50
@@ -41,6 +43,7 @@ SEIArObjCancelFlag[c]: 0
 SEIArObjLabelUpdateFlag[c]: 1
 SEIArObjectLabelIdc[c]: 1
 SEIArBoundBoxUpdateFlag[c]: 1
+SEIArBoundBoxCancelFlag[c]: 0
 SEIArObjTop[c]: 200
 SEIArObjLeft[c]: 200
 SEIArObjWidth[c]: 80
