@@ -49,6 +49,8 @@
 //! \ingroup TLibCommon
 //! \{
 
+#define JCTVC_AD0021_SEI_MANIFEST                         1  // JCTVC_AD0021(JVET-T0056): SEI manifest SEI message
+#define JCTVC_AD0021_SEI_PREFIX_INDICATION                1  // JCTVC_AD0021(JVET-T0056): SEI prefix indication SEI message
 #define JVET_X0079_MODIFIED_BITRATES                      1 // JVET-X0079: Addition of level 6.3
 
 #define JVET_V0078                                        1 // JVET-V0078: QP control for very smooth blocks

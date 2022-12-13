@@ -561,6 +561,13 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setSummaryOutFilename                                ( m_summaryOutFilename );
   m_cTEncTop.setSummaryPicFilenameBase                            ( m_summaryPicFilenameBase );
   m_cTEncTop.setSummaryVerboseness                                ( m_summaryVerboseness );
+
+#if JCTVC_AD0021_SEI_MANIFEST
+  m_cTEncTop.setSEIManifestSEIEnabled(m_SEIManifestSEIEnabled);
+#endif
+#if JCTVC_AD0021_SEI_PREFIX_INDICATION
+  m_cTEncTop.setSEIPrefixIndicationSEIEnabled(m_SEIPrefixIndicationSEIEnabled);
+#endif
 }
 
 Void TAppEncTop::xCreateLib()

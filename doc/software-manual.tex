@@ -2451,6 +2451,8 @@ The table below lists the SEI messages defined for Version 1 and Range-Extension
   155 & Region-wise packing                      & Table \ref{tab:sei-rwp} \\
   156 & Omni viewport                            & Table \ref{tab:sei-omni-viewport} \\  
   158 & Motion-constrained tile set extraction information        & Table \ref{tab:sei-mcts-extract} \\
+  200 & SEI manifest                             & Table \ref{tab:sei-sei-manifest} \\
+  201 & SEI prefix indication				 & Table \ref{tab:sei-sei-prefix-indication} \\
   203 & Shutter interval information             & Table \ref{tab:sei-sii}\\
 \end{SEIListTable}
 %%
@@ -3529,7 +3531,19 @@ When true (non-zero), generates example motion-constrained tile sets extraction 
 \\
 \end{OptionTableNoShorthand}
 
+\begin{OptionTableNoShorthand}{SEI manifest SEI message encoder parameters}{tab:sei-sei-manifest}
+\Option{SEISEIManifestEnabled} &
+\Default{false} &
+Enables (true) or disables (false) the SEI manifest SEI message.
+\\
+\end{OptionTableNoShorthand}
 
+\begin{OptionTableNoShorthand}{SEI prefix indication SEI message encoder parameters}{tab:sei-sei-prefix-indication}
+\Option{SEISEIPrefixIndicationEnabled} &
+\Default{false} &
+Enables (true) or disables (false) the SEI prefix indication SEI message.
+\\
+\end{OptionTableNoShorthand}
 
 \begin{OptionTableNoShorthand}{Shutter interval info SEI message encoder parameters}{tab:sei-sii}
 \Option{SEIShutterIntervalEnabled} &

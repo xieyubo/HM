@@ -788,6 +788,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
 #if SHUTTER_INTERVAL_SEI_MESSAGE
   SMultiValueInput<UInt>   cfg_siiSEIInputNumUnitsInSI                (0, MAX_UINT, 0, 7);
 #endif
+
   Int warnUnknowParameter = 0;
   po::Options opts;
   opts.addOptions()
@@ -1348,6 +1349,12 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("SEIFviPolynomialCoeff",                           cfg_fviSEIFisheyePolynomialCoeff,         cfg_fviSEIFisheyePolynomialCoeff,        "Specifies the j-th polynomial coefficient value of the curve function that maps the normalized distance of a luma sample from the centre of the circular region corresponding to the i-th active area to the angular value of a sphere coordinate from the normal vector of a nominal imaging plane that passes through the centre of the sphere coordinate system for the i-th active region.")
   ("SEIRegionalNestingFileRoot,-rns",                 m_regionalNestingSEIFileRoot,                    string(""), "Regional nesting SEI parameters root file name (wo num ext); only the file name base is to be added. Underscore and POC would be automatically addded to . E.g. \"-rns rns\" will search for files rns_0.txt, rns_1.txt, ...")
   ("SEIAnnotatedRegionsFileRoot,-ar",                 m_arSEIFileRoot,                                 string(""), "Annotated region SEI parameters root file name (wo num ext); only the file name base is to be added. Underscore and POC would be automatically addded to . E.g. \"-ar ar\" will search for files ar_0.txt, ar_1.txt, ...")
+#if JCTVC_AD0021_SEI_MANIFEST
+  ("SEISEIManifestEnabled",                           m_SEIManifestSEIEnabled,                  false,                                   "Controls if SEI Manifest SEI messages enabled")
+#endif
+#if JCTVC_AD0021_SEI_PREFIX_INDICATION
+  ("SEISEIPrefixIndicationEnabled",                   m_SEIPrefixIndicationSEIEnabled,          false,                                   "Controls if SEI Prefix Indications SEI messages enabled")
+#endif
   ;
 
   opts.addOptions()

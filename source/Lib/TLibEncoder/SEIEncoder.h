@@ -109,6 +109,12 @@ public:
   Void readRNSEIWindow(std::istream &fic, RNSEIWindowVec::iterator regionIter, Bool &failed );
   Bool initSEIAnnotatedRegions(SEIAnnotatedRegions *sei, Int currPOC);
   Void readAnnotatedRegionSEI(std::istream &fic, SEIAnnotatedRegions *seiAnnoRegion, Bool &failed);
+#if JCTVC_AD0021_SEI_MANIFEST
+  Void initSEISEIManifest(SEIManifest* seiSeiManifest, const SEIMessages& seiMessage);
+#endif
+#if JCTVC_AD0021_SEI_PREFIX_INDICATION
+  Void initSEISEIPrefixIndication(SEIPrefixIndication* seiSeiPrefixIndications, const SEI* sei);
+#endif
   // trailing SEIs
   Void initDecodedPictureHashSEI(SEIDecodedPictureHash *sei, TComPic *pcPic, std::string &rHashString, const BitDepths &bitDepths);
   Void initTemporalLevel0IndexSEI(SEITemporalLevel0Index *sei, TComSlice *slice);

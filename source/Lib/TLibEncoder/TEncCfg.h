@@ -556,6 +556,13 @@ protected:
   std::string m_summaryPicFilenameBase;                       ///< Base filename to use for producing summary picture output files. The actual filenames used will have I.txt, P.txt and B.txt appended.
   UInt        m_summaryVerboseness;                           ///< Specifies the level of the verboseness of the text output.
 
+#if JCTVC_AD0021_SEI_MANIFEST
+  Bool        m_SEIManifestSEIEnabled;
+#endif
+#if JCTVC_AD0021_SEI_PREFIX_INDICATION
+  Bool        m_SEIPrefixIndicationSEIEnabled;
+#endif
+
 public:
   TEncCfg()
   : m_tileColumnWidth()
@@ -1396,6 +1403,16 @@ public:
 
   Void      setSummaryVerboseness(UInt v)                            { m_summaryVerboseness = v; }
   UInt      getSummaryVerboseness( ) const                           { return m_summaryVerboseness; }
+
+#if JCTVC_AD0021_SEI_MANIFEST
+  Void     setSEIManifestSEIEnabled(Bool b) { m_SEIManifestSEIEnabled = b; }
+  Bool     getSEIManifestSEIEnabled() { return m_SEIManifestSEIEnabled; }
+#endif
+#if JCTVC_AD0021_SEI_PREFIX_INDICATION
+  Void     setSEIPrefixIndicationSEIEnabled(Bool b) { m_SEIPrefixIndicationSEIEnabled = b; }
+  Bool     getSEIPrefixIndicationSEIEnabled() { return m_SEIPrefixIndicationSEIEnabled; }
+#endif
+
 };
 
 //! \}

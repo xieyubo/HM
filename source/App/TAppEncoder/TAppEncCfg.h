@@ -541,6 +541,13 @@ protected:
   friend class TExt360AppEncTop;
 #endif
 
+#if JCTVC_AD0021_SEI_MANIFEST
+  Bool       m_SEIManifestSEIEnabled;
+#endif
+#if JCTVC_AD0021_SEI_PREFIX_INDICATION
+  Bool       m_SEIPrefixIndicationSEIEnabled;
+#endif
+
   // internal member functions
   Void  xCheckParameter ();                                   ///< check validity of configuration values
   Void  xPrintParameter ();                                   ///< print configuration values
