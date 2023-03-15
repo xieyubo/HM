@@ -479,9 +479,9 @@ protected:
   Bool      m_fgcSEIPerPictureSEI;
   UChar     m_fgcSEINumIntensityIntervalMinus1[MAX_NUM_COMPONENT];
   UChar     m_fgcSEINumModelValuesMinus1[MAX_NUM_COMPONENT];
-  UChar     m_fgcSEIIntensityIntervalLowerBound[MAX_NUM_COMPONENT][MAX_NUM_INTENSITIES];
-  UChar     m_fgcSEIIntensityIntervalUpperBound[MAX_NUM_COMPONENT][MAX_NUM_INTENSITIES];
-  UInt      m_fgcSEICompModelValue[MAX_NUM_COMPONENT][MAX_NUM_INTENSITIES][MAX_NUM_MODEL_VALUES];
+  UChar     m_fgcSEIIntensityIntervalLowerBound[MAX_NUM_COMPONENT][FG_MAX_NUM_INTENSITIES];
+  UChar     m_fgcSEIIntensityIntervalUpperBound[MAX_NUM_COMPONENT][FG_MAX_NUM_INTENSITIES];
+  UInt      m_fgcSEICompModelValue[MAX_NUM_COMPONENT][FG_MAX_NUM_INTENSITIES][FG_MAX_NUM_MODEL_VALUES];
 #endif
   // content light level SEI
   Bool      m_cllSEIEnabled;

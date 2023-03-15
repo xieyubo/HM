@@ -2497,13 +2497,29 @@ SEI messages.
 \Default{0} &
 Enables or disables the insertion of the film grain characteristics SEI message.
 \\
+\Option{SEIFGCAnalysisEnabled} &
+\Default{0} &
+Enable film grain analysis to estimate film grain parameters.
+\\
+\Option{SEIFGCExternalMask} &
+\Default{\NotSet} &
+Read external file with mask for film grain analysis. If empty string, use internally calculated mask.
+\\
+\Option{SEIFGCExternalDenoised} &
+\Default{\NotSet} &
+Read external file with denoised sequence for film grain analysis. If empty string, use MCTF for denoising.
+\\
 \Option{SEIFGCCancelFlag} &
 \Default{0} &
 Specifies the persistence of any previous film grain characteristics SEI message in output order. For SMPTE-RDD5, the value must be 0.
 \\
 \Option{SEIFGCPersistenceFlag} &
 \Default{0} &
-Specifies the persistence of the film grain characteristics SEI message for the current layer. For SMPTE-RDD5, the value must be 0.
+Specifies the persistence of the film grain characteristics SEI message for the current layer. For SMPTE-RDD5, the value must be 0; set to 1 when FGC SEI frequency is once per I-period
+\\
+\Option{SEIFGCPerPictureSEI} &
+\Default{0} &
+Specifies the frequency of inserting the film grain characteristics SEI message. 0: FGC SEI is inserted once per I-period; 1: FGC SEI is inserted once per picture.
 \\
 \Option{SEIFGCModelID} &
 \Default{0} &
@@ -2532,15 +2548,15 @@ Specifies the blending mode used to blend the simulated film grain with the deco
 Specifies a scale factor used in the film grain characterization equations.
 \\
 \Option{SEIFGCCompModelPresentComp0} &
-\Default{1} &
+\Default{0} &
 Specifies the presence of film grain modelling on colour component 0.
 \\
 \Option{SEIFGCCompModelPresentComp1} &
-\Default{1} &
+\Default{0} &
 Specifies the presence of film grain modelling on colour component 1.
 \\
 \Option{SEIFGCCompModelPresentComp2} &
-\Default{1} &
+\Default{0} &
 Specifies the presence of film grain modelling on colour component 2.
 \\
 \Option{SEIFGCNumIntensityIntervalMinus1Comp0} &
@@ -2568,39 +2584,39 @@ Specifies the number of model values minus 1 for comp 1
 Specifies the number of model values minus 1 for comp 2
 \\
 \Option{SEIFGCIntensityIntervalLowerBoundComp0} &
-\Default{10} &
+\Default{0} &
 Specifies the lower bound of intensity interval for comp 0 (for SMPTE-RDD5, non-overlapping interval)
 \\
 \Option{SEIFGCIntensityIntervalLowerBoundComp1} &
-\Default{10} &
+\Default{0} &
 Specifies the lower bound of intensity interval for comp 1 (for SMPTE-RDD5, non-overlapping interval)
 \\
 \Option{SEIFGCIntensityIntervalLowerBoundComp2} &
-\Default{10} &
+\Default{0} &
 Specifies the lower bound of intensity interval for comp 2 (for SMPTE-RDD5, non-overlapping interval)
 \\
 \Option{SEIFGCIntensityIntervalUpperBoundComp0} &
-\Default{250} &
+\Default{0} &
 Specifies the upper bound of intensity interval for comp 0 (for SMPTE-RDD5, non-overlapping interval)
 \\
 \Option{SEIFGCIntensityIntervalUpperBoundComp1} &
-\Default{250} &
+\Default{0} &
 Specifies the upper bound of intensity interval for comp 1 (for SMPTE-RDD5, non-overlapping interval)
 \\
 \Option{SEIFGCIntensityIntervalUpperBoundComp2} &
-\Default{250} &
+\Default{0} &
 Specifies the upper bound of intensity interval for comp 2 (for SMPTE-RDD5, non-overlapping interval)
 \\
 \Option{SEIFGCCompModelValuesComp0} &
-\Default{24} &
+\Default{0} &
 Specifies the model values for each intensity interval for comp 0 (sigma, h, v (h,v might be inferred based on number of model value))
 \\
 \Option{SEIFGCCompModelValuesComp1} &
-\Default{24} &
+\Default{0} &
 Specifies the model values for each intensity interval for comp 1 (sigma, h, v (h,v might be inferred based on number of model value))
 \\
 \Option{SEIFGCCompModelValuesComp2} &
-\Default{24} &
+\Default{0} &
 Specifies the model values for each intensity interval for comp 2 (sigma, h, v (h,v might be inferred based on number of model value))
 \\
 \end{OptionTableNoShorthand}
