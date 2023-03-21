@@ -19,6 +19,11 @@ build_macos:
    tags:
       - macos
 
+build_ubuntu2204:
+   extends: .build_template
+   tags:
+      - ubuntu2204
+
 build_ubuntu2004:
    extends: .build_template
    tags:
