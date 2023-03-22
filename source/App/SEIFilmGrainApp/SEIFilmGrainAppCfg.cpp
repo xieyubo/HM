@@ -54,44 +54,20 @@ static inline istream& operator >> (std::istream &in, SMultiValueInput<T> &value
   return values.readValues(in);
 }
 
-template<>
-UInt SMultiValueInput<UInt>::readValue(const TChar *&pStr, Bool &bSuccess)
+template <class T>
+T SMultiValueInput<T>::readValue(const char *&pStr, bool &bSuccess)
 {
-  TChar *eptr;
-  UInt val=strtoul(pStr, &eptr, 0);
-  pStr=eptr;
-  bSuccess=!(*eptr!=0 && !isspace(*eptr) && *eptr!=',') && !(val<minValIncl || val>maxValIncl);
+  T val = T();
+  std::string s(pStr);
+  std::replace(s.begin(), s.end(), ',', ' '); // make comma separated into space separated
+  std::istringstream iss(s);
+  iss >> val;
+  bSuccess = !iss.fail() // check nothing has gone wrong
+    && !(val<minValIncl || val>maxValIncl) // check value is within range
+    && (int)iss.tellg() != 0 // check we've actually read something
+    && (iss.eof() || iss.peek() == ' '); // check next character is a space, or eof
+  pStr += (iss.eof() ? s.size() : (std::size_t)iss.tellg());
   return val;
-}
-
-template<>
-Int SMultiValueInput<Int>::readValue(const TChar *&pStr, Bool &bSuccess)
-{
-  TChar *eptr;
-  Int val=strtol(pStr, &eptr, 0);
-  pStr=eptr;
-  bSuccess=!(*eptr!=0 && !isspace(*eptr) && *eptr!=',') && !(val<minValIncl || val>maxValIncl);
-  return val;
-}
-
-template<>
-Double SMultiValueInput<Double>::readValue(const TChar *&pStr, Bool &bSuccess)
-{
-  TChar *eptr;
-  Double val=strtod(pStr, &eptr);
-  pStr=eptr;
-  bSuccess=!(*eptr!=0 && !isspace(*eptr) && *eptr!=',') && !(val<minValIncl || val>maxValIncl);
-  return val;
-}
-
-template<>
-Bool SMultiValueInput<Bool>::readValue(const TChar *&pStr, Bool &bSuccess)
-{
-  TChar *eptr;
-  Int val=strtol(pStr, &eptr, 0);
-  pStr=eptr;
-  bSuccess=!(*eptr!=0 && !isspace(*eptr) && *eptr!=',') && !(val<Int(minValIncl) || val>Int(maxValIncl));
-  return val!=0;
 }
 
 template <class T>
