@@ -255,6 +255,9 @@ Void TAppEncTop::xInitLibCfg()
   {
     m_cTEncTop.setBitDepth((ChannelType)channelType, m_internalBitDepth[channelType]);
     m_cTEncTop.setPCMBitDepth((ChannelType)channelType, m_bPCMInputBitDepthFlag ? m_MSBExtendedBitDepth[channelType] : m_internalBitDepth[channelType]);
+#if JVET_X0048_X0103_FILM_GRAIN
+    m_cTEncTop.setBitDepthInput((ChannelType)channelType, m_inputBitDepth[channelType]);
+#endif
   }
 
   m_cTEncTop.setPCMLog2MaxSize                                    ( m_pcmLog2MaxSize);
@@ -446,17 +449,26 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setFilmGrainCharactersticsSEISepColourDescPresent    (m_fgcSEISepColourDescPresentFlag);
   m_cTEncTop.setFilmGrainCharactersticsSEIBlendingModeID          ((UChar)m_fgcSEIBlendingModeID);
   m_cTEncTop.setFilmGrainCharactersticsSEILog2ScaleFactor         ((UChar)m_fgcSEILog2ScaleFactor);
+#if JVET_X0048_X0103_FILM_GRAIN
+  m_cTEncTop.setFilmGrainAnalysisEnabled                          (m_fgcSEIAnalysisEnabled);
+  m_cTEncTop.setFilmGrainExternalMask                             (m_fgcSEIExternalMask);
+  m_cTEncTop.setFilmGrainExternalDenoised                         (m_fgcSEIExternalDenoised);
+  m_cTEncTop.setFilmGrainCharactersticsSEIPerPictureSEI           (m_fgcSEIPerPictureSEI);
+#endif
   for (Int i = 0; i < MAX_NUM_COMPONENT; i++) {
     m_cTEncTop.setFGCSEICompModelPresent                          (m_fgcSEICompModelPresent[i], i);
-#if FGS_RDD5_ENABLE	
-    if (m_fgcSEICompModelPresent[i]) {
-      m_cTEncTop.setFGCSEINumIntensityIntervalMinus1((UChar)m_fgcSEINumIntensityIntervalMinus1[i], i);
-      m_cTEncTop.setFGCSEINumModelValuesMinus1((UChar)m_fgcSEINumModelValuesMinus1[i], i);
-      for (UInt j = 0; j <= m_fgcSEINumIntensityIntervalMinus1[i]; j++) {
-        m_cTEncTop.setFGCSEIIntensityIntervalLowerBound((UChar)m_fgcSEIIntensityIntervalLowerBound[i][j], i, j);
-        m_cTEncTop.setFGCSEIIntensityIntervalUpperBound((UChar)m_fgcSEIIntensityIntervalUpperBound[i][j], i, j);
-        for (UInt k = 0; k <= m_fgcSEINumModelValuesMinus1[i]; k++) {
-          m_cTEncTop.setFGCSEICompModelValue(m_fgcSEICompModelValue[i][j][k], i, j, k);
+#if JVET_X0048_X0103_FILM_GRAIN	
+    if (m_fgcSEICompModelPresent[i])
+    {
+      m_cTEncTop.setFGCSEINumIntensityIntervalMinus1              ((UChar)m_fgcSEINumIntensityIntervalMinus1[i], i);
+      m_cTEncTop.setFGCSEINumModelValuesMinus1                    ((UChar)m_fgcSEINumModelValuesMinus1[i], i);
+      for (UInt j = 0; j <= m_fgcSEINumIntensityIntervalMinus1[i]; j++)
+      {
+        m_cTEncTop.setFGCSEIIntensityIntervalLowerBound           ((UChar)m_fgcSEIIntensityIntervalLowerBound[i][j], i, j);
+        m_cTEncTop.setFGCSEIIntensityIntervalUpperBound           ((UChar)m_fgcSEIIntensityIntervalUpperBound[i][j], i, j);
+        for (UInt k = 0; k <= m_fgcSEINumModelValuesMinus1[i]; k++)
+        {
+          m_cTEncTop.setFGCSEICompModelValue                      (m_fgcSEICompModelValue[i][j][k], i, j, k);
         }
       }
     }
@@ -636,6 +648,19 @@ Void TAppEncTop::encode()
   TComPicYuv*       pcPicYuvOrg = new TComPicYuv;
   TComPicYuv*       pcPicYuvRec = NULL;
 
+#if JVET_X0048_X0103_FILM_GRAIN
+  TComPicYuv* m_filteredOrgPicForFG;
+  if (m_fgcSEIAnalysisEnabled && m_fgcSEIExternalDenoised.empty())
+  {
+    m_filteredOrgPicForFG = new TComPicYuv;
+    m_filteredOrgPicForFG->create(m_sourceWidth, m_sourceHeight, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxTotalCUDepth, true);
+  }
+  else
+  {
+    m_filteredOrgPicForFG = NULL;
+  }
+#endif
+
   // initialize internal class & member variables
   xInitLibCfg();
   xCreateLib();
@@ -687,6 +712,30 @@ Void TAppEncTop::encode()
       m_gopBasedTemporalFilterEnabled, m_cTEncTop.getAdaptQPmap(), m_bimEnabled);
 #endif
   }
+#if JVET_X0048_X0103_FILM_GRAIN
+  TEncTemporalFilter m_temporalFilterForFG;
+  if ( m_fgcSEIAnalysisEnabled && m_fgcSEIExternalDenoised.empty() )
+  {
+    int  filteredFrame                 = 0;
+    if ( m_iIntraPeriod < 1 )
+      filteredFrame = 2 * m_iFrameRate;
+    else
+      filteredFrame = m_iIntraPeriod;
+
+    map<int, double> filteredFramesAndStrengths = { { filteredFrame, 1.5 } };   // TODO: adjust MCTF and MCTF strenght
+
+    m_temporalFilterForFG.init(m_FrameSkip, m_inputBitDepth, m_MSBExtendedBitDepth, m_internalBitDepth, m_sourceWidth, m_sourceHeight,
+      m_sourcePadding, m_framesToBeEncoded, m_bClipInputVideoToRec709Range, m_inputFileName, m_chromaFormatIDC,
+      m_inputColourSpaceConvert, m_iQP, m_iGOPSize, filteredFramesAndStrengths,
+      m_gopBasedTemporalFilterPastRefs, m_gopBasedTemporalFilterFutureRefs,
+#if !JVET_Y0077_BIM
+      m_firstValidFrame, m_lastValidFrame);
+#else
+      m_firstValidFrame, m_lastValidFrame,
+      m_gopBasedTemporalFilterEnabled, m_cTEncTop.getAdaptQPmap(), m_bimEnabled);
+#endif
+  }
+#endif
   while ( !bEos )
   {
     // get buffers
@@ -704,6 +753,14 @@ Void TAppEncTop::encode()
     }
 #else
     m_cTVideoIOYuvInputFile.read( pcPicYuvOrg, &cPicYuvTrueOrg, ipCSC, m_sourcePadding, m_InputChromaFormatIDC, m_bClipInputVideoToRec709Range );
+#endif
+
+#if JVET_X0048_X0103_FILM_GRAIN
+    if (m_fgcSEIAnalysisEnabled && m_fgcSEIExternalDenoised.empty())
+    {
+      pcPicYuvOrg->copyToPic(m_filteredOrgPicForFG);
+      m_temporalFilterForFG.filter(m_filteredOrgPicForFG, m_iFrameRcvd);
+    }
 #endif
 
 #if JVET_Y0077_BIM
@@ -737,7 +794,11 @@ Void TAppEncTop::encode()
     }
     else
     {
+#if JVET_X0048_X0103_FILM_GRAIN
+      m_cTEncTop.encode( bEos, flush ? 0 : pcPicYuvOrg, flush ? 0 : &cPicYuvTrueOrg, flush ? 0 : m_filteredOrgPicForFG, ipCSC, snrCSC, m_cListPicYuvRec, outputAccessUnits, iNumEncoded);
+#else
       m_cTEncTop.encode( bEos, flush ? 0 : pcPicYuvOrg, flush ? 0 : &cPicYuvTrueOrg, ipCSC, snrCSC, m_cListPicYuvRec, outputAccessUnits, iNumEncoded );
+#endif
     }
 
 #if SHUTTER_INTERVAL_SEI_PROCESSING
@@ -767,6 +828,15 @@ Void TAppEncTop::encode()
   pcPicYuvOrg->destroy();
   delete pcPicYuvOrg;
   pcPicYuvOrg = NULL;
+
+#if JVET_X0048_X0103_FILM_GRAIN
+  if (m_fgcSEIAnalysisEnabled && m_fgcSEIExternalDenoised.empty())
+  {
+    m_filteredOrgPicForFG->destroy();
+    delete m_filteredOrgPicForFG;
+    m_filteredOrgPicForFG = NULL;
+  }
+#endif
 
   // delete used buffers in encoder class
   m_cTEncTop.deletePicBuffer();

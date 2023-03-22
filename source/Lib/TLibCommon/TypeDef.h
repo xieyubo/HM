@@ -103,7 +103,8 @@
 #define SHUTTER_INTERVAL_SEI_MESSAGE                      1  ///< support for shutter interval SEI message 
 #define SEI_ENCODER_CONTROL                               1  ///< add encoder control for the following SEI: film grain characteristics, content light level, ambient viewing environment
 #define DPB_ENCODER_USAGE_CHECK                           1 ///< Adds DPB encoder usage check.
-#define FGS_RDD5_ENABLE                                   1 // SMPTE RDD5 based film grain synthesis enabled
+#define JVET_X0048_X0103_FILM_GRAIN                       1 ///< JVET-X0048-X0103: SMPTE RDD-5 based film grain analysis and synthesis model for film grain characterstics (FGC) SEI
+
 #define JVET_T0050_ANNOTATED_REGIONS_SEI                  1 ///< Detect static objects and use it in Annotated Regions SEI message
 
 #if SHUTTER_INTERVAL_SEI_MESSAGE
@@ -801,6 +802,9 @@ private:
 
 struct BitDepths
 {
+#if JVET_X0048_X0103_FILM_GRAIN
+  const int &operator[](const ChannelType ch) const { return recon[ch]; }
+#endif
 #if O0043_BEST_EFFORT_DECODING
   Int recon[MAX_NUM_CHANNEL_TYPE]; ///< the bit depth used for reconstructing the video
   Int stream[MAX_NUM_CHANNEL_TYPE];///< the bit depth used indicated in the SPS

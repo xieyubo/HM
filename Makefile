@@ -17,7 +17,7 @@ BUILD_SCRIPT := $(CURDIR)/cmake/CMakeBuild/bin/cmake.py
 #
 
 TARGETS := TLibCommon TAppDecoder TAppDecoderAnalyser TLibDecoder 
-TARGETS += TAppEncoder TLibEncoder Utilities MCTSExtractor
+TARGETS += TAppEncoder TLibEncoder Utilities MCTSExtractor SEIFilmGrainApp
 
 ifeq ($(OS),Windows_NT)
   ifneq ($(MSYSTEM),)

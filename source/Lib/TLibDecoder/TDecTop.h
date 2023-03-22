@@ -100,7 +100,7 @@ private:
   Int                     m_prevPOC;
   Int                     m_prevTid0POC;
   Bool                    m_bFirstSliceInPicture;
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
   Bool                    m_bFirstPictureInSequence;
   SEIFilmGrainSynthesizer m_grainCharacteristic;
   TComPicYuv              m_grainBuf;

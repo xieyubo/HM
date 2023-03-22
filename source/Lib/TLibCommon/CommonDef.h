@@ -246,9 +246,17 @@ static const Int MAX_ENCODER_DEBLOCKING_QUALITY_LAYERS =           8 ;
 
 static const UInt LUMA_LEVEL_TO_DQP_LUT_MAXSIZE =                1024; ///< max LUT size for QP offset based on luma
 
-#if FGS_RDD5_ENABLE
-static const Int MAX_NUM_INTENSITIES =                            256; // Maximum nuber of intensity intervals supported in FGC SEI
-static const Int MAX_NUM_MODEL_VALUES =                             6; // Maximum nuber of model values supported in FGC SEI 
+#if JVET_X0048_X0103_FILM_GRAIN
+static const Int FG_MAX_NUM_INTENSITIES =                         256; // Maximum nuber of intensity intervals supported in FGC SEI
+static const Int FG_MAX_NUM_MODEL_VALUES =                          6; // Maximum nuber of model values supported in FGC SEI 
+static const int FG_MAX_ALLOWED_MODEL_VALUES =                      3;
+static const int FG_MAX_ALLOWED_COMP_MODEL_PAIRS =                 10;
+static const int FG_MAX_STANDARD_DEVIATION =                      255;  // for 8-bit format; for higher bit depths, internal scaling is performed
+static const int FG_DATA_BASE_SIZE =                               64;
+static const int FG_BLK_8 =                                         8;
+static const int FG_BLK_16 =                                       16;
+static const int FG_BLK_32 =                                       32;
+static const int FG_BIT_DEPTH_8 =                                   8;
 #endif
 // ====================================================================================================================
 // Macro functions

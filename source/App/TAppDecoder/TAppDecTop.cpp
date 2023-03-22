@@ -69,7 +69,7 @@ Void TAppDecTop::destroy()
 {
   m_bitstreamFileName.clear();
   m_reconFileName.clear();
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
   m_SEIFGSFileName.clear();
 #endif
 #if SHUTTER_INTERVAL_SEI_PROCESSING
@@ -142,7 +142,7 @@ Void TAppDecTop::decode()
 
   // main decoder loop
   Bool openedReconFile = false; // reconstruction file not yet opened. (must be performed after SPS is seen)
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
   Bool openedSEIFGSFile = false; // reconstruction file (with FGS) not yet opened. (must be performed after SPS is seen)
 #endif
   Bool loopFiltered = false;
@@ -244,7 +244,7 @@ Void TAppDecTop::decode()
         m_cTVideoIOYuvReconFile.open( m_reconFileName, true, m_outputBitDepth, m_outputBitDepth, bitDepths.recon ); // write mode
         openedReconFile = true;
       }
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
       // Initialize file handle to write output with film grain
       if ((!m_SEIFGSFileName.empty()) && (!openedSEIFGSFile))
       {
@@ -376,7 +376,7 @@ Void TAppDecTop::xDestroyDecLib()
   {
     m_cTVideoIOYuvReconFile.close();
   }
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
   if (!m_SEIFGSFileName.empty())
   {
     m_cTVideoIOYuvSEIFGSFile.close();
@@ -579,7 +579,7 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
                                          NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range  );
         }
 
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
         // Perform FGS on decoded frame and write to output FGS file
         if (!m_SEIFGSFileName.empty())
         {
@@ -740,7 +740,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
                                          NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range );
         }
 
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
         // Perform FGS on decoded frame and write to output FGS file
         if (!m_SEIFGSFileName.empty())
         {

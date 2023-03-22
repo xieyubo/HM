@@ -57,6 +57,9 @@
 #if EXTENSION_360_VIDEO
 #include "TAppEncHelper360/TExt360EncGop.h"
 #endif
+#if JVET_X0048_X0103_FILM_GRAIN
+#include "TLibCommon/SEIFilmGrainAnalyzer.h"
+#endif
 
 #include "TEncAnalyze.h"
 #include "TEncRateCtrl.h"
@@ -126,6 +129,10 @@ private:
   TComLoopFilter*         m_pcLoopFilter;
 
   SEIWriter               m_seiWriter;
+
+#if JVET_X0048_X0103_FILM_GRAIN
+  FGAnalyser              m_FGAnalyser;
+#endif
 
   //--Adaptive Loop filter
   TEncSampleAdaptiveOffset*  m_pcSAO;

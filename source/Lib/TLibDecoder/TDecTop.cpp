@@ -67,7 +67,7 @@ TDecTop::TDecTop()
   , m_prevPOC(MAX_INT)
   , m_prevTid0POC(0)
   , m_bFirstSliceInPicture(true)
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
   , m_bFirstPictureInSequence(true)
   , m_grainCharacteristic()
   , m_grainBuf()
@@ -174,17 +174,23 @@ Void TDecTop::xGetNewPicBuffer ( const TComSPS &sps, const TComPPS &pps, TComPic
     rpcPic = new TComPic();
 
 #if REDUCED_ENCODER_MEMORY
+    rpcPic->create ( sps, pps, false, true
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-    rpcPic->create ( sps, pps, false, true, getShutterFilterFlag() );
-#else
-    rpcPic->create ( sps, pps, false, true);
+                    , getShutterFilterFlag()
 #endif
+#if JVET_X0048_X0103_FILM_GRAIN
+                    , false
+#endif
+                    );
 #else
+    rpcPic->create ( sps, pps, true
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-    rpcPic->create ( sps, pps, true, getShutterFilterFlag());
-#else
-    rpcPic->create ( sps, pps, true);
+                    , getShutterFilterFlag()
 #endif
+#if JVET_X0048_X0103_FILM_GRAIN
+                    , false
+#endif
+                    );
 #endif
 
     m_cListPic.pushBack( rpcPic );
@@ -223,17 +229,23 @@ Void TDecTop::xGetNewPicBuffer ( const TComSPS &sps, const TComPPS &pps, TComPic
   }
   rpcPic->destroy();
 #if REDUCED_ENCODER_MEMORY
+  rpcPic->create ( sps, pps, false, true
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-  rpcPic->create ( sps, pps, false, true, getShutterFilterFlag() );
-#else
-  rpcPic->create ( sps, pps, false, true);
+                  , getShutterFilterFlag()
 #endif
+#if JVET_X0048_X0103_FILM_GRAIN
+                  , false
+#endif
+                  );
 #else
+  rpcPic->create ( sps, pps, true
 #if SHUTTER_INTERVAL_SEI_PROCESSING
-  rpcPic->create ( sps, pps, true, getShutterFilterFlag() );
-#else
-  rpcPic->create ( sps, pps, true);
+                  , getShutterFilterFlag()
 #endif
+#if JVET_X0048_X0103_FILM_GRAIN
+                  , false
+#endif
+                  );
 #endif
 }
 
@@ -367,7 +379,7 @@ Void TDecTop::xActivateParameterSets()
     //  Get a new picture buffer. This will also set up m_pcPic, and therefore give us a SPS and PPS pointer that we can use.
     xGetNewPicBuffer (*(sps), *(pps), m_pcPic, m_apcSlicePilot->getTLayer());
     m_apcSlicePilot->applyReferencePictureSet(m_cListPic, m_apcSlicePilot->getRPS());
-#if FGS_RDD5_ENABLE
+#if JVET_X0048_X0103_FILM_GRAIN
     // Initialization of film grain synthesizer 
     m_pcPic->createGrainSynthesizer(m_bFirstPictureInSequence, &m_grainCharacteristic, &m_grainBuf, sps);
     m_bFirstPictureInSequence = false;
