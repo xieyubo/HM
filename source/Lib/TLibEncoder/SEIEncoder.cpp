@@ -252,6 +252,19 @@ Void SEIEncoder::initSEIBufferingPeriod(SEIBufferingPeriod *bufferingPeriodSEI, 
   bufferingPeriodSEI->m_dpbDelayOffset = 0;
 }
 
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+void SEIEncoder::initSEIPhaseIndication(SEIPhaseIndication* seiPhaseIndication)
+{
+  assert (m_isInitialized);
+  assert (seiPhaseIndication != NULL);
+
+  seiPhaseIndication->m_horPhaseNum = m_pcCfg->getHorPhaseNumFullResolution();
+  seiPhaseIndication->m_horPhaseDenMinus1 = m_pcCfg->getHorPhaseDenMinus1FullResolution();
+  seiPhaseIndication->m_verPhaseNum = m_pcCfg->getVerPhaseNumFullResolution();
+  seiPhaseIndication->m_verPhaseDenMinus1 = m_pcCfg->getVerPhaseDenMinus1FullResolution();
+}
+#endif
+
 //! initialize scalable nesting SEI message.
 //! Note: The SEI message structures input into this function will become part of the scalable nesting SEI and will be 
 //!       automatically freed, when the nesting SEI is disposed.

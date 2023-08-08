@@ -1204,6 +1204,13 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("SEICCVMaxLuminanceValue",                         m_ccvSEIMaxLuminanceValue,              0.1, "specifies the CCV max luminance value  in the content colour volume SEI message")
   ("SEICCVAvgLuminanceValuePresent",                  m_ccvSEIAvgLuminanceValuePresentFlag,  true,                                    "Specifies whether the CCV avg luminance value is present in the content colour volume SEI message")
   ("SEICCVAvgLuminanceValue",                         m_ccvSEIAvgLuminanceValue,              0.01, "specifies the CCV avg luminance value  in the content colour volume SEI message")
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+  ("SEIPhaseIndicationFullResolution", m_phaseIndicationSEIEnabledFullResolution, false, "Control generation of Phase Indication SEI messages for full resolution pictures.")
+  ("SEIPIHorPhaseNumFullResolution", m_piHorPhaseNumFullResolution, 0, "Specifies the Horizontal Phase Numerator of Phase Indication SEI messages for full resolution pictures.")
+  ("SEIPIHorPhaseDenMinus1FullResolution", m_piHorPhaseDenMinus1FullResolution, 0, "Specifies the Horizontal Phase Denominator minus 1 of Phase Indication SEI messages for full resolution pictures.")
+  ("SEIPIVerPhaseNumFullResolution", m_piVerPhaseNumFullResolution, 0, "Specifies the Vertical Phase Numerator of Phase Indication SEI messages for full resolution pictures.")
+  ("SEIPIVerPhaseDenMinus1FullResolution", m_piVerPhaseDenMinus1FullResolution, 0, "Specifies the Vertical Phase Denominator minus 1 of Phase Indication SEI messages for full resolution pictures.")
+#endif
 #if SHUTTER_INTERVAL_SEI_MESSAGE
   ("SEIShutterIntervalEnabled",                       m_siiSEIEnabled,                           false,                                   "Controls if shutter interval information SEI message is enabled")
   ("SEISiiTimeScale",                                 m_siiSEITimeScale,                         27000000u,                               "Specifies sii_time_scale")
@@ -3081,6 +3088,20 @@ Void TAppEncCfg::xCheckParameter()
   {
     printf("Warning: Shutter Interval SEI message processing is disabled for single TempLayer and single frame in DPB\n");
     m_ShutterFilterEnable = false;
+  }
+#endif
+
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+  if (m_phaseIndicationSEIEnabledFullResolution)
+  {
+    xConfirmPara(m_piHorPhaseNumFullResolution < 0, "m_piHorPhaseNumFullResolution must be in the range of 0 to 511, inclusive");
+    xConfirmPara(m_piHorPhaseDenMinus1FullResolution < 0, "m_piHorPhaseDenMinus1FullResolution must be in the range of 0 to 511, inclusive");
+    xConfirmPara(m_piVerPhaseNumFullResolution < 0, "m_piVerPhaseNumFullResolution must be in the range of 0 to 511, inclusive");
+    xConfirmPara(m_piVerPhaseDenMinus1FullResolution < 0, "m_piVerPhaseDenMinus1FullResolution must be in the range of 0 to 511, inclusive");
+    xConfirmPara(m_piHorPhaseDenMinus1FullResolution > 511, "m_piHorPhaseDenMinus1FullResolution must be in the range of 0 to 511, inclusive");
+    xConfirmPara(m_piHorPhaseNumFullResolution > m_piHorPhaseDenMinus1FullResolution + 1, "m_piHorPhaseNumFullResolution must be in the range of 0 to m_piHorPhaseDenMinus1FullResolution + 1, inclusive");
+    xConfirmPara(m_piVerPhaseDenMinus1FullResolution > 511, "m_piVerPhaseDenMinus1FullResolution must be in the range of 0 to 511, inclusive");
+    xConfirmPara(m_piVerPhaseNumFullResolution > m_piVerPhaseDenMinus1FullResolution + 1, "m_piVerPhaseNumFullResolution must be in the range of 0 to m_piVerPhaseDenMinus1FullResolution + 1, inclusive");
   }
 #endif
 

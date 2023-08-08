@@ -365,6 +365,13 @@ protected:
   Bool      m_decodingUnitInfoSEIEnabled;
   Bool      m_SOPDescriptionSEIEnabled;
   Bool      m_scalableNestingSEIEnabled;
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+  bool      m_phaseIndicationSEIEnabledFullResolution;
+  int       m_horPhaseNumFullResolution;
+  int       m_horPhaseDenMinus1FullResolution;
+  int       m_verPhaseNumFullResolution;
+  int       m_verPhaseDenMinus1FullResolution;
+#endif
   Bool      m_tmctsSEIEnabled;
 #if MCTS_ENC_CHECK
   Bool      m_tmctsSEITileConstraint;
@@ -1010,6 +1017,18 @@ public:
   Bool  getSOPDescriptionSEIEnabled() const                          { return m_SOPDescriptionSEIEnabled; }
   Void  setScalableNestingSEIEnabled(Bool b)                         { m_scalableNestingSEIEnabled = b; }
   Bool  getScalableNestingSEIEnabled() const                         { return m_scalableNestingSEIEnabled; }
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+  bool  getPhaseIndicationSEIEnabledFullResolution() const           { return m_phaseIndicationSEIEnabledFullResolution; }
+  void  setPhaseIndicationSEIEnabledFullResolution(const bool val)   { m_phaseIndicationSEIEnabledFullResolution = val; }
+  int   getHorPhaseNumFullResolution() const                         { return m_horPhaseNumFullResolution; }
+  void  setHorPhaseNumFullResolution(const int val)                  { m_horPhaseNumFullResolution = val; }
+  int   getHorPhaseDenMinus1FullResolution() const                   { return m_horPhaseDenMinus1FullResolution; }
+  void  setHorPhaseDenMinus1FullResolution(const int val)            { m_horPhaseDenMinus1FullResolution = val; }
+  int   getVerPhaseNumFullResolution() const                         { return m_verPhaseNumFullResolution; }
+  void  setVerPhaseNumFullResolution(const int   val)                { m_verPhaseNumFullResolution = val; }
+  int   getVerPhaseDenMinus1FullResolution() const                   { return m_verPhaseDenMinus1FullResolution; }
+  void  setVerPhaseDenMinus1FullResolution(const int val)            { m_verPhaseDenMinus1FullResolution = val; }
+#endif
   Void  setTMCTSSEIEnabled(Bool b)                                   { m_tmctsSEIEnabled = b; }
   Bool  getTMCTSSEIEnabled()                                         { return m_tmctsSEIEnabled; }
 #if MCTS_ENC_CHECK

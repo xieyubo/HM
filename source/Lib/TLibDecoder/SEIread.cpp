@@ -401,6 +401,12 @@ Void SEIReader::xReadSEIPayloadData(Int const payloadType, Int const payloadSize
       xParseSEISEIPrefixIndication((SEIPrefixIndication&)*sei, payloadSize, pDecodedMessageOutputStream);
       break;
 #endif
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+    case SEI::PayloadType::PHASE_INDICATION:
+      sei = new SEIPhaseIndication;
+      xParseSEIPhaseIndication((SEIPhaseIndication &) *sei, payloadSize, pDecodedMessageOutputStream);
+      break;
+#endif
     default:
       for (UInt i = 0; i < payloadSize; i++)
       {
@@ -1606,6 +1612,26 @@ Void SEIReader::xParseSEIShutterInterval(SEIShutterIntervalInfo& sei, UInt paylo
       sei.m_siiSubLayerNumUnitsInSI[i] = val;
     }
   }
+}
+#endif
+
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+void SEIReader::xParseSEIPhaseIndication(SEIPhaseIndication& sei, uint32_t payloadSize, std::ostream* pDecodedMessageOutputStream)
+{
+  output_sei_message_header(sei, pDecodedMessageOutputStream, payloadSize);
+  uint32_t val;
+
+  sei_read_code(pDecodedMessageOutputStream, 8, val, "hor_phase_num");
+  sei.m_horPhaseNum = val;
+  sei_read_code(pDecodedMessageOutputStream, 8, val, "hor_phase_den_minus1");
+  sei.m_horPhaseDenMinus1 = val;
+  sei_read_code(pDecodedMessageOutputStream, 8, val, "ver_phase_num");
+  sei.m_verPhaseNum = val;
+  sei_read_code(pDecodedMessageOutputStream, 8, val, "ver_phase_den_minus1");
+  sei.m_verPhaseDenMinus1 = val;
+
+  assert(sei.m_horPhaseNum <= sei.m_horPhaseDenMinus1 + 1);
+  assert(sei.m_verPhaseNum <= sei.m_verPhaseDenMinus1 + 1);
 }
 #endif
 

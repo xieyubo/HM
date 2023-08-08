@@ -73,6 +73,9 @@ public:
   Void initSEIToneMappingInfo(SEIToneMappingInfo *sei);
   Void initSEISOPDescription(SEISOPDescription *sei, TComSlice *slice, Int picInGOP, Int lastIdr, Int currGOPSize);
   Void initSEIBufferingPeriod(SEIBufferingPeriod *sei, TComSlice *slice);
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+  void initSEIPhaseIndication(SEIPhaseIndication* sei);
+#endif
   Void initSEIScalableNesting(SEIScalableNesting *sei, SEIMessages &nestedSEIs);
   Void initSEIRecoveryPoint(SEIRecoveryPoint *sei, TComSlice *slice);
   Void initSEISegmentedRectFramePacking(SEISegmentedRectFramePacking *sei);

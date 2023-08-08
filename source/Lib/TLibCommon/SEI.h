@@ -114,6 +114,9 @@ public:
 #if SHUTTER_INTERVAL_SEI_MESSAGE
     SHUTTER_INTERVAL_INFO                = 203,
 #endif
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+    PHASE_INDICATION                     = 212,
+#endif
   };
 
   SEI() {}
@@ -976,6 +979,21 @@ public:
   UInt                  m_siiMaxSubLayersMinus1;
   Bool                  m_siiFixedSIwithinCLVS;
   std::vector<UInt>     m_siiSubLayerNumUnitsInSI;
+};
+#endif
+
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+class SEIPhaseIndication : public SEI
+{
+public:
+  PayloadType payloadType() const { return PayloadType::PHASE_INDICATION; }
+  SEIPhaseIndication() {}
+  SEIPhaseIndication(const SEIPhaseIndication& sei);
+  virtual ~SEIPhaseIndication() {}
+  int                   m_horPhaseNum;
+  int                   m_horPhaseDenMinus1;
+  int                   m_verPhaseNum;
+  int                   m_verPhaseDenMinus1;
 };
 #endif
 
