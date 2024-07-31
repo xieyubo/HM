@@ -68,7 +68,7 @@ endif()
 # bb_enable_warnings( gcc -Wno-unused-variable )
 # bb_enable_warnings( gcc-4.8 warnings-as-errors -Wno-unused-variable )
 # for gcc 8.2:
-bb_enable_warnings( gcc warnings-as-errors -Wno-sign-compare -Wno-class-memaccess -Wno-array-bounds)
+bb_enable_warnings( gcc warnings-as-errors -Wno-sign-compare -Wno-class-memaccess -Wno-array-bounds -Wno-mismatched-new-delete )
 
 if( XCODE )
   bb_enable_warnings( clang warnings-as-errors
