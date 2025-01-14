@@ -88,6 +88,9 @@ const std::vector<SEI::PayloadType> SEI::prefix_sei_messages({
 #if SHUTTER_INTERVAL_SEI_MESSAGE
   , SEI::SHUTTER_INTERVAL_INFO
 #endif
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+  , SEI::PHASE_INDICATION
+#endif
 });
 
 const std::vector<SEI::PayloadType> SEI::suffix_sei_messages({
@@ -371,6 +374,9 @@ const TChar *SEI::getSEIMessageString(SEI::PayloadType payloadType)
     case SEI::ANNOTATED_REGIONS:                    return "Annotated Region";
 #if SHUTTER_INTERVAL_SEI_MESSAGE
     case SEI::SHUTTER_INTERVAL_INFO:                return "Shutter interval information";
+#endif
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+    case SEI::PHASE_INDICATION:                     return "Phase Indication";
 #endif
     default:                                        return "Unknown";
   }

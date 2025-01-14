@@ -2454,6 +2454,7 @@ The table below lists the SEI messages defined for Version 1 and Range-Extension
   200 & SEI manifest                             & Table \ref{tab:sei-sei-manifest} \\
   201 & SEI prefix indication				 & Table \ref{tab:sei-sei-prefix-indication} \\
   203 & Shutter interval information             & Table \ref{tab:sei-sii}\\
+  212 & Phase indication                         & Table \ref{tab:sei-phase-indication} \\
 \end{SEIListTable}
 %%
 %% SEI messages
@@ -3589,6 +3590,30 @@ Specifies the file name of pre-processed video with shutter interval info SEI me
 \\
 \end{OptionTableNoShorthand}
 
+
+
+\begin{OptionTableNoShorthand}{Phase indication}{tab:sei-phase-indication}
+\Option{SEIPhaseIndicationFullResolution} &
+\Default{false} &
+Control generation of Phase Indication SEI messages for full resolution pictures.
+\\
+\Option{SEIPIHorPhaseNumFullResolution} &
+\Default{0} &
+Specifies the Horizontal Phase Numerator of Phase Indication SEI messages for full resolution pictures.
+\\
+\Option{SEIPIHorPhaseDenMinus1FullResolution} &
+\Default{0} &
+Specifies the Horizontal Phase Denominator minus 1 of Phase Indication SEI messages for full resolution pictures.
+\\
+\Option{SEIPIVerPhaseNumFullResolution} &
+\Default{0} &
+Specifies the Vertical Phase Numerator of Phase Indication SEI messages for full resolution pictures.
+\\
+\Option{SEIPIVerPhaseDenMinus1FullResolution} &
+\Default{0} &
+Specifies the Vertical Phase Denominator minus 1 of Phase Indication SEI messages for full resolution pictures.
+\\
+\end{OptionTableNoShorthand}
 
 
 %\Option{SEITimeCode} &

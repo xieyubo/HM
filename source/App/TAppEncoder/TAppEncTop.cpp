@@ -346,6 +346,13 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setDecodingUnitInfoSEIEnabled                        ( m_decodingUnitInfoSEIEnabled );
   m_cTEncTop.setSOPDescriptionSEIEnabled                          ( m_SOPDescriptionSEIEnabled );
   m_cTEncTop.setScalableNestingSEIEnabled                         ( m_scalableNestingSEIEnabled );
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+  m_cTEncTop.setPhaseIndicationSEIEnabledFullResolution            ( m_phaseIndicationSEIEnabledFullResolution );
+  m_cTEncTop.setHorPhaseNumFullResolution                          ( m_piHorPhaseNumFullResolution );
+  m_cTEncTop.setHorPhaseDenMinus1FullResolution                    ( m_piHorPhaseDenMinus1FullResolution );
+  m_cTEncTop.setVerPhaseNumFullResolution                          ( m_piVerPhaseNumFullResolution );
+  m_cTEncTop.setVerPhaseDenMinus1FullResolution                    ( m_piVerPhaseDenMinus1FullResolution );
+#endif
   m_cTEncTop.setTMCTSSEIEnabled                                   ( m_tmctsSEIEnabled );
 #if MCTS_ENC_CHECK
   m_cTEncTop.setTMCTSSEITileConstraint                            ( m_tmctsSEITileConstraint );

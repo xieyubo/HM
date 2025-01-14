@@ -240,6 +240,11 @@ Void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, const TComSP
     xWriteSEISEIPrefixIndication(bs, *static_cast<const SEIPrefixIndication*>(&sei), sps);
     break;
 #endif
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+  case SEI::PayloadType::PHASE_INDICATION:
+    xWriteSEIPhaseIndication(*static_cast<const SEIPhaseIndication *>(&sei));
+    break;
+#endif
   default:
     assert(!"Trying to write unhandled SEI message");
     break;
@@ -1217,6 +1222,16 @@ Void SEIWriter::xWriteSEIShutterInterval(const SEIShutterIntervalInfo &sei)
       WRITE_CODE(sei.m_siiSubLayerNumUnitsInSI[i], 32, "sub_layer_num_units_in_shutter_interval[ i ]");
     }
   }
+}
+#endif
+
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+void SEIWriter::xWriteSEIPhaseIndication(const SEIPhaseIndication& sei)
+{
+  WRITE_CODE((uint32_t)sei.m_horPhaseNum, 8, "hor_phase_num");
+  WRITE_CODE((uint32_t)sei.m_horPhaseDenMinus1, 8, "hor_phase_den_minus1");
+  WRITE_CODE((uint32_t)sei.m_verPhaseNum, 8, "ver_phase_num");
+  WRITE_CODE((uint32_t)sei.m_verPhaseDenMinus1, 8, "ver_phase_den_minus1");
 }
 #endif
 

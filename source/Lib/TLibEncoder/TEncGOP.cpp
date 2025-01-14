@@ -635,6 +635,14 @@ Void TEncGOP::xCreateIRAPLeadingSEIMessages (SEIMessages& seiMessages, const TCo
     m_seiEncoder.initSEIAlternativeTransferCharacteristics(seiAlternativeTransferCharacteristics);
     seiMessages.push_back(seiAlternativeTransferCharacteristics);
   }
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+   if (m_pcCfg->getPhaseIndicationSEIEnabledFullResolution())
+   {
+     SEIPhaseIndication* seiPhaseIndication = new SEIPhaseIndication;
+     m_seiEncoder.initSEIPhaseIndication(seiPhaseIndication);
+     seiMessages.push_back(seiPhaseIndication);
+   }
+#endif
 }
 
 Void TEncGOP::xCreatePerPictureSEIMessages (Int picInGOP, SEIMessages& seiMessages, SEIMessages& nestedSeiMessages, TComSlice *slice)

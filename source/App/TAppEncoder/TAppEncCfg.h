@@ -504,6 +504,13 @@ protected:
   UInt      m_siiSEITimeScale;
   std::vector<UInt>     m_siiSEISubLayerNumUnitsInSI;
 #endif
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+  bool      m_phaseIndicationSEIEnabledFullResolution;
+  int       m_piHorPhaseNumFullResolution;
+  int       m_piHorPhaseDenMinus1FullResolution;
+  int       m_piVerPhaseNumFullResolution;
+  int       m_piVerPhaseDenMinus1FullResolution;
+#endif
 #if SEI_ENCODER_CONTROL
   // film grain characterstics sei
   Bool      m_fgcSEIEnabled;

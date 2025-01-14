@@ -114,6 +114,9 @@ protected:
 #if SHUTTER_INTERVAL_SEI_MESSAGE
   Void xParseSEIShutterInterval               (SEIShutterIntervalInfo& sei,           UInt payloadSize,                     std::ostream *pDecodedMessageOutputStream);
 #endif
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+  void xParseSEIPhaseIndication(SEIPhaseIndication& sei, uint32_t payloadSize, std::ostream* pDecodedMessageOutputStream);
+#endif
 #if JCTVC_AD0021_SEI_MANIFEST
   Void xParseSEISEIManifest(SEIManifest & sei, UInt payloadSize, std::ostream * pDecodedMessageOutputStream);
 #endif
