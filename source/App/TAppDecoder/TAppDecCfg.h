@@ -83,6 +83,10 @@ protected:
 #if MCTS_ENC_CHECK
   Bool          m_tmctsCheck;
 #endif
+#if JVET_AK0194_DSC_SEI
+  std::string   m_keyStoreDir;
+  std::string   m_trustStoreDir;
+#endif
 
 public:
   TAppDecCfg()

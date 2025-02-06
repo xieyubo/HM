@@ -38,16 +38,17 @@
 #include "TLibCommon/TComPicYuv.h"
 #include "SEIwrite.h"
 
+
 //! \ingroup TLibEncoder
 //! \{
 
 #if ENC_DEC_TRACE
-Void  xTraceSEIHeader()
+Void  SEIWriter::xTraceSEIHeader()
 {
   fprintf( g_hTrace, "=========== SEI message ===========\n");
 }
 
-Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
+Void  SEIWriter::xTraceSEIMessageType(SEI::PayloadType payloadType)
 {
   fprintf( g_hTrace, "=========== %s SEI message ===========\n", SEI::getSEIMessageString(payloadType));
 }
@@ -250,6 +251,17 @@ Void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, const TComSP
     xWriteSEIModalityInfo(*static_cast<const SEIModalityInfo *>(&sei));
     break;
 #endif 
+#if JVET_AK0194_DSC_SEI
+  case SEI::PayloadType::DIGITALLY_SIGNED_CONTENT_INITIALIZATION:
+    xWriteSEIDigitallySignedContentInitialization(*static_cast<const SEIDigitallySignedContentInitialization *>(&sei));
+    break;
+  case SEI::PayloadType::DIGITALLY_SIGNED_CONTENT_SELECTION:
+    xWriteSEIDigitallySignedContentSelection(*static_cast<const SEIDigitallySignedContentSelection *>(&sei));
+    break;
+  case SEI::PayloadType::DIGITALLY_SIGNED_CONTENT_VERIFICATION:
+    xWriteSEIDigitallySignedContentVerification(*static_cast<const SEIDigitallySignedContentVerification *>(&sei));
+    break;
+#endif
   default:
     assert(!"Trying to write unhandled SEI message");
     break;
@@ -1740,14 +1752,57 @@ Void SEIWriter::xWriteSEIPrefixIndicationByteAlign() {
 
 Void SEIWriter::xWriteByteAlign()
 {
-    if (m_pcBitIf->getNumberOfWrittenBits() % 8 != 0)
+  if (m_pcBitIf->getNumberOfWrittenBits() % 8 != 0)
+  {
+    WRITE_FLAG(1, "payload_bit_equal_to_one");
+    while (m_pcBitIf->getNumberOfWrittenBits() % 8 != 0)
     {
-        WRITE_FLAG(1, "payload_bit_equal_to_one");
-        while (m_pcBitIf->getNumberOfWrittenBits() % 8 != 0)
-        {
-            WRITE_FLAG(0, "payload_bit_equal_to_zero");
-        }
+      WRITE_FLAG(0, "payload_bit_equal_to_zero");
     }
+  }
 }
 
+#if JVET_AK0194_DSC_SEI
+void SEIWriter::xWriteSEIDigitallySignedContentInitialization(const SEIDigitallySignedContentInitialization &sei)
+{
+  WRITE_CODE(sei.dsciHashMethodType, 8, "dsci_hash_method_type");
+  WRITE_STRING(sei.dsciKeySourceUri, "dsci_key_source_uri");
+  CHECK (sei.dsciNumVerificationSubstreams < 1, "Number of DSC verification substreams has to be greater than zero");
+  WRITE_UVLC(sei.dsciNumVerificationSubstreams - 1, "dsci_num_verification_substreams_minus1");
+  WRITE_UVLC(sei.dsciKeyRetrievalModeIdc, "dsci_key_retrieval_mode_idc");
+  if (sei.dsciKeyRetrievalModeIdc == 1)
+  {
+    WRITE_FLAG(sei.dsciUseKeyRegisterIdxFlag, "dsci_use_key_register_idx_flag");
+    if( sei.dsciUseKeyRegisterIdxFlag )
+    {
+      WRITE_UVLC(sei.dsciKeyRegisterIdx, "dsci_key_register_idx");
+    }
+  }
+  WRITE_FLAG(sei.dsciContentUuidPresentFlag, "dsci_content_uuid_present_flag");
+  if (sei.dsciContentUuidPresentFlag)
+  {
+    for (int i=0; i<16; i++)
+    {
+      WRITE_CODE(sei.dsciContentUuid[i], 8, "dsci_content_uuid");
+    }
+  }
+}
+
+void SEIWriter::xWriteSEIDigitallySignedContentSelection(const SEIDigitallySignedContentSelection &sei)
+{
+  WRITE_UVLC(sei.dscsVerificationSubstreamId, "dscs_verification_substream_id");
+}
+
+void SEIWriter::xWriteSEIDigitallySignedContentVerification(const SEIDigitallySignedContentVerification &sei)
+{
+  WRITE_UVLC(sei.dscvVerificationSubstreamId, "dscv_verification_substream_id");
+  CHECK (sei.dscvSignatureLengthInOctets < 1, "Length of signature has to be greater than zero");
+  WRITE_UVLC(sei.dscvSignatureLengthInOctets - 1, "dscv_signature_length_in_octets_minus1");
+  CHECK (sei.dscvSignatureLengthInOctets != sei.dscvSignature.size(), "Signature length incosistent");
+  for (int i=0; i< sei.dscvSignature.size(); i++)
+  {
+    WRITE_CODE(sei.dscvSignature[i], 8, "dscv_signature");
+  }
+}
+#endif
 //! \}

@@ -121,6 +121,11 @@ public:
 #if JVET_AK0107_MODALITY_INFORMATION
   Void initSEIModalityInfo(SEIModalityInfo *sei);
 #endif
+#if JVET_AK0194_DSC_SEI
+  void initSEIDigitallySignedContentInitialization(SEIDigitallySignedContentInitialization *sei);
+  void initSEIDigitallySignedContentSelection(SEIDigitallySignedContentSelection *sei, int substream);
+  void initSEIDigitallySignedContentVerification(SEIDigitallySignedContentVerification *sei, int32_t substream, const std::vector<uint8_t> &signature);
+#endif
   // trailing SEIs
   Void initDecodedPictureHashSEI(SEIDecodedPictureHash *sei, TComPic *pcPic, std::string &rHashString, const BitDepths &bitDepths);
   Void initTemporalLevel0IndexSEI(SEITemporalLevel0Index *sei, TComSlice *slice);

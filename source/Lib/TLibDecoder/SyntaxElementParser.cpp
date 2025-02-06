@@ -197,6 +197,31 @@ Void SyntaxElementParser::xReadUvlc( UInt& rValue)
 }
 
 #if RExt__DECODER_DEBUG_BIT_STATISTICS || ENC_DEC_TRACE
+Void SyntaxElementParser::xReadString( std::string& valueOut, const TChar *symbolName )
+#else
+Void SyntaxElementParser::xReadString( std::string& valueOut )
+#endif
+{
+  uint32_t code;
+  std::string value( "" );;
+  do
+  {
+    m_pcBitstream->read(8, code);
+    if (code != 0)
+    {
+      value += (char) code;
+    }
+  } while (code != 0);
+
+#if ENC_DEC_TRACE
+  fprintf( g_hTrace, "%8lld  ", g_nSymbolCounter++ );
+  fprintf( g_hTrace, "%-50s st(v) : %s\n", symbolName, value.c_str() );
+  fflush ( g_hTrace );
+#endif
+  valueOut = value;
+}
+
+#if RExt__DECODER_DEBUG_BIT_STATISTICS || ENC_DEC_TRACE
 Void SyntaxElementParser::xReadSvlc( Int& rValue, const TChar *pSymbolName)
 #else
 Void SyntaxElementParser::xReadSvlc( Int& rValue)

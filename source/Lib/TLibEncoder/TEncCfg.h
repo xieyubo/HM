@@ -44,6 +44,7 @@
 
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComSlice.h"
+#include "EncCfgParam.h"
 #if JVET_T0050_ANNOTATED_REGIONS_SEI
 #include "TLibCommon/SEI.h"
 #endif
@@ -384,6 +385,11 @@ protected:
   Int         m_miMaxWavelengthMantissa; 
   Int         m_miMaxWavelengthExponentPlus15; 
 #endif 
+
+#if JVET_AK0194_DSC_SEI
+  EncCfgParam::CfgSEIDigitallySignedContent m_cfgDigitallySignedContentSEI;
+#endif
+
   Bool      m_tmctsSEIEnabled;
 #if MCTS_ENC_CHECK
   Bool      m_tmctsSEITileConstraint;
@@ -1062,6 +1068,18 @@ public:
   Int      getMiMaxWavelengthMantissa() const                                                             { return m_miMaxWavelengthMantissa; }
   Void     setMiMaxWavelengthExponentPlus15(const Int val)                                                { m_miMaxWavelengthExponentPlus15 = val; }
   Int      getMiMaxWavelengthExponentPlus15() const                                                       { return m_miMaxWavelengthExponentPlus15; }
+#endif
+
+#if JVET_AK0194_DSC_SEI
+  const EncCfgParam::CfgSEIDigitallySignedContent &getDigitallySignedContentSEICfg() const
+  {
+    return m_cfgDigitallySignedContentSEI;
+  }
+  void setDigitallySignedContentSEICfg(const EncCfgParam::CfgSEIDigitallySignedContent &cfg)
+  {
+    m_cfgDigitallySignedContentSEI = cfg;
+  }
+
 #endif
   Void  setTMCTSSEIEnabled(Bool b)                                   { m_tmctsSEIEnabled = b; }
   Bool  getTMCTSSEIEnabled()                                         { return m_tmctsSEIEnabled; }
