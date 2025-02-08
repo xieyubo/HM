@@ -1344,6 +1344,18 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
 #if JCTVC_AD0021_SEI_PREFIX_INDICATION
   ("SEISEIPrefixIndicationEnabled",                   m_SEIPrefixIndicationSEIEnabled,          false,                                   "Controls if SEI Prefix Indications SEI messages enabled")
 #endif
+#if JVET_AK0107_MODALITY_INFORMATION
+// Modality Information SEI 
+  ("SEIModalityInfoEnabled",                          m_miSEIEnabled,                                    false, "Control generation of Modality Information SEI messages")
+  ("SEIMiCancelFlag",                                 m_miCancelFlag,                                    false, "Indicates that Modality Information SEI message cancels the persistence or follows")
+  ("SEIMiPersistenceFlag",                            m_miPersistenceFlag,                                true, "Specifies the persistence of the Modality Information SEI message")
+  ("SEIMiModalityType",                               m_miModalityType,                                      1, "Specifies the type of modality. 0: unspecified; 1: visible picture; 2: Infrared Picture; 3: Ultraviolet Picture")
+  ("SEIMiSpectrumRangePresentFlag",                   m_miSpectrumRangePresentFlag,                      false, "Specifies the presence of the spectrum band of the optical radiation wavelength")
+  ("SEIMiMinWavelengthMantissa",                      m_miMinWavelengthMantissa,                             0, "Specifies the mantissa part of the minimum wavelength indicating the spectral band of optical radiation")
+  ("SEIMiMinWavelengthExponentPlus15",                m_miMinWavelengthExponentPlus15,                       0, "Specifies the exponent part of the minimum wavelength indicating the spectral band of optical radiation")
+  ("SEIMiMaxWavelengthMantissa",                      m_miMaxWavelengthMantissa,                             0, "Specifies the mantissa part of the maximum wavelength indicating the spectral band of optical radiation")
+  ("SEIMiMaxWavelengthExponentPlus15",                m_miMaxWavelengthExponentPlus15,                       0, "Specifies the exponent part of the maximum wavelength indicating the spectral band of optical radiation")
+#endif
   ;
 
   opts.addOptions()

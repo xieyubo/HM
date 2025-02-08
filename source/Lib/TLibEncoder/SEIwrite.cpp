@@ -245,6 +245,11 @@ Void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, const TComSP
     xWriteSEIPhaseIndication(*static_cast<const SEIPhaseIndication *>(&sei));
     break;
 #endif
+#if JVET_AK0107_MODALITY_INFORMATION
+  case SEI::PayloadType::MODALITY_INFORMATION:
+    xWriteSEIModalityInfo(*static_cast<const SEIModalityInfo *>(&sei));
+    break;
+#endif 
   default:
     assert(!"Trying to write unhandled SEI message");
     break;
@@ -1234,6 +1239,27 @@ void SEIWriter::xWriteSEIPhaseIndication(const SEIPhaseIndication& sei)
   WRITE_CODE((uint32_t)sei.m_verPhaseDenMinus1, 8, "ver_phase_den_minus1");
 }
 #endif
+
+#if JVET_AK0107_MODALITY_INFORMATION
+Void SEIWriter::xWriteSEIModalityInfo(const SEIModalityInfo& sei)
+{
+  WRITE_FLAG( sei.m_miCancelFlag,                                  "modality_info_cancel_flag" );
+  if(!sei.m_miCancelFlag)
+  {
+    WRITE_FLAG( sei.m_miPersistenceFlag,                           "modality_info_persistence_flag" );
+    WRITE_CODE( sei.m_miModalityType,                  5,          "modality_type");
+    WRITE_FLAG( sei.m_miSpectrumRangePresentFlag,                  "spectrum_range_present_flag" );
+    if (sei.m_miSpectrumRangePresentFlag)
+    {
+      WRITE_CODE( sei.m_miMinWavelengthMantissa,      11,          "min_wavelength_mantissa ");
+      WRITE_CODE( sei.m_miMinWavelengthExponentPlus15, 5,          "min_wavelength_exponent_plus15 ");
+      WRITE_CODE( sei.m_miMaxWavelengthMantissa,      11,          "max_wavelength_mantissa ");
+      WRITE_CODE( sei.m_miMaxWavelengthExponentPlus15, 5,          "max_wavelength_exponent_plus15 ");
+    }
+    WRITE_UVLC(0, "modality_type_extension_bits");   // mi_modality_type_extension_bits shall be equal to 0 in the current edition 
+  }
+}
+#endif 
 
 Void SEIWriter::xWriteSEIEquirectangularProjection(const SEIEquirectangularProjection &sei
 #if JCTVC_AD0021_SEI_PREFIX_INDICATION

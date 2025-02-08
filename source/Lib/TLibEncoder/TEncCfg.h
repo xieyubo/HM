@@ -372,6 +372,18 @@ protected:
   int       m_verPhaseNumFullResolution;
   int       m_verPhaseDenMinus1FullResolution;
 #endif
+#if JVET_AK0107_MODALITY_INFORMATION
+  // Modality Information SEI
+  Bool        m_miSEIEnabled;
+  Bool        m_miCancelFlag;
+  Bool        m_miPersistenceFlag;
+  Int         m_miModalityType; 
+  Bool        m_miSpectrumRangePresentFlag;
+  Int         m_miMinWavelengthMantissa; 
+  Int         m_miMinWavelengthExponentPlus15; 
+  Int         m_miMaxWavelengthMantissa; 
+  Int         m_miMaxWavelengthExponentPlus15; 
+#endif 
   Bool      m_tmctsSEIEnabled;
 #if MCTS_ENC_CHECK
   Bool      m_tmctsSEITileConstraint;
@@ -576,6 +588,7 @@ protected:
 #if JCTVC_AD0021_SEI_PREFIX_INDICATION
   Bool        m_SEIPrefixIndicationSEIEnabled;
 #endif
+
 
 public:
   TEncCfg()
@@ -1029,6 +1042,27 @@ public:
   int   getVerPhaseDenMinus1FullResolution() const                   { return m_verPhaseDenMinus1FullResolution; }
   void  setVerPhaseDenMinus1FullResolution(const int val)            { m_verPhaseDenMinus1FullResolution = val; }
 #endif
+#if JVET_AK0107_MODALITY_INFORMATION
+  //Modality Information SEI 
+  Void     setMiSEIEnabled(Bool b)                                                                        { m_miSEIEnabled = b; }
+  Bool     getMiSEIEnabled()                                                                              { return m_miSEIEnabled; }
+  Void     setMiCancelFlag(const Bool val)                                                                { m_miCancelFlag = val; }
+  Bool     getMiCancelFlag() const                                                                        { return m_miCancelFlag; }
+  Void     setMiPersistenceFlag(const Bool val)                                                           { m_miPersistenceFlag = val; }
+  Bool     getMiPersistenceFlag() const                                                                   { return m_miPersistenceFlag; }
+  Void     setMiModalityType(const Int val)                                                               { m_miModalityType = val; }
+  Int      getMiModalityType() const                                                                      { return m_miModalityType; }
+  Void     setMiSpectrumRangePresentFlag(const Bool val)                                                  { m_miSpectrumRangePresentFlag = val; }
+  Bool     getMiSpectrumRangePresentFlag() const                                                          { return m_miSpectrumRangePresentFlag; }
+  Void     setMiMinWavelengthMantissa(const Int val)                                                      { m_miMinWavelengthMantissa = val; }
+  Int      getMiMinWavelengthMantissa() const                                                             { return m_miMinWavelengthMantissa; }
+  Void     setMiMinWavelengthExponentPlus15(const Int val)                                                { m_miMinWavelengthExponentPlus15 = val; }
+  Int      getMiMinWavelengthExponentPlus15() const                                                       { return m_miMinWavelengthExponentPlus15; }
+  Void     setMiMaxWavelengthMantissa(const Int val)                                                      { m_miMaxWavelengthMantissa = val; }
+  Int      getMiMaxWavelengthMantissa() const                                                             { return m_miMaxWavelengthMantissa; }
+  Void     setMiMaxWavelengthExponentPlus15(const Int val)                                                { m_miMaxWavelengthExponentPlus15 = val; }
+  Int      getMiMaxWavelengthExponentPlus15() const                                                       { return m_miMaxWavelengthExponentPlus15; }
+#endif
   Void  setTMCTSSEIEnabled(Bool b)                                   { m_tmctsSEIEnabled = b; }
   Bool  getTMCTSSEIEnabled()                                         { return m_tmctsSEIEnabled; }
 #if MCTS_ENC_CHECK
@@ -1456,6 +1490,8 @@ public:
 #endif
 
 };
+
+
 
 //! \}
 

@@ -91,6 +91,9 @@ const std::vector<SEI::PayloadType> SEI::prefix_sei_messages({
 #if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
   , SEI::PHASE_INDICATION
 #endif
+#if JVET_AK0107_MODALITY_INFORMATION
+  , SEI::MODALITY_INFORMATION
+#endif
 });
 
 const std::vector<SEI::PayloadType> SEI::suffix_sei_messages({
@@ -377,6 +380,9 @@ const TChar *SEI::getSEIMessageString(SEI::PayloadType payloadType)
 #endif
 #if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
     case SEI::PHASE_INDICATION:                     return "Phase Indication";
+#endif
+#if JVET_AK0107_MODALITY_INFORMATION
+    case SEI::MODALITY_INFORMATION:                 return "Modality information";
 #endif
     default:                                        return "Unknown";
   }

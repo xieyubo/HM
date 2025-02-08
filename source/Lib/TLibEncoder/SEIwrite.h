@@ -153,6 +153,9 @@ protected:
 #if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
   void xWriteSEIPhaseIndication                   (const SEIPhaseIndication&sei);
 #endif
+#if JVET_AK0107_MODALITY_INFORMATION
+  Void xWriteSEIModalityInfo(const SEIModalityInfo &sei);
+#endif
   Void xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, const TComSPS *sps
 #if JCTVC_AD0021_SEI_PREFIX_INDICATION
     , Int SEIPrefixIndicationIdx = 0

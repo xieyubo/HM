@@ -2455,6 +2455,7 @@ The table below lists the SEI messages defined for Version 1 and Range-Extension
   201 & SEI prefix indication				 & Table \ref{tab:sei-sei-prefix-indication} \\
   203 & Shutter interval information             & Table \ref{tab:sei-sii}\\
   212 & Phase indication                         & Table \ref{tab:sei-phase-indication} \\
+  218 & Modality Information         & Table \ref{tab:sei-modality-info}\\
 \end{SEIListTable}
 %%
 %% SEI messages
@@ -3615,6 +3616,51 @@ Specifies the Vertical Phase Denominator minus 1 of Phase Indication SEI message
 \\
 \end{OptionTableNoShorthand}
 
+\begin{OptionTableNoShorthand}{Modality Information}{tab:sei-modality-info}
+\Option{SEIModalityInfoEnabled} &
+\Default{true} &
+Enables (true) or disables (false) the insertion of modality information SEI message.
+\\
+\Option{SEIMiCancelFlag} &
+\Default{false} &
+Indicates that modality information SEI message cancels the persistence (true) or follows (false).
+\\
+\Option{SEIMiPersistenceFlag} &
+\Default{true} &
+Specifies the persistence of the Modality Information SEI message.
+\\
+\Option{SEIMiModalityType} &
+\Default{1} &
+Specifies the type of modality
+\par
+\begin{tabular}{cp{0.35\textwidth}}
+0 & Unspecified \\
+1 & Visible picture \\
+2 & Infrared Picture \\
+3 & Ultraviolet Picture \\
+\end{tabular}
+\\
+\Option{SEIMiSpectrumRangePresentFlag} &
+\Default{false} &
+Specifies the presence of the spectrum band of the optical radiation wavelength.
+\\
+\Option{SEIMiMinWavelengthMantissa} &
+\Default{0} &
+Specifies the mantissa part of the minimum wavelength indicating the spectral band of optical radiation.
+\\
+\Option{SEIMiMinWavelengthExponentPlus15} &
+\Default{0} &
+Specifies the exponent part of the minimum wavelength indicating the spectral band of optical radiation.
+\\
+\Option{SEIMiMaxWavelengthMantissa} &
+\Default{0} &
+Specifies the mantissa part of the maximum wavelength indicating the spectral band of optical radiation.
+\\
+\Option{SEIMiMaxWavelengthExponentPlus15} &
+\Default{0} &
+Specifies the exponent part of the maximum wavelength indicating the spectral band of optical radiation.
+\\
+\end{OptionTableNoShorthand}
 
 %\Option{SEITimeCode} &
 %\Default{false} &

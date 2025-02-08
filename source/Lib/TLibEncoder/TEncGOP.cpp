@@ -635,6 +635,15 @@ Void TEncGOP::xCreateIRAPLeadingSEIMessages (SEIMessages& seiMessages, const TCo
     m_seiEncoder.initSEIAlternativeTransferCharacteristics(seiAlternativeTransferCharacteristics);
     seiMessages.push_back(seiAlternativeTransferCharacteristics);
   }
+#if JVET_AK0107_MODALITY_INFORMATION
+  // modality information SEI
+  if (m_pcCfg->getMiSEIEnabled())
+  {
+    SEIModalityInfo* seiMI = new SEIModalityInfo;
+    m_seiEncoder.initSEIModalityInfo(seiMI);
+    seiMessages.push_back(seiMI);
+  }
+#endif
 #if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
    if (m_pcCfg->getPhaseIndicationSEIEnabledFullResolution())
    {
