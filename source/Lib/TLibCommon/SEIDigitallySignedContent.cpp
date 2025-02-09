@@ -360,14 +360,6 @@ bool DscSignature::signPacket (std::vector<uint8_t> &packet, std::vector<uint8_t
 {
   CHECK(m_isInitialized == false, "Signature is not initialized");
 
-#if 0
-  if (std::rand() >  (RAND_MAX / 2) )
-  {
-    std::cout << "\033[1;31mTest mode: invalid signature\033[0m\n";
-    packet[0] = 0;
-  }
-#endif
-
   // Create signature
   EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
   EVP_SignInit(mdctx, getHashFunction(m_hashMethodType));
@@ -578,11 +570,13 @@ DSCStatus DscVerificator::verifyPacket (std::vector<uint8_t> &packet, std::vecto
     }
     std::cout << "\033[1;32mSignature is valid.\033[0m\n";
     return DSCStatus::DSC_Verified;
-  } else if (verify_result == 0)
+  }
+  else if (verify_result == 0)
   {
     std::cout << "\033[1;31mSignature is invalid.\033[0m\n";
     return DSCStatus::DSC_Invalid;
-  } else
+  }
+  else
   {
     std::cout << "Error occurred during verification.\n";
   }
