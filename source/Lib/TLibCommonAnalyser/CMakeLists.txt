@@ -68,7 +68,10 @@ if( SET_ENABLE_TRACING )
     target_compile_definitions( ${LIB_NAME} PUBLIC ENABLE_TRACING=0 )
   endif()
 endif()
-#find_package(OpenSSL)
+
+if ( ENABLE_SEARCH_OPENSSL )
+  find_package(OpenSSL)
+endif()
 
 if (NOT OPENSSL_FOUND)
   message ("OpenSSL not available. Compiling with parsing only support for Digitally Signed Content SEIs")

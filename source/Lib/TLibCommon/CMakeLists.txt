@@ -63,7 +63,9 @@ if( SET_ENABLE_TRACING )
   endif()
 endif()
 
-find_package(OpenSSL)
+if ( ENABLE_SEARCH_OPENSSL )
+  find_package(OpenSSL)
+endif()
 
 if (NOT OPENSSL_FOUND)
   message ("OpenSSL not available. Compiling with parsing only support for Digitally Signed Content SEIs")
@@ -74,8 +76,6 @@ else()
   target_include_directories( ${LIB_NAME} PUBLIC . .. ./x86 ../libmd5 ${OPENSSL_INCLUDE_DIR} )
   target_link_libraries( ${LIB_NAME} Threads::Threads OpenSSL::SSL OpenSSL::Crypto )
 endif ()
-
-
 
 # set needed compile definitions
 set_property( SOURCE ${SSE41_SRC_FILES} APPEND PROPERTY COMPILE_DEFINITIONS USE_SSE41 )
