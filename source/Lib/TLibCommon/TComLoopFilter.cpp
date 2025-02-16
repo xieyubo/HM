@@ -211,7 +211,7 @@ Void TComLoopFilter::xDeblockCU( TComDataCU* pcCU, UInt uiAbsZorderIdx, UInt uiD
       uiBSCheck = 1;
     }
 
-    if ( m_aapbEdgeFilter[edgeDir][uiPartIdx] && uiBSCheck )
+    if ( m_aapbEdgeFilter[edgeDir==EDGE_VER?EDGE_VER:EDGE_HOR][uiPartIdx] && uiBSCheck )
     {
       xGetBoundaryStrengthSingle ( pcCU, edgeDir, uiPartIdx );
     }
