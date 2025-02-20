@@ -325,7 +325,7 @@ Void TEncGOP::xWriteLeadingSEIOrdered (SEIMessages& seiMessages, SEIMessages& du
   SEIMessages currentMessages;
   SEIMessages localMessages = seiMessages;
 
-#if ENABLE_TRACING
+#if ENC_DEC_TRACE
   g_HLSTraceEnable = !testWrite;
 #endif
 
