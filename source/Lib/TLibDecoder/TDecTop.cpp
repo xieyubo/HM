@@ -279,18 +279,15 @@ void TDecTop::xRemoveLastNalUnitFromSignature()
 void TDecTop::xProcessStoredNALUnitsForSignature(int substreamId)
 {
   const bool verificationActive = m_dscSubstreamManager.isVerificationActive();
-  if (m_dscSubstreamManager.isVerificationActive())
+  for (auto nalu: m_signedContentNalUnitBuffer)
   {
-    for (auto nalu: m_signedContentNalUnitBuffer)
+    if (verificationActive)
     {
-      if (verificationActive)
-      {
-        m_dscSubstreamManager.addToSubstream(substreamId, (char*)nalu.data, nalu.length);
-      }
-      free (nalu.data);
+      m_dscSubstreamManager.addToSubstream(substreamId, (char*)nalu.data, nalu.length);
     }
-    m_signedContentNalUnitBuffer.clear();
+    delete[] (nalu.data);
   }
+  m_signedContentNalUnitBuffer.clear();
 }
 #endif
 Void TDecTop::executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic)
