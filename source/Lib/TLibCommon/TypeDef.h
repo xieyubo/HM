@@ -791,7 +791,6 @@ private:
   std::string m_str;
 };
 
-// if a check fails with THROW or CHECK, please check if ported correctly from assert in revision 1196)
 #define THROW(x)            throw( Exception( "\nERROR: In function \"" ) << __FUNCTION__ << "\" in " << __FILE__ << ":" << __LINE__ << ": " << x )
 #define CHECK(c,x)          if(c){ THROW(x); }
 #define EXIT(x)             throw( Exception( "\n" ) << x << "\n" )
