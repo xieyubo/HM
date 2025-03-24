@@ -559,6 +559,18 @@ protected:
   Bool       m_SEIPrefixIndicationSEIEnabled;
 #endif
 
+#if JVET_AK0107_MODALITY_INFORMATION
+  Bool      m_miSEIEnabled;
+  Bool      m_miCancelFlag;
+  Bool      m_miPersistenceFlag;
+  Int       m_miModalityType; 
+  Bool      m_miSpectrumRangePresentFlag;
+  Int       m_miMinWavelengthMantissa; 
+  Int       m_miMinWavelengthExponentPlus15; 
+  Int       m_miMaxWavelengthMantissa; 
+  Int       m_miMaxWavelengthExponentPlus15; 
+#endif
+
   // internal member functions
   Void  xCheckParameter ();                                   ///< check validity of configuration values
   Void  xPrintParameter ();                                   ///< print configuration values

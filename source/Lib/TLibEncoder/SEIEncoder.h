@@ -118,6 +118,9 @@ public:
 #if JCTVC_AD0021_SEI_PREFIX_INDICATION
   Void initSEISEIPrefixIndication(SEIPrefixIndication* seiSeiPrefixIndications, const SEI* sei);
 #endif
+#if JVET_AK0107_MODALITY_INFORMATION
+  Void initSEIModalityInfo(SEIModalityInfo *sei);
+#endif
   // trailing SEIs
   Void initDecodedPictureHashSEI(SEIDecodedPictureHash *sei, TComPic *pcPic, std::string &rHashString, const BitDepths &bitDepths);
   Void initTemporalLevel0IndexSEI(SEITemporalLevel0Index *sei, TComSlice *slice);

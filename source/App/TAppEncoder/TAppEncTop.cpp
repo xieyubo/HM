@@ -353,6 +353,18 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setVerPhaseNumFullResolution                          ( m_piVerPhaseNumFullResolution );
   m_cTEncTop.setVerPhaseDenMinus1FullResolution                    ( m_piVerPhaseDenMinus1FullResolution );
 #endif
+#if JVET_AK0107_MODALITY_INFORMATION
+  // Modality Information SEI
+  m_cTEncTop.setMiSEIEnabled                                      (m_miSEIEnabled);
+  m_cTEncTop.setMiCancelFlag                                      (m_miCancelFlag);
+  m_cTEncTop.setMiPersistenceFlag                                 (m_miPersistenceFlag);
+  m_cTEncTop.setMiModalityType                                    (m_miModalityType);
+  m_cTEncTop.setMiSpectrumRangePresentFlag                        (m_miSpectrumRangePresentFlag);
+  m_cTEncTop.setMiMinWavelengthMantissa                           (m_miMinWavelengthMantissa);
+  m_cTEncTop.setMiMinWavelengthExponentPlus15                     (m_miMinWavelengthExponentPlus15);
+  m_cTEncTop.setMiMaxWavelengthMantissa                           (m_miMaxWavelengthMantissa);
+  m_cTEncTop.setMiMaxWavelengthExponentPlus15                     (m_miMaxWavelengthExponentPlus15);
+#endif
   m_cTEncTop.setTMCTSSEIEnabled                                   ( m_tmctsSEIEnabled );
 #if MCTS_ENC_CHECK
   m_cTEncTop.setTMCTSSEITileConstraint                            ( m_tmctsSEITileConstraint );

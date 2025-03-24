@@ -265,6 +265,29 @@ void SEIEncoder::initSEIPhaseIndication(SEIPhaseIndication* seiPhaseIndication)
 }
 #endif
 
+#if JVET_AK0107_MODALITY_INFORMATION
+Void SEIEncoder::initSEIModalityInfo(SEIModalityInfo *seiMI)
+{
+  assert(m_isInitialized);
+  assert(seiMI != NULL);
+  //  Set SEI message parameters read from command line options
+  seiMI->m_miCancelFlag = m_pcCfg->getMiCancelFlag(); 
+  if (!seiMI->m_miCancelFlag)
+  {
+    seiMI->m_miPersistenceFlag            = m_pcCfg->getMiPersistenceFlag();
+    seiMI->m_miModalityType               = m_pcCfg->getMiModalityType();
+    seiMI->m_miSpectrumRangePresentFlag   = m_pcCfg->getMiSpectrumRangePresentFlag();
+    if (seiMI->m_miSpectrumRangePresentFlag)
+    {
+      seiMI->m_miMinWavelengthMantissa         = m_pcCfg->getMiMinWavelengthMantissa();
+      seiMI->m_miMinWavelengthExponentPlus15   = m_pcCfg->getMiMinWavelengthExponentPlus15();
+      seiMI->m_miMaxWavelengthMantissa         = m_pcCfg->getMiMaxWavelengthMantissa();
+      seiMI->m_miMaxWavelengthExponentPlus15   = m_pcCfg->getMiMaxWavelengthExponentPlus15();
+    }
+  }
+}
+#endif
+
 //! initialize scalable nesting SEI message.
 //! Note: The SEI message structures input into this function will become part of the scalable nesting SEI and will be 
 //!       automatically freed, when the nesting SEI is disposed.
@@ -1605,5 +1628,6 @@ Void SEIEncoder::initSEISEIPrefixIndication(SEIPrefixIndication* seiSeiPrefixInd
   seiSeiPrefixIndications->m_payload = sei;
 }
 #endif 
+
 
 //! \}

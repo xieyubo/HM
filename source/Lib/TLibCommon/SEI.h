@@ -117,6 +117,9 @@ public:
 #if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
     PHASE_INDICATION                     = 212,
 #endif
+#if JVET_AK0107_MODALITY_INFORMATION
+    MODALITY_INFORMATION                 = 218,
+#endif
   };
 
   SEI() {}
@@ -994,6 +997,36 @@ public:
   int                   m_horPhaseDenMinus1;
   int                   m_verPhaseNum;
   int                   m_verPhaseDenMinus1;
+};
+#endif
+
+#if JVET_AK0107_MODALITY_INFORMATION
+class SEIModalityInfo : public SEI
+{
+public:
+  PayloadType payloadType() const { return PayloadType::MODALITY_INFORMATION; }
+  SEIModalityInfo() 
+    : m_miCancelFlag(false)
+    , m_miPersistenceFlag(true)
+    , m_miModalityType(1)
+    , m_miSpectrumRangePresentFlag(false)
+    , m_miMinWavelengthMantissa(0)
+    , m_miMinWavelengthExponentPlus15(0)
+    , m_miMaxWavelengthMantissa(0)
+    , m_miMaxWavelengthExponentPlus15(0)
+  { }
+  SEIModalityInfo(const SEIModalityInfo& sei);
+
+  virtual ~SEIModalityInfo() { }
+
+  Bool             m_miCancelFlag;
+  Bool             m_miPersistenceFlag;
+  Int              m_miModalityType;  
+  Bool             m_miSpectrumRangePresentFlag; 
+  Int              m_miMinWavelengthMantissa; 
+  Int              m_miMinWavelengthExponentPlus15; 
+  Int              m_miMaxWavelengthMantissa;  
+  Int              m_miMaxWavelengthExponentPlus15;  
 };
 #endif
 

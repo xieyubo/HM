@@ -111,6 +111,7 @@
 #if SHUTTER_INTERVAL_SEI_MESSAGE
 #define SHUTTER_INTERVAL_SEI_PROCESSING                   1 ///< JCTVC-AM0024: pre-/post-processing to use shutter interval SEI
 #endif
+#define JVET_AK0107_MODALITY_INFORMATION                  1 // Implementation of Modality Information SEI message
 // ====================================================================================================================
 // Tool Switches
 // ====================================================================================================================

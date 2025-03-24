@@ -407,6 +407,12 @@ Void SEIReader::xReadSEIPayloadData(Int const payloadType, Int const payloadSize
       xParseSEIPhaseIndication((SEIPhaseIndication &) *sei, payloadSize, pDecodedMessageOutputStream);
       break;
 #endif
+#if JVET_AK0107_MODALITY_INFORMATION    
+    case SEI::MODALITY_INFORMATION:
+      sei = new SEIModalityInfo; 
+      xParseSEIModalityInfo((SEIModalityInfo &) *sei, payloadSize, pDecodedMessageOutputStream);
+      break;
+#endif
     default:
       for (UInt i = 0; i < payloadSize; i++)
       {
@@ -2198,5 +2204,35 @@ Void SEIReader::xParseSEISEIPrefixIndication(SEIPrefixIndication& sei, UInt payl
 }
 #endif
 
+#if JVET_AK0107_MODALITY_INFORMATION
+Void SEIReader::xParseSEIModalityInfo(SEIModalityInfo& sei, UInt payloadSize, std::ostream *pDecodedMessageOutputStream)
+{
+  uint32_t code;
+  output_sei_message_header(sei, pDecodedMessageOutputStream, payloadSize);
+  sei_read_flag( pDecodedMessageOutputStream,           code,    "modality_info_cancel_flag" );                      sei.m_miCancelFlag = code;
+  if (!sei.m_miCancelFlag)
+   {
+    sei_read_flag( pDecodedMessageOutputStream,         code,    "modality_info_persistence_flag" );                 sei.m_miPersistenceFlag = code;
+    sei_read_code( pDecodedMessageOutputStream,     5,  code,    "modality_type" );                                  sei.m_miModalityType = code;
+    sei_read_flag( pDecodedMessageOutputStream,         code,    "spectrum_range_present_flag" );                    sei.m_miSpectrumRangePresentFlag = code;
+    if (sei.m_miSpectrumRangePresentFlag)
+    {
+      sei_read_code( pDecodedMessageOutputStream,  11,  code,    "min_wavelength_mantissa " );                       sei.m_miMinWavelengthMantissa = code;
+      sei_read_code( pDecodedMessageOutputStream,  5,   code,    "min_wavelength_exponent_plus15" );                 sei.m_miMinWavelengthExponentPlus15 = code;
+      sei_read_code( pDecodedMessageOutputStream,  11,  code,    "max_wavelength_mantissa " );                       sei.m_miMaxWavelengthMantissa = code;
+      sei_read_code( pDecodedMessageOutputStream,  5,   code,    "max_wavelength_exponent_plus15" );                 sei.m_miMaxWavelengthExponentPlus15 = code;
+    }
+    sei_read_uvlc(pDecodedMessageOutputStream,          code,    "modality_type_extension_bits");   // modality_type_extension_bits shall be equal to 0 in the current edition
+    if (code > 2048){
+      printf ("Warning: Values of modality_type_extension_bits greater than 2048 shall not be present in bitstreams.");
+    }
+    for (UInt i = 0; i < code; i++)
+    {
+      UInt code2;
+      sei_read_code(pDecodedMessageOutputStream, 1, code2, "reserved_modality_type_extension");   // Decoders shall ignore the presence and value of reserved_modality_type_extension                                                   
+    }
+  }
+}
+#endif
 
 //! \}
