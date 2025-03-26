@@ -1,3 +1,4 @@
+
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
@@ -31,58 +32,31 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
+#ifndef __ENCCFGPARAMS__
+#define __ENCCFGPARAMS__
+
 #pragma once
 
-#ifndef __NALWRITE__
-#define __NALWRITE__
-
-#include <ostream>
-
 #include "TLibCommon/CommonDef.h"
-#include "TLibCommon/TComBitStream.h"
-#include "TLibCommon/NAL.h"
 
-//! \ingroup TLibEncoder
-//! \{
+namespace EncCfgParam {
 
-/**
- * A convenience wrapper to NALUnit that also provides a
- * bitstream object.
- */
-struct OutputNALUnit : public NALUnit
+#if JVET_AK0194_DSC_SEI
+class CfgSEIDigitallySignedContent
 {
-  /**
-   * construct an OutputNALunit structure with given header values and
-   * storage for a bitstream.  Upon construction the NALunit header is
-   * written to the bitstream.
-   */
-  OutputNALUnit(
-    NalUnitType nalUnitType,
-    UInt temporalID = 0,
-    UInt reserved_zero_6bits = 0)
-  : NALUnit(nalUnitType, temporalID, reserved_zero_6bits)
-  , m_Bitstream()
-  {}
+public:
+  CfgSEIDigitallySignedContent(){};
+  virtual ~CfgSEIDigitallySignedContent(){};
 
-  OutputNALUnit& operator=(const NALUnit& src)
-  {
-    m_Bitstream.clear();
-    static_cast<NALUnit*>(this)->operator=(src);
-    return *this;
-  }
-
-  TComOutputBitstream m_Bitstream;
+  bool                      enabled = false;
+  std::string               privateKeyFile;
+  std::string               publicKeyUri;
+  bool                      keyIdEnabled = false;
+  int                       keyId = 0;
+  int                       hashMethod = 0;
 };
-
-void writeNaluWithHeader(std::ostream& out, OutputNALUnit& nalu);
-void writeNaluContent(std::ostream& out, OutputNALUnit& nalu);
-
-inline NALUnitEBSP::NALUnitEBSP(OutputNALUnit& nalu)
-  : NALUnit(nalu)
-{
-  writeNaluWithHeader(m_nalUnitData, nalu);
+#endif
 }
 
-//! \}
-
-#endif
+#endif // __ENCCFGPARAMS__

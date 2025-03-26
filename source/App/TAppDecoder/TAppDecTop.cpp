@@ -412,6 +412,9 @@ Void TAppDecTop::xInitDecLib()
 #if O0043_BEST_EFFORT_DECODING
   m_cTDecTop.setForceDecodeBitDepth(m_forceDecodeBitDepth);
 #endif
+#if JVET_AK0194_DSC_SEI
+  m_cTDecTop.setKeyStoreParameters(m_keyStoreDir, m_trustStoreDir);
+#endif
   if (!m_outputDecodedSEIMessagesFilename.empty())
   {
     std::ostream &os=m_seiMessageFileStream.is_open() ? m_seiMessageFileStream : std::cout;

@@ -38,6 +38,9 @@
 
 #include "SyntaxElementWriter.h"
 #include "TLibCommon/SEI.h"
+#if JVET_AK0194_DSC_SEI
+#include "TLibCommon/SEIDigitallySignedContent.h"
+#endif
 
 class TComBitIf;
 
@@ -146,6 +149,11 @@ protected:
     return 2 * n + 1;
   }
 #endif 
+#if JVET_AK0194_DSC_SEI
+  void xWriteSEIDigitallySignedContentInitialization(const SEIDigitallySignedContentInitialization &sei);
+  void xWriteSEIDigitallySignedContentSelection(const SEIDigitallySignedContentSelection &sei);
+  void xWriteSEIDigitallySignedContentVerification(const SEIDigitallySignedContentVerification &sei);
+#endif
 
 #if SHUTTER_INTERVAL_SEI_MESSAGE
   Void xWriteSEIShutterInterval                   (const SEIShutterIntervalInfo& sei);
@@ -161,6 +169,9 @@ protected:
     , Int SEIPrefixIndicationIdx = 0
 #endif
   );
+
+  Void  xTraceSEIHeader();
+  Void  xTraceSEIMessageType(SEI::PayloadType payloadType);
   Void xWriteByteAlign();
 };
 

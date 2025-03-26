@@ -115,6 +115,9 @@ Void TAppEncTop::xInitLibCfg()
 #if SHUTTER_INTERVAL_SEI_PROCESSING
   m_cTEncTop.setShutterFilterFlag                                 ( m_ShutterFilterEnable );
 #endif
+#if JVET_AK0194_DSC_SEI
+  m_cTEncTop.setDigitallySignedContentSEICfg                      (m_cfgDigitallySignedContentSEI);
+#endif
 
   m_cTEncTop.setCabacZeroWordPaddingEnabled                       ( m_cabacZeroWordPaddingEnabled );
 

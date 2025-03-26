@@ -101,6 +101,10 @@ Bool TAppDecCfg::parseCfg( Int argc, TChar* argv[] )
 #if MCTS_ENC_CHECK
   ("TMCTSCheck",                  m_tmctsCheck,                          false,    "If enabled, the decoder checks for violations of mc_exact_sample_value_match_flag in Temporal MCTS ")
 #endif
+#if JVET_AK0194_DSC_SEI
+  ("KeyStoreDir",              m_keyStoreDir,            std::string("keystore/pub"),    "Directory for locally stored public keys for verifying digitally signed content")
+  ("TrustStoreDir",            m_trustStoreDir,          std::string("keystore/ca"),     "Directory for locally stored trusted CA certificates")
+#endif
   ;
 
   po::setDefaults(opts);

@@ -32,6 +32,8 @@ set( SET_ENABLE_TRACING OFF CACHE BOOL "Set ENABLE_TRACING as a compiler flag" )
 set( ENABLE_TRACING OFF CACHE BOOL "If SET_ENABLE_TRACING is on, it will be set to this value" )
 set( HIGH_BITDEPTH OFF CACHE BOOL "Build libraries and applications with high bit depth support" )
 
+set( ENABLE_SEARCH_OPENSSL ON CACHE BOOL "ENABLE_SEARCH_OPENSSL will be set to this value" )
+
 if( CMAKE_COMPILER_IS_GNUCC )
   set( BUILD_STATIC OFF CACHE BOOL "Build static executables" )
 endif()

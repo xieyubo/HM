@@ -33,6 +33,9 @@
 
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/SEI.h"
+#if JVET_AK0194_DSC_SEI
+#include "TLibCommon/SEIDigitallySignedContent.h"
+#endif
 #include "TEncGOP.h"
 #include "TEncTop.h"
 
@@ -1627,7 +1630,27 @@ Void SEIEncoder::initSEISEIPrefixIndication(SEIPrefixIndication* seiSeiPrefixInd
   seiSeiPrefixIndications->m_numSeiPrefixIndicationsMinus1 = seiSeiPrefixIndications->getNumsOfSeiPrefixIndications(sei) - 1;
   seiSeiPrefixIndications->m_payload = sei;
 }
-#endif 
+#endif
 
+#if JVET_AK0194_DSC_SEI
+void SEIEncoder::initSEIDigitallySignedContentInitialization(SEIDigitallySignedContentInitialization *sei)
+{
+  sei->dsciNumVerificationSubstreams = 1; //m_pcCfg->getMaxTempLayer();
+  sei->dsciHashMethodType = m_pcCfg->getDigitallySignedContentSEICfg().hashMethod;
+  sei->dsciKeySourceUri = m_pcCfg->getDigitallySignedContentSEICfg().publicKeyUri;
+  sei->dsciUseKeyRegisterIdxFlag = m_pcCfg->getDigitallySignedContentSEICfg().keyIdEnabled;
+  sei->dsciKeyRegisterIdx = m_pcCfg->getDigitallySignedContentSEICfg().keyId;
+}
+void SEIEncoder::initSEIDigitallySignedContentSelection(SEIDigitallySignedContentSelection *sei, int substream)
+{
+  sei->dscsVerificationSubstreamId = substream;
+}
+void SEIEncoder::initSEIDigitallySignedContentVerification(SEIDigitallySignedContentVerification *sei, int32_t substream, const std::vector<uint8_t> &signature)
+{
+  sei->dscvVerificationSubstreamId = substream;
+  sei->dscvSignatureLengthInOctets = (int32_t) signature.size();
+  sei->dscvSignature = signature;
+}
+#endif
 
 //! \}

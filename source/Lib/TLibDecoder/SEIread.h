@@ -50,6 +50,9 @@
 #include "TLibCommon/SEI.h"
 class TComInputBitstream;
 
+#if JVET_AK0194_DSC_SEI_DECODER_SYNTAX
+#include "TLibCommon/SEIDigitallySignedContent.h"
+#endif
 
 class SEIReader: public SyntaxElementParser
 {
@@ -126,13 +129,22 @@ protected:
 #if JVET_AK0107_MODALITY_INFORMATION
   Void xParseSEIModalityInfo                  (SEIModalityInfo& sei,                  UInt payloadSize,                     std::ostream *pDecodedMessageOutputStream);
 #endif 
+#if JVET_AK0194_DSC_SEI_DECODER_SYNTAX
+  void xParseSEIDigitallySignedContentInitialization(SEIDigitallySignedContentInitialization &sei, uint32_t payloadSize, std::ostream *pDecodedMessageOutputStream);
+  void xParseSEIDigitallySignedContentSelection     (SEIDigitallySignedContentSelection &sei, uint32_t payloadSize, std::ostream *pDecodedMessageOutputStream);
+  void xParseSEIDigitallySignedContentVerification  (SEIDigitallySignedContentVerification &sei, uint32_t payloadSize, std::ostream *pDecodedMessageOutputStream);
+#endif
+
+  Void xTraceSEIHeader();
+  Void xTraceSEIMessageType(SEI::PayloadType payloadType);
 
   Void sei_read_scode(std::ostream *pOS, UInt uiLength, Int& ruiCode, const TChar *pSymbolName);
   Void sei_read_code(std::ostream *pOS, UInt uiLength, UInt& ruiCode, const TChar *pSymbolName);
   Void sei_read_uvlc(std::ostream *pOS,                UInt& ruiCode, const TChar *pSymbolName);
   Void sei_read_svlc(std::ostream *pOS,                Int&  ruiCode, const TChar *pSymbolName);
   Void sei_read_flag(std::ostream *pOS,                UInt& ruiCode, const TChar *pSymbolName);
-  
+  void sei_read_string(std::ostream* os,           std::string& code, const TChar* symbolName);
+
 };
 
 
