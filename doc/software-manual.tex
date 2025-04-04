@@ -1155,6 +1155,7 @@ Defines the depth of the TU tree for inter CUs.
 \Default{$-1$} &
 Specifies the intra frame period.
 A value of $-1$ implies an infinite period.
+A value of $-N$ implies a period that is a multiple $N$ based on frame rate $r$: $\mathrm{round}(r / N) \cdot N$.
 \\
 
 \Option{DecodingRefreshType (-dr)} &

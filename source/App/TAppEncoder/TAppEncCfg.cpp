@@ -863,7 +863,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("QuadtreeTUMaxDepthInter",                         m_uiQuadtreeTUMaxDepthInter,                         2u, "Depth of TU tree for inter CUs")
 
   // Coding structure paramters
-  ("IntraPeriod,-ip",                                 m_iIntraPeriod,                                      -1, "Intra period in frames, (-1: only first frame)")
+  ("IntraPeriod,-ip",                                 m_iIntraPeriod,                                      -1, "Intra period in frames, (-1: only first frame, -N: set to a multiple of N based on frame rate)")
   ("DecodingRefreshType,-dr",                         m_iDecodingRefreshType,                               0, "Intra refresh type (0:none 1:CRA 2:IDR 3:RecPointSEI)")
   ("GOPSize,g",                                       m_iGOPSize,                                           1, "GOP size of temporal structure")
   ("ReWriteParamSetsFlag",                            m_bReWriteParamSetsFlag,                           true, "Enable rewriting of Parameter sets before every (intra) random access point")
@@ -1423,6 +1423,21 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
    */
   m_inputFileWidth  = m_sourceWidth;
   m_inputFileHeight = m_sourceHeight;
+
+  if (m_iIntraPeriod < -1)
+  {
+    // Set IntraPeriod to a multiple of -m_intraPeriod according to frame rate of source
+    // When setting to m_intraPeriod to -32, it is changed to appropriate value according to CTC:
+    // Frame rate | IntraPeriod
+    //     20     |     32
+    //     24     |     32
+    //     30     |     32
+    //     50     |     64
+    //     60     |     64
+    //    100     |     96
+    const int ipBase = -m_iIntraPeriod;
+    m_iIntraPeriod    = std::max((m_iFrameRate + ipBase / 2) / ipBase, 1) * ipBase;
+  }
 
   if (!inputPathPrefix.empty() && inputPathPrefix.back() != '/' && inputPathPrefix.back() != '\\' )
   {
