@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.
  *
- * Copyright (c) 2010-2022, ITU/ISO/IEC
+ * Copyright (c) 2010-2025, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -504,6 +504,13 @@ protected:
   UInt      m_siiSEITimeScale;
   std::vector<UInt>     m_siiSEISubLayerNumUnitsInSI;
 #endif
+#if JVET_AE0101_PHASE_INDICATION_SEI_MESSAGE
+  bool      m_phaseIndicationSEIEnabledFullResolution;
+  int       m_piHorPhaseNumFullResolution;
+  int       m_piHorPhaseDenMinus1FullResolution;
+  int       m_piVerPhaseNumFullResolution;
+  int       m_piVerPhaseDenMinus1FullResolution;
+#endif
 #if SEI_ENCODER_CONTROL
   // film grain characterstics sei
   Bool      m_fgcSEIEnabled;
@@ -535,6 +542,9 @@ protected:
   UInt      m_aveSEIAmbientLightX;
   UInt      m_aveSEIAmbientLightY;
 #endif
+#if JVET_AK0194_DSC_SEI
+  EncCfgParam::CfgSEIDigitallySignedContent m_cfgDigitallySignedContentSEI;
+#endif
   std::string m_summaryOutFilename;                           ///< filename to use for producing summary output file.
   std::string m_summaryPicFilenameBase;                       ///< Base filename to use for producing summary picture output files. The actual filenames used will have I.txt, P.txt and B.txt appended.
   UInt        m_summaryVerboseness;                           ///< Specifies the level of the verboseness of the text output.
@@ -550,6 +560,18 @@ protected:
 #endif
 #if JCTVC_AD0021_SEI_PREFIX_INDICATION
   Bool       m_SEIPrefixIndicationSEIEnabled;
+#endif
+
+#if JVET_AK0107_MODALITY_INFORMATION
+  Bool      m_miSEIEnabled;
+  Bool      m_miCancelFlag;
+  Bool      m_miPersistenceFlag;
+  Int       m_miModalityType; 
+  Bool      m_miSpectrumRangePresentFlag;
+  Int       m_miMinWavelengthMantissa; 
+  Int       m_miMinWavelengthExponentPlus15; 
+  Int       m_miMaxWavelengthMantissa; 
+  Int       m_miMaxWavelengthExponentPlus15; 
 #endif
 
   // internal member functions

@@ -3,7 +3,7 @@
 * and contributor rights, including patent rights, and no such rights are
 * granted under this license.
 *
-* Copyright (c) 2010-2022, ITU/ISO/IEC
+* Copyright (c) 2010-2025, ITU/ISO/IEC
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -1069,7 +1069,7 @@ uint32_t SEIFilmGrainSynthesizer::fgsSimulationBlending_8x8(fgsProcessArgs *inAr
     }
   }
 
-  delete grainStripe;
+  delete[] grainStripe;
   return FGS_SUCCESS;
 }
 
@@ -1169,7 +1169,7 @@ uint32_t SEIFilmGrainSynthesizer::fgsSimulationBlending_16x16(fgsProcessArgs *in
     }
   }
 
-  delete grainStripe;
+  delete[] grainStripe;
   return FGS_SUCCESS;
 }
 
@@ -1263,7 +1263,7 @@ uint32_t SEIFilmGrainSynthesizer::fgsSimulationBlending_32x32(fgsProcessArgs *in
     }
   }
 
-  delete grainStripe;
+  delete[] grainStripe;
   return FGS_SUCCESS;
 }
 
